@@ -1,0 +1,2647 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AllCreator — AI 프롬프트 플랫폼</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --brand: #12112A;
+  --brand2: #1E1C3A;
+  --accent: #6C63FF;
+  --accent-dim: rgba(108,99,255,0.15);
+  --accent-border: rgba(108,99,255,0.35);
+  --point: #FF6584;
+  --point-dim: rgba(255,101,132,0.12);
+  --green: #10B981;
+  --bg: #0E0D1F;
+  --surface: #18172E;
+  --surface2: #211F3C;
+  --border: rgba(255,255,255,0.08);
+  --border2: rgba(255,255,255,0.14);
+  --text: #F0EFF8;
+  --muted: #9B99B8;
+  --subtle: #5A5872;
+  --sans: 'Noto Sans KR', sans-serif;
+  --display: 'Space Grotesk', sans-serif;
+  --nav-bg: rgba(14,13,31,0.92);
+  --cover-overlay: rgba(14,13,31,0.6);
+}
+
+/* ── 라이트 모드 ── */
+body.light {
+  --brand: #F5F4FF;
+  --brand2: #ECEAFF;
+  --accent: #5B52E8;
+  --accent-dim: rgba(91,82,232,0.1);
+  --accent-border: rgba(91,82,232,0.3);
+  --point: #E84C6A;
+  --point-dim: rgba(232,76,106,0.1);
+  --green: #0E9E6A;
+  --bg: #F7F7FC;
+  --surface: #FFFFFF;
+  --surface2: #F0EFF9;
+  --border: rgba(0,0,0,0.08);
+  --border2: rgba(0,0,0,0.13);
+  --text: #1A1830;
+  --muted: #5A5878;
+  --subtle: #9B99B8;
+  --nav-bg: rgba(255,255,255,0.94);
+  --cover-overlay: rgba(91,82,232,0.04);
+}
+
+/* 테마 토글 버튼 */
+.theme-btn {
+  width: 36px; height: 36px; border-radius: 50%;
+  background: var(--surface2); border: 1px solid var(--border2);
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  font-size: 16px; transition: all .2s; flex-shrink: 0;
+  position: relative; z-index: 201; pointer-events: all;
+}
+.theme-btn:hover { border-color: var(--accent-border); background: var(--accent-dim); }
+
+html { scroll-behavior: smooth; }
+body { font-family: var(--sans); background: var(--bg); color: var(--text); font-size: 15px; line-height: 1.7; min-height: 100vh; }
+
+/* ── SCREENS ── */
+.screen { display: none; min-height: 100vh; }
+.screen.active { display: block; }
+
+/* ── NAV ── */
+nav {
+  position: sticky; top: 0; z-index: 200;
+  background: var(--nav-bg);
+  backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--border);
+  height: 60px;
+  display: flex; align-items: center;
+  padding: 0 2.5rem;
+  gap: 2rem;
+}
+.nav-logo {
+  font-family: var(--display); font-weight: 700; font-size: 20px;
+  color: var(--text); letter-spacing: -0.01em; cursor: pointer;
+  display: flex; align-items: center; gap: 2px;
+}
+.nav-logo .dot { color: var(--accent); }
+.nav-search {
+  flex: 1; max-width: 480px;
+  background: var(--surface2);
+  border: 1px solid var(--border2);
+  border-radius: 10px;
+  display: flex; align-items: center; gap: 10px;
+  padding: 0 14px; height: 38px;
+  cursor: text;
+}
+.nav-search input {
+  background: none; border: none; outline: none;
+  font-family: var(--sans); font-size: 14px; color: var(--text);
+  flex: 1; height: 100%;
+}
+.nav-search input::placeholder { color: var(--subtle); }
+.nav-search-icon { color: var(--subtle); font-size: 16px; }
+.nav-links { display: flex; align-items: center; gap: 1.5rem; margin-left: auto; }
+.nav-links a {
+  font-size: 14px; color: var(--muted); text-decoration: none;
+  font-family: var(--display); font-weight: 500; cursor: pointer;
+  transition: color .2s;
+}
+.nav-links a:hover { color: var(--text); }
+.nav-btn {
+  background: var(--accent); color: #fff;
+  border: none; border-radius: 8px;
+  padding: 8px 18px; font-size: 14px; font-weight: 600;
+  font-family: var(--display); cursor: pointer;
+  transition: opacity .15s;
+}
+.nav-btn:hover { opacity: 0.88; }
+
+/* ── USER DROPDOWN ── */
+.user-menu { position: relative; }
+.user-btn {
+  display: flex; align-items: center; gap: 8px;
+  background: var(--surface2); border: 1px solid var(--border2);
+  border-radius: 100px; padding: 6px 14px 6px 8px;
+  cursor: pointer; transition: border-color .15s;
+}
+.user-btn:hover { border-color: var(--accent-border); }
+.user-avatar {
+  width: 28px; height: 28px; border-radius: 50%;
+  background: var(--accent-dim); border: 1px solid var(--accent-border);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 700; font-family: var(--display);
+  color: var(--accent); flex-shrink: 0;
+}
+.user-name { font-size: 14px; font-weight: 500; font-family: var(--display); color: var(--text); }
+.user-chevron { font-size: 10px; color: var(--muted); transition: transform .2s; }
+.user-menu.open .user-chevron { transform: rotate(180deg); }
+
+.user-dropdown {
+  position: absolute; top: calc(100% + 8px); right: 0;
+  background: var(--surface); border: 1px solid var(--border2);
+  border-radius: 12px; min-width: 180px;
+  overflow: hidden;
+  opacity: 0; pointer-events: none; transform: translateY(-6px);
+  transition: opacity .15s, transform .15s;
+  z-index: 300;
+}
+.user-menu.open .user-dropdown { opacity: 1; pointer-events: all; transform: translateY(0); }
+
+.dropdown-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 11px 16px; font-size: 14px; color: var(--muted);
+  cursor: pointer; transition: background .1s; font-family: var(--sans);
+  border: none; background: none; width: 100%; text-align: left;
+}
+.dropdown-item:hover { background: var(--surface2); color: var(--text); }
+.dropdown-item.danger { color: #FF6B6B; }
+.dropdown-item.danger:hover { background: rgba(255,107,107,0.08); }
+.dropdown-sep { height: 1px; background: var(--border); margin: 4px 0; }
+
+/* ── HERO ── */
+.hero {
+  padding: 5rem 2.5rem 3rem;
+  max-width: 900px; margin: 0 auto;
+  text-align: center;
+}
+.hero-badge {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: var(--accent-dim); border: 1px solid var(--accent-border);
+  border-radius: 100px; padding: 5px 14px;
+  font-size: 12px; color: var(--accent); font-family: var(--display);
+  font-weight: 600; letter-spacing: 0.04em; margin-bottom: 1.75rem;
+}
+.hero-badge::before { content:''; width:6px; height:6px; border-radius:50%; background:var(--accent); animation: pulse 2s infinite; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+.hero h1 {
+  font-family: var(--display); font-size: clamp(2.4rem, 5vw, 3.8rem);
+  font-weight: 700; line-height: 1.1; letter-spacing: -0.03em;
+  color: var(--text); margin-bottom: 1.25rem;
+}
+.hero h1 em { font-style: normal; color: var(--accent); }
+.hero p { font-size: 17px; color: var(--muted); max-width: 520px; margin: 0 auto 2.5rem; }
+
+.search-bar {
+  display: flex; gap: 0;
+  background: var(--surface); border: 1px solid var(--border2);
+  border-radius: 14px; overflow: hidden;
+  max-width: 640px; margin: 0 auto 1.25rem;
+  box-shadow: 0 0 0 4px var(--accent-dim);
+}
+.search-bar input {
+  flex: 1; background: none; border: none; outline: none;
+  font-family: var(--sans); font-size: 16px; color: var(--text);
+  padding: 0 1.25rem; height: 56px;
+}
+.search-bar input::placeholder { color: var(--subtle); }
+.search-bar button {
+  background: var(--accent); border: none; color: #fff;
+  font-family: var(--display); font-weight: 600; font-size: 15px;
+  padding: 0 1.75rem; cursor: pointer; transition: opacity .15s;
+}
+.search-bar button:hover { opacity: .88; }
+
+.quick-tags { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+.qtag {
+  background: var(--surface2); border: 1px solid var(--border2);
+  border-radius: 100px; padding: 5px 14px;
+  font-size: 13px; color: var(--muted); cursor: pointer;
+  transition: all .2s; white-space: nowrap;
+}
+.qtag:hover { border-color: var(--accent-border); color: var(--accent); background: var(--accent-dim); }
+
+/* ── FILTER BAR ── */
+.filter-bar {
+  padding: 1.25rem 2.5rem;
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; gap: 1rem; overflow-x: auto;
+}
+.filter-label { font-size: 12px; color: var(--subtle); font-family: var(--display); white-space: nowrap; }
+.filter-chip {
+  background: var(--surface2); border: 1px solid var(--border2);
+  border-radius: 8px; padding: 6px 14px;
+  font-size: 13px; color: var(--muted); cursor: pointer;
+  white-space: nowrap; transition: all .2s; font-family: var(--display);
+}
+.filter-chip:hover, .filter-chip.on { background: var(--accent-dim); border-color: var(--accent-border); color: var(--accent); }
+.filter-sep { width: 1px; height: 20px; background: var(--border2); flex-shrink: 0; }
+
+/* ── MASONRY GRID ── */
+.feed-wrap { padding: 2rem 2.5rem 4rem; }
+.feed-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 1.5rem;
+}
+.feed-header h2 { font-family: var(--display); font-size: 17px; font-weight: 600; }
+.feed-count { font-size: 13px; color: var(--subtle); }
+
+.masonry {
+  columns: 4; gap: 16px;
+}
+@media (max-width: 1200px) { .masonry { columns: 3; } }
+
+.pcard {
+  break-inside: avoid;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px; overflow: hidden;
+  margin-bottom: 16px;
+  cursor: pointer;
+  transition: border-color .2s, transform .2s;
+}
+.pcard:hover { border-color: var(--accent-border); transform: translateY(-2px); }
+
+.pcard-img {
+  width: 100%; display: block;
+  background: var(--surface2);
+  position: relative; overflow: hidden;
+}
+.pcard-img-inner {
+  width: 100%; display: flex; align-items: center; justify-content: center;
+  font-size: 2.5rem;
+}
+.pcard-img-inner.h-short { height: 140px; }
+.pcard-img-inner.h-med { height: 190px; }
+.pcard-img-inner.h-tall { height: 240px; }
+.pcard-img-overlay {
+  position: absolute; inset: 0;
+  background: rgba(108,99,255,0.08);
+  opacity: 0; transition: opacity .2s;
+  display: flex; align-items: center; justify-content: center;
+}
+.pcard:hover .pcard-img-overlay { opacity: 1; }
+.pcard-copy-btn {
+  background: rgba(255,255,255,0.15); backdrop-filter: blur(8px);
+  border: 1px solid rgba(255,255,255,0.25); border-radius: 8px;
+  color: #fff; font-size: 13px; font-family: var(--display);
+  font-weight: 600; padding: 8px 18px; cursor: pointer;
+}
+
+.pcard-body { padding: 14px 16px; }
+.pcard-ai-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.ai-badge {
+  font-size: 10px; font-family: var(--display); font-weight: 600;
+  padding: 2px 8px; border-radius: 5px; letter-spacing: 0.05em;
+}
+.ai-badge.chatgpt { background: rgba(16,185,129,0.15); color: #10B981; }
+.ai-badge.claude { background: var(--accent-dim); color: var(--accent); }
+.ai-badge.midjourney { background: rgba(255,101,132,0.12); color: var(--point); }
+.ai-badge.runway { background: rgba(251,191,36,0.12); color: #FBBF24; }
+.diff-badge {
+  font-size: 10px; font-family: var(--display); padding: 2px 8px;
+  border-radius: 5px; margin-left: auto;
+}
+.diff-easy { background: rgba(16,185,129,0.12); color: #10B981; }
+.diff-mid { background: rgba(251,191,36,0.12); color: #FBBF24; }
+
+.pcard-title { font-size: 14px; font-weight: 500; color: var(--text); margin-bottom: 6px; line-height: 1.4; }
+.pcard-desc { font-size: 12px; color: var(--muted); line-height: 1.5; }
+
+.pcard-foot {
+  padding: 10px 16px;
+  border-top: 1px solid var(--border);
+  display: flex; align-items: center; gap: 8px;
+}
+.pcard-foot-star { font-size: 12px; color: #FBBF24; }
+.pcard-foot-stat { font-size: 12px; color: var(--subtle); }
+.pcard-foot-price {
+  margin-left: auto; font-family: var(--display); font-size: 13px; font-weight: 600;
+}
+.pcard-foot-price.free { color: var(--green); }
+.pcard-foot-price.paid { color: var(--point); }
+.heart-btn {
+  background: none; border: none; color: var(--subtle); cursor: pointer;
+  font-size: 16px; padding: 0; transition: color .15s;
+}
+.heart-btn:hover { color: var(--point); }
+
+/* ── DETAIL SCREEN ── */
+.detail-wrap { max-width: 1100px; margin: 0 auto; padding: 2.5rem; display: grid; grid-template-columns: 1fr 380px; gap: 2.5rem; align-items: start; }
+
+.detail-left {}
+.back-btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 14px; color: var(--muted); cursor: pointer;
+  margin-bottom: 1.75rem; font-family: var(--display);
+  background: none; border: none; padding: 0;
+  transition: color .15s;
+}
+.back-btn:hover { color: var(--text); }
+
+.detail-preview {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 16px; overflow: hidden;
+  margin-bottom: 1.75rem;
+}
+.detail-preview-main {
+  height: 340px; display: flex; align-items: center; justify-content: center;
+  font-size: 5rem; position: relative;
+}
+.detail-preview-label {
+  position: absolute; top: 14px; left: 14px;
+  background: rgba(0,0,0,0.5); backdrop-filter: blur(8px);
+  border: 1px solid var(--border2); border-radius: 8px;
+  padding: 4px 12px; font-size: 11px; color: var(--muted); font-family: var(--display);
+}
+.detail-preview-thumbs {
+  display: flex; gap: 8px; padding: 12px;
+  border-top: 1px solid var(--border);
+}
+.thumb {
+  height: 64px; flex: 1;
+  background: var(--surface); border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.8rem; cursor: pointer; border: 2px solid transparent;
+  transition: border-color .15s;
+}
+.thumb.active { border-color: var(--accent); }
+
+.detail-meta { margin-bottom: 1.5rem; }
+.detail-tags { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 1rem; }
+.dtag {
+  font-size: 11px; font-family: var(--display); font-weight: 600;
+  padding: 3px 10px; border-radius: 6px;
+}
+.detail-title { font-family: var(--display); font-size: 26px; font-weight: 700; letter-spacing: -0.02em; margin-bottom: .75rem; line-height: 1.2; }
+.detail-rating { display: flex; align-items: center; gap: 10px; margin-bottom: 1.25rem; }
+.stars { color: #FBBF24; font-size: 15px; letter-spacing: 1px; }
+.rating-val { font-family: var(--display); font-weight: 600; font-size: 15px; }
+.rating-count { font-size: 13px; color: var(--muted); }
+.rating-uses { font-size: 13px; color: var(--subtle); }
+
+.detail-desc { font-size: 15px; color: var(--muted); line-height: 1.75; margin-bottom: 1.5rem; }
+
+.prompt-box {
+  background: var(--brand2);
+  border: 1px solid var(--border2);
+  border-radius: 12px; padding: 1.25rem 1.5rem;
+  margin-bottom: 1.5rem; position: relative;
+}
+.prompt-box-label {
+  font-size: 11px; color: var(--subtle); font-family: var(--display);
+  letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: .75rem;
+}
+.prompt-text {
+  font-size: 15px; color: var(--text); line-height: 1.75;
+  white-space: pre-wrap;
+}
+.prompt-text.blurred { filter: blur(5px); user-select: none; pointer-events: none; }
+.prompt-copy-btn {
+  position: absolute; top: 12px; right: 12px;
+  background: var(--surface2); border: 1px solid var(--border2);
+  border-radius: 7px; padding: 5px 12px;
+  font-size: 12px; color: var(--muted); font-family: var(--display);
+  cursor: pointer; transition: all .2s;
+}
+.prompt-copy-btn:hover { border-color: var(--accent-border); color: var(--accent); }
+
+.ai-tabs { display: flex; gap: 8px; margin-bottom: 1rem; }
+.ai-tab {
+  padding: 7px 16px; border-radius: 8px; font-size: 13px;
+  font-family: var(--display); font-weight: 500; cursor: pointer;
+  border: 1px solid var(--border2); background: var(--surface2);
+  color: var(--muted); transition: all .2s;
+}
+.ai-tab.active { background: var(--accent-dim); border-color: var(--accent-border); color: var(--accent); }
+
+.reviews { margin-top: 2rem; }
+.reviews h3 { font-family: var(--display); font-size: 16px; font-weight: 600; margin-bottom: 1.25rem; }
+.review-item { padding: 1rem 0; border-bottom: 1px solid var(--border); }
+.review-header { display: flex; align-items: center; gap: 10px; margin-bottom: .5rem; }
+.review-avatar {
+  width: 32px; height: 32px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px; font-weight: 600; font-family: var(--display); flex-shrink: 0;
+}
+.review-name { font-size: 14px; font-weight: 500; }
+.review-date { font-size: 12px; color: var(--subtle); margin-left: auto; }
+.review-stars { color: #FBBF24; font-size: 12px; margin-bottom: 4px; }
+.review-text { font-size: 14px; color: var(--muted); line-height: 1.6; }
+
+/* ── BUY PANEL ── */
+.buy-panel {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 16px; padding: 1.5rem;
+  position: sticky; top: 80px;
+}
+.buy-price-row { display: flex; align-items: baseline; gap: 10px; margin-bottom: 1.5rem; }
+.buy-price { font-family: var(--display); font-size: 32px; font-weight: 700; }
+.buy-price-orig { font-size: 16px; color: var(--subtle); text-decoration: line-through; }
+.buy-badge { font-size: 11px; font-family: var(--display); font-weight: 700; color: var(--point); background: var(--point-dim); padding: 3px 8px; border-radius: 6px; }
+
+.buy-includes { margin-bottom: 1.5rem; }
+.buy-includes-title { font-size: 12px; color: var(--subtle); font-family: var(--display); letter-spacing: .08em; text-transform: uppercase; margin-bottom: .75rem; }
+.buy-include-item { display: flex; align-items: center; gap: 10px; font-size: 14px; color: var(--muted); margin-bottom: .5rem; }
+.buy-include-item::before { content:'✓'; color: var(--green); font-weight: 700; flex-shrink: 0; }
+
+.buy-ai-select { margin-bottom: 1.25rem; }
+.buy-ai-select label { font-size: 12px; color: var(--subtle); font-family: var(--display); display: block; margin-bottom: .5rem; }
+.ai-select-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.ai-opt {
+  border: 1px solid var(--border2); border-radius: 8px; padding: 8px 10px;
+  font-size: 13px; font-family: var(--display); color: var(--muted);
+  cursor: pointer; text-align: center; transition: all .15s; background: var(--surface2);
+}
+.ai-opt.selected { border-color: var(--accent-border); color: var(--accent); background: var(--accent-dim); }
+
+.buy-btn {
+  width: 100%; background: var(--accent); border: none; border-radius: 10px;
+  color: #fff; font-family: var(--display); font-size: 16px; font-weight: 700;
+  padding: 15px; cursor: pointer; transition: opacity .15s; margin-bottom: .75rem;
+}
+.buy-btn:hover { opacity: .88; }
+.buy-free-btn {
+  width: 100%; background: none; border: 1px solid var(--border2);
+  border-radius: 10px; color: var(--muted); font-family: var(--display);
+  font-size: 14px; font-weight: 500; padding: 12px; cursor: pointer;
+  transition: all .2s;
+}
+.buy-free-btn:hover { border-color: var(--border2); color: var(--text); }
+
+.seller-card {
+  margin-top: 1.25rem; padding-top: 1.25rem;
+  border-top: 1px solid var(--border);
+  display: flex; align-items: center; gap: 12px;
+}
+.seller-avatar {
+  width: 40px; height: 40px; border-radius: 50%;
+  background: var(--accent-dim); border: 1px solid var(--accent-border);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px; flex-shrink: 0;
+}
+.seller-name { font-size: 14px; font-weight: 500; }
+.seller-badge {
+  font-size: 10px; font-family: var(--display); font-weight: 600;
+  color: var(--accent); background: var(--accent-dim); border-radius: 5px;
+  padding: 2px 7px;
+}
+.seller-stat { font-size: 12px; color: var(--subtle); margin-top: 2px; }
+
+/* ── PURCHASE SCREEN ── */
+.purchase-wrap {
+  max-width: 680px; margin: 0 auto; padding: 3rem 2.5rem;
+}
+.purchase-wrap h2 { font-family: var(--display); font-size: 24px; font-weight: 700; margin-bottom: .5rem; }
+.purchase-wrap .step-sub { font-size: 14px; color: var(--muted); margin-bottom: 2rem; }
+
+.step-indicator { display: flex; align-items: center; gap: 0; margin-bottom: 2.5rem; }
+.step-item { display: flex; align-items: center; gap: 0; flex: 1; }
+.step-circle {
+  width: 28px; height: 28px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-family: var(--display); font-weight: 700; flex-shrink: 0;
+}
+.step-circle.done { background: var(--accent); color: #fff; }
+.step-circle.current { background: var(--accent); color: #fff; box-shadow: 0 0 0 4px var(--accent-dim); }
+.step-circle.upcoming { background: var(--surface2); color: var(--subtle); border: 1px solid var(--border2); }
+.step-label { font-size: 12px; font-family: var(--display); margin-left: 8px; color: var(--muted); white-space: nowrap; }
+.step-label.current { color: var(--text); font-weight: 600; }
+.step-line { flex: 1; height: 1px; background: var(--border2); margin: 0 10px; }
+
+.order-summary {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 14px; padding: 1.25rem; margin-bottom: 1.75rem;
+  display: flex; align-items: center; gap: 1rem;
+}
+.order-thumb {
+  width: 56px; height: 56px; border-radius: 10px;
+  background: var(--surface2); display: flex; align-items: center; justify-content: center;
+  font-size: 1.8rem; flex-shrink: 0;
+}
+.order-info { flex: 1; }
+.order-title { font-size: 15px; font-weight: 500; margin-bottom: 4px; }
+.order-ai { font-size: 12px; color: var(--muted); }
+.order-price { font-family: var(--display); font-size: 20px; font-weight: 700; }
+
+.form-section { margin-bottom: 1.75rem; }
+.form-section-title {
+  font-family: var(--display); font-size: 13px; font-weight: 600;
+  color: var(--subtle); letter-spacing: .08em; text-transform: uppercase;
+  margin-bottom: 1rem;
+}
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+.form-row.full { grid-template-columns: 1fr; }
+.form-group { display: flex; flex-direction: column; gap: 6px; }
+.form-group label { font-size: 13px; color: var(--muted); font-family: var(--display); }
+.form-group input, .form-group select {
+  background: var(--surface2); border: 1px solid var(--border2);
+  border-radius: 9px; padding: 11px 14px;
+  font-size: 14px; color: var(--text); font-family: var(--sans);
+  outline: none; transition: border-color .2s;
+  -webkit-appearance: none;
+}
+.form-group input:focus, .form-group select:focus { border-color: var(--accent-border); }
+.form-group input::placeholder { color: var(--subtle); }
+
+.card-input-row {
+  background: var(--surface2); border: 1px solid var(--border2);
+  border-radius: 9px; padding: 11px 14px;
+  display: flex; align-items: center; gap: 10px; margin-bottom: 12px;
+}
+.card-input-row input {
+  background: none; border: none; outline: none; flex: 1;
+  font-size: 14px; color: var(--text); font-family: var(--sans);
+}
+.card-icons { display: flex; gap: 6px; }
+.card-icon-badge {
+  background: var(--surface); border: 1px solid var(--border2);
+  border-radius: 5px; padding: 2px 7px;
+  font-size: 11px; font-family: var(--display); font-weight: 700;
+  color: var(--muted);
+}
+
+.price-breakdown {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 12px; padding: 1.25rem; margin-bottom: 1.75rem;
+}
+.price-row { display: flex; justify-content: space-between; font-size: 14px; color: var(--muted); margin-bottom: .6rem; }
+.price-row.total { font-size: 17px; font-weight: 700; color: var(--text); border-top: 1px solid var(--border); padding-top: .75rem; margin-top: .75rem; margin-bottom: 0; }
+.price-row.total .val { color: var(--accent); }
+
+.pay-btn {
+  width: 100%; background: var(--accent); border: none; border-radius: 12px;
+  color: #fff; font-family: var(--display); font-size: 17px; font-weight: 700;
+  padding: 17px; cursor: pointer; transition: opacity .15s; margin-bottom: 1rem;
+}
+.pay-btn:hover { opacity: .88; }
+.pay-note { font-size: 12px; color: var(--subtle); text-align: center; line-height: 1.6; }
+
+/* ── SUCCESS SCREEN ── */
+.success-wrap {
+  max-width: 560px; margin: 0 auto; padding: 5rem 2.5rem;
+  text-align: center;
+}
+.success-icon {
+  width: 80px; height: 80px; border-radius: 50%;
+  background: rgba(16,185,129,0.15); border: 1px solid rgba(16,185,129,0.3);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 2.5rem; margin: 0 auto 1.75rem;
+}
+.success-wrap h2 { font-family: var(--display); font-size: 28px; font-weight: 700; margin-bottom: .75rem; }
+.success-wrap p { font-size: 16px; color: var(--muted); margin-bottom: 2rem; }
+.success-prompt-box {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 14px; padding: 1.5rem; margin-bottom: 2rem; text-align: left;
+}
+.success-prompt-box .lbl { font-size: 11px; color: var(--subtle); font-family: var(--display); text-transform: uppercase; letter-spacing: .1em; margin-bottom: .75rem; }
+.success-prompt-box .txt { font-size: 15px; color: var(--text); line-height: 1.75; }
+.success-actions { display: flex; gap: 12px; justify-content: center; }
+.success-btn-primary {
+  background: var(--accent); border: none; border-radius: 10px;
+  color: #fff; font-family: var(--display); font-size: 15px; font-weight: 600;
+  padding: 12px 24px; cursor: pointer; transition: opacity .15s;
+}
+.success-btn-secondary {
+  background: none; border: 1px solid var(--border2); border-radius: 10px;
+  color: var(--muted); font-family: var(--display); font-size: 15px;
+  padding: 12px 24px; cursor: pointer; transition: all .2s;
+}
+.success-btn-secondary:hover { border-color: var(--border2); color: var(--text); }
+
+.nav-links a.nav-active { color: var(--text); }
+
+/* ── TREND PAGE ── */
+.trend-hero {
+  background: linear-gradient(135deg, rgba(255,101,132,0.12) 0%, rgba(108,99,255,0.1) 100%);
+  border-bottom: 1px solid var(--border);
+  padding: 3rem 2.5rem 2rem;
+  text-align: center;
+}
+.trend-hero-eyebrow {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: rgba(255,101,132,0.15); border: 1px solid rgba(255,101,132,0.3);
+  border-radius: 100px; padding: 4px 14px;
+  font-size: 12px; color: var(--point); font-family: var(--display);
+  font-weight: 600; letter-spacing: .04em; margin-bottom: 1rem;
+}
+.trend-hero h1 {
+  font-family: var(--display); font-size: clamp(1.8rem, 4vw, 2.8rem);
+  font-weight: 700; letter-spacing: -.02em; margin-bottom: .5rem;
+}
+.trend-hero h1 em { font-style: normal; color: var(--point); }
+.trend-hero p { font-size: 15px; color: var(--muted); margin-bottom: 1.75rem; }
+
+.period-tabs {
+  display: inline-flex; gap: 0;
+  background: var(--surface2); border: 1px solid var(--border2);
+  border-radius: 10px; padding: 3px;
+}
+.period-tab {
+  padding: 7px 22px; border-radius: 7px; font-size: 14px;
+  font-family: var(--display); font-weight: 500; cursor: pointer;
+  color: var(--muted); transition: all .2s; border: none; background: none;
+}
+.period-tab.active {
+  background: var(--surface); color: var(--text);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+}
+
+.trend-wrap { max-width: 1100px; margin: 0 auto; padding: 2.5rem; }
+
+.trend-section-title {
+  font-family: var(--display); font-size: 13px; font-weight: 600;
+  color: var(--subtle); letter-spacing: .1em; text-transform: uppercase;
+  margin-bottom: 1.25rem; display: flex; align-items: center; gap: 10px;
+}
+.trend-section-title::after {
+  content: ''; flex: 1; height: 1px; background: var(--border);
+}
+
+/* 1위~3위 포디움 */
+.podium { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-bottom: 2.5rem; }
+.podium-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 16px; overflow: hidden; cursor: pointer;
+  transition: border-color .2s, transform .2s; position: relative;
+}
+.podium-card:hover { border-color: var(--border2); transform: translateY(-2px); }
+.podium-card.rank1 { border-color: rgba(255,101,132,0.4); }
+.podium-rank {
+  position: absolute; top: 12px; left: 12px;
+  font-family: var(--display); font-size: 22px; font-weight: 700;
+  z-index: 2;
+}
+.rank1 .podium-rank { color: var(--point); }
+.rank2 .podium-rank { color: #9B99B8; }
+.rank3 .podium-rank { color: #BA7517; }
+.podium-img {
+  height: 160px; display: flex; align-items: center; justify-content: center;
+  font-size: 3.5rem; background: var(--surface2); position: relative;
+}
+.podium-trend-badge {
+  position: absolute; top: 12px; right: 12px;
+  font-size: 10px; font-family: var(--display); font-weight: 700;
+  padding: 3px 8px; border-radius: 6px;
+}
+.badge-up { background: rgba(16,185,129,0.15); color: var(--green); }
+.badge-new { background: rgba(108,99,255,0.2); color: var(--accent); }
+.badge-hot { background: rgba(255,101,132,0.15); color: var(--point); }
+.podium-body { padding: 14px; }
+.podium-ai-row { display: flex; gap: 6px; margin-bottom: 8px; }
+.podium-title { font-size: 14px; font-weight: 500; color: var(--text); margin-bottom: 8px; line-height: 1.4; }
+.podium-stats { display: flex; gap: 10px; font-size: 12px; color: var(--subtle); }
+.podium-price { font-family: var(--display); font-size: 14px; font-weight: 600; margin-top: 10px; }
+
+/* 4위~ 리스트 뷰 */
+.trend-list { display: flex; flex-direction: column; gap: 10px; }
+.tlist-item {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 12px; padding: 14px 18px;
+  display: flex; align-items: center; gap: 16px;
+  cursor: pointer; transition: border-color .15s;
+}
+.tlist-item:hover { border-color: var(--border2); }
+.tlist-rank {
+  font-family: var(--display); font-size: 18px; font-weight: 700;
+  color: var(--subtle); min-width: 28px; text-align: center;
+}
+.tlist-emoji { font-size: 2rem; flex-shrink: 0; }
+.tlist-info { flex: 1; min-width: 0; }
+.tlist-title { font-size: 14px; font-weight: 500; color: var(--text); margin-bottom: 4px; }
+.tlist-meta { font-size: 12px; color: var(--subtle); display: flex; gap: 10px; }
+.tlist-right { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; flex-shrink: 0; }
+.tlist-change {
+  font-size: 11px; font-family: var(--display); font-weight: 600;
+  padding: 2px 8px; border-radius: 5px;
+}
+.change-up { background: rgba(16,185,129,0.12); color: var(--green); }
+.change-new { background: var(--accent-dim); color: var(--accent); }
+.change-same { background: var(--surface2); color: var(--subtle); }
+.tlist-price { font-family: var(--display); font-size: 13px; font-weight: 600; }
+
+/* 카테고리별 1위 */
+.cat-best-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; margin-bottom: 3rem; }
+.cat-best-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 12px; padding: 14px 16px;
+  cursor: pointer; transition: border-color .15s, transform .15s;
+}
+.cat-best-card:hover { border-color: var(--border2); transform: translateY(-1px); }
+.cat-best-header { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+.cat-best-icon { font-size: 16px; }
+.cat-best-label { font-size: 11px; font-family: var(--display); font-weight: 600; color: var(--subtle); text-transform: uppercase; letter-spacing: .06em; }
+.cat-best-title { font-size: 13px; font-weight: 500; color: var(--text); margin-bottom: 6px; line-height: 1.4; }
+.cat-best-stat { font-size: 11px; color: var(--subtle); }
+
+/* ── LOGIN MODAL ── */
+.modal-backdrop {
+  position: fixed; inset: 0; z-index: 900;
+  background: rgba(0,0,0,0.7); backdrop-filter: blur(6px);
+  display: flex; align-items: center; justify-content: center;
+  opacity: 0; pointer-events: none; transition: opacity .2s;
+}
+.modal-backdrop.open { opacity: 1; pointer-events: all; }
+.modal {
+  background: var(--surface); border: 1px solid var(--border2);
+  border-radius: 20px; width: 100%; max-width: 420px; padding: 2rem;
+  transform: translateY(16px) scale(0.98);
+  transition: transform .25s cubic-bezier(.34,1.56,.64,1); position: relative;
+}
+.modal-backdrop.open .modal { transform: translateY(0) scale(1); }
+.modal-close {
+  position: absolute; top: 16px; right: 16px;
+  background: var(--surface2); border: none; border-radius: 50%;
+  width: 32px; height: 32px; cursor: pointer; color: var(--muted);
+  font-size: 18px; display: flex; align-items: center; justify-content: center;
+  transition: background .15s;
+}
+.modal-close:hover { background: var(--border2); }
+.modal-logo { font-family: var(--display); font-size: 22px; font-weight: 700; text-align: center; margin-bottom: .25rem; }
+.modal-logo span { color: var(--accent); }
+.modal-tagline { font-size: 13px; color: var(--muted); text-align: center; margin-bottom: 1.5rem; }
+.modal-tabs {
+  display: flex; background: var(--surface2); border: 1px solid var(--border);
+  border-radius: 10px; padding: 3px; margin-bottom: 1.75rem;
+}
+.modal-tab {
+  flex: 1; padding: 8px 0; border-radius: 8px; font-size: 14px;
+  font-family: var(--display); font-weight: 500; cursor: pointer;
+  color: var(--muted); background: none; border: none; transition: all .2s; text-align: center;
+}
+.modal-tab.active { background: var(--surface); color: var(--text); }
+.social-btn {
+  width: 100%; display: flex; align-items: center; justify-content: center; gap: 10px;
+  padding: 13px; border-radius: 11px; font-size: 15px; font-weight: 600;
+  font-family: var(--sans); cursor: pointer; border: none;
+  transition: opacity .15s; margin-bottom: 10px;
+}
+.social-btn:hover { opacity: .88; }
+.social-kakao { background: #FEE500; color: #191919; }
+.social-google { background: #fff; color: #3c3c3c; border: 1px solid rgba(255,255,255,0.15); }
+.divider {
+  display: flex; align-items: center; gap: 12px; margin: 1.25rem 0;
+  color: var(--subtle); font-size: 12px; font-family: var(--display);
+}
+.divider::before, .divider::after { content:''; flex:1; height:1px; background: var(--border2); }
+.modal-input-group { margin-bottom: 12px; }
+.modal-input-group label { display: block; font-size: 13px; color: var(--muted); font-family: var(--display); margin-bottom: 6px; }
+.modal-input {
+  width: 100%; background: var(--surface2); border: 1px solid var(--border2);
+  border-radius: 10px; padding: 12px 14px; font-size: 15px; color: var(--text);
+  font-family: var(--sans); outline: none; transition: border-color .2s;
+}
+.modal-input:focus { border-color: var(--accent-border); }
+.modal-input::placeholder { color: var(--subtle); }
+.modal-input-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
+.pw-wrap { position: relative; }
+.pw-toggle {
+  position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
+  background: none; border: none; color: var(--subtle); cursor: pointer;
+  font-size: 12px; font-family: var(--display); padding: 0;
+}
+.modal-submit {
+  width: 100%; background: var(--accent); border: none; border-radius: 11px;
+  color: #fff; font-family: var(--display); font-size: 16px; font-weight: 700;
+  padding: 14px; cursor: pointer; margin-top: 4px; transition: opacity .15s;
+}
+.modal-submit:hover { opacity: .88; }
+.modal-footer { text-align: center; margin-top: 1.25rem; font-size: 13px; color: var(--subtle); }
+.modal-footer a { color: var(--accent); cursor: pointer; font-family: var(--display); font-weight: 500; }
+.modal-terms { font-size: 11px; color: var(--subtle); text-align: center; margin-top: 1rem; line-height: 1.7; }
+.modal-terms a { color: var(--muted); text-decoration: underline; cursor: pointer; }
+.modal-success-view { text-align: center; padding: 1rem 0; }
+.modal-success-icon {
+  width: 64px; height: 64px; border-radius: 50%;
+  background: rgba(16,185,129,0.15); border: 1px solid rgba(16,185,129,0.3);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 2rem; margin: 0 auto 1.25rem;
+}
+.modal-success-view h3 { font-family: var(--display); font-size: 20px; font-weight: 700; margin-bottom: .5rem; }
+.modal-success-view p { font-size: 14px; color: var(--muted); margin-bottom: 1.5rem; }
+.forgot-link { text-align: right; font-size: 12px; margin-top: -6px; margin-bottom: 14px; }
+.forgot-link a { color: var(--muted); cursor: pointer; font-family: var(--display); }
+.forgot-link a:hover { color: var(--accent); }
+
+/* ══════════════════════════════
+   모바일 반응형
+══════════════════════════════ */
+@media (max-width: 768px) {
+
+  /* NAV */
+  nav {
+    height: auto; padding: 0 1.25rem;
+    flex-wrap: wrap; gap: 0;
+  }
+  .nav-logo { padding: 14px 0; flex: 1; }
+  .nav-links { gap: .75rem; padding: 12px 0; }
+  .nav-links a { font-size: 13px; }
+  .nav-btn { padding: 7px 14px; font-size: 13px; }
+  .theme-btn { width: 32px; height: 32px; font-size: 14px; }
+  .nav-search {
+    order: 3; flex: 0 0 100%;
+    max-width: 100%; margin: 0 0 10px;
+    height: 40px;
+  }
+  .user-name { display: none; }
+  .user-dropdown { right: 0; left: auto; }
+
+  /* HERO */
+  .hero { padding: 2.5rem 1.25rem 2rem; }
+  .hero h1 { font-size: 1.9rem; }
+  .hero p { font-size: 15px; }
+  .search-bar { border-radius: 12px; }
+  .search-bar input { font-size: 15px; height: 50px; }
+  .search-bar button { padding: 0 1.25rem; font-size: 14px; }
+  .quick-tags { gap: 6px; }
+  .qtag { font-size: 12px; padding: 4px 12px; }
+
+  /* 필터바 */
+  .filter-bar { padding: .75rem 1.25rem; gap: .5rem; }
+  .filter-chip { padding: 5px 12px; font-size: 12px; }
+
+  /* 피드 */
+  .feed-wrap { padding: 1.25rem 1.25rem 3rem; }
+  .masonry { columns: 2; gap: 10px; }
+  .pcard { margin-bottom: 10px; }
+  .pcard-img-inner.h-short { height: 120px; }
+  .pcard-img-inner.h-med   { height: 160px; }
+  .pcard-img-inner.h-tall  { height: 200px; }
+  .pcard-body { padding: 10px 12px; }
+  .pcard-title { font-size: 13px; }
+  .pcard-desc { display: none; }
+  .pcard-foot { padding: 8px 12px; }
+
+  /* 상세 페이지 */
+  .detail-wrap {
+    grid-template-columns: 1fr;
+    padding: 1.25rem;
+    gap: 1.5rem;
+  }
+  .buy-panel { position: static; }
+  .detail-title { font-size: 20px; }
+  .detail-preview-main { height: 240px; }
+  .ai-tabs { flex-wrap: wrap; }
+  .ai-tab { font-size: 12px; padding: 6px 12px; }
+  .prompt-text { font-size: 14px; }
+
+  /* 결제 */
+  .purchase-wrap { padding: 1.5rem 1.25rem; }
+  .purchase-wrap h2 { font-size: 20px; }
+  .form-row { grid-template-columns: 1fr; }
+  .modal-input-row { grid-template-columns: 1fr; }
+
+  /* 트렌드 */
+  .trend-hero { padding: 2rem 1.25rem 1.5rem; }
+  .trend-hero h1 { font-size: 1.7rem; }
+  .trend-wrap { padding: 1.5rem 1.25rem; }
+  .podium { grid-template-columns: 1fr; gap: 10px; }
+  .podium-img { height: 140px; }
+  .cat-best-grid { grid-template-columns: 1fr 1fr; }
+
+  /* 검색 결과 */
+  .search-result-header { padding: 1.25rem 1.25rem 0; }
+  .search-result-query { font-size: 17px; }
+  .search-filter-bar { gap: 6px; }
+  .sfilter { font-size: 12px; padding: 5px 11px; }
+
+  /* 로그인 모달 */
+  .modal { margin: 1rem; padding: 1.5rem; border-radius: 16px; }
+
+  /* 성공/완료 */
+  .success-wrap { padding: 3rem 1.25rem; }
+}
+
+@media (max-width: 480px) {
+  .masonry { columns: 1; }
+  .hero h1 { font-size: 1.6rem; }
+  .podium { grid-template-columns: 1fr; }
+  .cat-best-grid { grid-template-columns: 1fr; }
+  .step-label { display: none; }
+}
+
+/* ── SEARCH SCREEN ── */
+.search-result-header {
+  padding: 1.75rem 2.5rem 0;
+  max-width: 1100px; margin: 0 auto;
+}
+.search-result-query {
+  font-family: var(--display); font-size: 22px; font-weight: 700; margin-bottom: .4rem;
+}
+.search-result-query em { color: var(--accent); font-style: normal; }
+.search-result-meta { font-size: 14px; color: var(--muted); margin-bottom: 1.25rem; }
+.search-filter-bar {
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 1.5rem;
+}
+.sfilter {
+  background: var(--surface2); border: 1px solid var(--border2);
+  border-radius: 100px; padding: 6px 14px; font-size: 13px; color: var(--muted);
+  cursor: pointer; font-family: var(--display); transition: all .2s; white-space: nowrap;
+}
+.sfilter:hover, .sfilter.on { background: var(--accent-dim); border-color: var(--accent-border); color: var(--accent); }
+.sfilter-sep { width: 1px; height: 18px; background: var(--border2); flex-shrink: 0; }
+.no-result { text-align: center; padding: 5rem 2rem; }
+.no-result-icon { font-size: 3rem; margin-bottom: 1rem; }
+.no-result h3 { font-family: var(--display); font-size: 20px; font-weight: 600; margin-bottom: .5rem; }
+.no-result p { font-size: 14px; color: var(--muted); margin-bottom: 1.5rem; }
+.no-result-tags { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+.no-result-tag {
+  background: var(--surface2); border: 1px solid var(--border2); border-radius: 100px;
+  padding: 5px 14px; font-size: 13px; color: var(--muted); cursor: pointer; transition: all .2s;
+}
+.no-result-tag:hover { border-color: var(--accent-border); color: var(--accent); }
+
+.toast {
+  position: fixed; bottom: 2rem; left: 50%; transform: translateX(-50%) translateY(80px);
+  background: var(--surface); border: 1px solid var(--border2);
+  border-radius: 10px; padding: 12px 20px;
+  font-size: 14px; color: var(--text); font-family: var(--display);
+  display: flex; align-items: center; gap: 8px;
+  transition: transform .3s cubic-bezier(.34,1.56,.64,1);
+  z-index: 999; white-space: nowrap;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+}
+.toast.show { transform: translateX(-50%) translateY(0); }
+.toast-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--green); }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════
+     NAV (공통)
+═══════════════════════════════════════════ -->
+<nav>
+  <div class="nav-logo" onclick="goHome()">All<span class="dot">.</span>Creator</div>
+  <div class="nav-search">
+    <span class="nav-search-icon">🔍</span>
+    <input type="text" placeholder="어떤 결과물을 원하세요?" id="navSearchInput">
+  </div>
+  <div class="nav-links">
+    <a id="nav-explore" class="nav-active" onclick="goHome()">탐색</a>
+    <a id="nav-trend" onclick="goTrend()" style="display:flex;align-items:center;gap:5px;">
+      <span style="display:inline-flex;align-items:center;justify-content:center;background:var(--point);color:#fff;font-size:9px;font-weight:700;border-radius:4px;padding:1px 5px;font-family:var(--display);letter-spacing:.03em;">HOT</span>트렌드
+    </a>
+    <a>마켓</a>
+    <a>크리에이터</a>
+    <button class="theme-btn" id="theme-btn" onclick="toggleTheme()" title="다크/라이트 모드 전환">🌙</button>
+    <button class="nav-btn" id="nav-login-btn" onclick="openLogin('login')">로그인</button>
+
+    <!-- 로그인 후 보이는 유저 메뉴 -->
+    <div class="user-menu" id="user-menu" style="display:none;">
+      <div class="user-btn" onclick="toggleUserMenu()">
+        <div class="user-avatar" id="user-avatar">?</div>
+        <span class="user-name" id="user-name-label">닉네임</span>
+        <span class="user-chevron">▼</span>
+      </div>
+      <div class="user-dropdown">
+        <button class="dropdown-item" onclick="closeUserMenu(); goMypage();">
+          👤 마이페이지
+        </button>
+        <button class="dropdown-item" onclick="closeUserMenu(); goMypage(); setTimeout(()=>switchMyTab('bought'),300);">
+          🛍️ 구매한 프롬프트
+        </button>
+        <button class="dropdown-item" onclick="closeUserMenu(); goMypage(); setTimeout(()=>switchMyTab('saved'),300);">
+          ♡ 저장한 프롬프트
+        </button>
+        <div class="dropdown-sep"></div>
+        <button class="dropdown-item danger" onclick="doLogout()">
+          🚪 로그아웃
+        </button>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<!-- ═══════════════════════════════════════════
+     MODAL: 로그인 / 회원가입
+═══════════════════════════════════════════ -->
+<div class="modal-backdrop" id="modal-backdrop" onclick="handleBackdropClick(event)">
+  <div class="modal">
+    <button class="modal-close" onclick="closeLogin()">✕</button>
+
+    <div class="modal-logo">All<span>.</span>Creator</div>
+    <div class="modal-tagline" id="modal-tagline">AI 크리에이터의 세계에 오신 걸 환영해요</div>
+
+    <!-- 탭 -->
+    <div class="modal-tabs">
+      <button class="modal-tab active" id="tab-login" onclick="switchModalTab('login')">로그인</button>
+      <button class="modal-tab" id="tab-signup" onclick="switchModalTab('signup')">회원가입</button>
+    </div>
+
+    <!-- ── 로그인 뷰 ── -->
+    <div id="view-login">
+      <button class="social-btn social-kakao" onclick="socialLogin('카카오')">
+        <span style="font-size:20px;">💬</span> 카카오로 계속하기
+      </button>
+      <button class="social-btn social-google" onclick="socialLogin('구글')">
+        <svg width="20" height="20" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.93 2.31-8.16 2.31-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
+        구글로 계속하기
+      </button>
+
+      <div class="divider">또는 이메일로 로그인</div>
+
+      <div class="modal-input-group">
+        <label>이메일</label>
+        <input class="modal-input" type="email" placeholder="example@email.com" id="login-email">
+      </div>
+      <div class="modal-input-group">
+        <label>비밀번호</label>
+        <div class="pw-wrap">
+          <input class="modal-input" type="password" placeholder="비밀번호를 입력하세요" id="login-pw" style="padding-right:52px;">
+          <button class="pw-toggle" onclick="togglePw('login-pw', this)">보기</button>
+        </div>
+      </div>
+      <div class="forgot-link"><a onclick="showForgot()">비밀번호를 잊으셨나요?</a></div>
+
+      <button class="modal-submit" onclick="emailLogin()">이메일로 로그인</button>
+
+      <div class="modal-footer">
+        아직 계정이 없으신가요? <a onclick="switchModalTab('signup')">회원가입</a>
+      </div>
+    </div>
+
+    <!-- ── 회원가입 뷰 ── -->
+    <div id="view-signup" style="display:none;">
+      <button class="social-btn social-kakao" onclick="socialLogin('카카오')">
+        <span style="font-size:20px;">💬</span> 카카오로 가입하기
+      </button>
+      <button class="social-btn social-google" onclick="socialLogin('구글')">
+        <svg width="20" height="20" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.93 2.31-8.16 2.31-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
+        구글로 가입하기
+      </button>
+
+      <div class="divider">또는 이메일로 가입</div>
+
+      <div class="modal-input-row">
+        <div class="modal-input-group" style="margin-bottom:0">
+          <label>이름</label>
+          <input class="modal-input" type="text" placeholder="홍길동" id="signup-name">
+        </div>
+        <div class="modal-input-group" style="margin-bottom:0">
+          <label>닉네임</label>
+          <input class="modal-input" type="text" placeholder="크리에이터명" id="signup-nick">
+        </div>
+      </div>
+      <div style="margin-bottom:12px;"></div>
+      <div class="modal-input-group">
+        <label>이메일</label>
+        <input class="modal-input" type="email" placeholder="example@email.com" id="signup-email">
+      </div>
+      <div class="modal-input-group">
+        <label>비밀번호</label>
+        <div class="pw-wrap">
+          <input class="modal-input" type="password" placeholder="8자 이상 영문+숫자" id="signup-pw" style="padding-right:52px;">
+          <button class="pw-toggle" onclick="togglePw('signup-pw', this)">보기</button>
+        </div>
+      </div>
+      <div class="modal-input-group">
+        <label>비밀번호 확인</label>
+        <div class="pw-wrap">
+          <input class="modal-input" type="password" placeholder="비밀번호를 다시 입력하세요" id="signup-pw2" style="padding-right:52px;">
+          <button class="pw-toggle" onclick="togglePw('signup-pw2', this)">보기</button>
+        </div>
+      </div>
+
+      <button class="modal-submit" onclick="emailSignup()">회원가입</button>
+
+      <div class="modal-terms">
+        가입하면 올크리에이터의 <a>이용약관</a>과 <a>개인정보처리방침</a>에<br>동의하는 것으로 간주됩니다.
+      </div>
+
+      <div class="modal-footer">
+        이미 계정이 있으신가요? <a onclick="switchModalTab('login')">로그인</a>
+      </div>
+    </div>
+
+    <!-- ── 가입 완료 뷰 ── -->
+    <div id="view-success" style="display:none;" class="modal-success-view">
+      <div class="modal-success-icon">✓</div>
+      <h3 id="modal-success-title">환영해요!</h3>
+      <p id="modal-success-desc">올크리에이터 회원이 됐어요.<br>이제 프롬프트를 저장하고 구매할 수 있어요.</p>
+      <button class="modal-submit" onclick="closeLogin()">시작하기</button>
+    </div>
+
+    <!-- ── 비밀번호 찾기 뷰 ── -->
+    <div id="view-forgot" style="display:none;">
+      <div style="font-size:13px;color:var(--muted);margin-bottom:1.5rem;line-height:1.7;">
+        가입한 이메일을 입력하면 비밀번호 재설정 링크를 보내드려요.
+      </div>
+      <div class="modal-input-group">
+        <label>이메일</label>
+        <input class="modal-input" type="email" placeholder="example@email.com" id="forgot-email">
+      </div>
+      <button class="modal-submit" onclick="sendReset()">재설정 링크 보내기</button>
+      <div class="modal-footer"><a onclick="switchModalTab('login')">← 로그인으로 돌아가기</a></div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     SCREEN 1: 홈 피드
+═══════════════════════════════════════════ -->
+<div class="screen active" id="screen-home">
+
+  <!-- HERO -->
+  <div class="hero">
+    <div class="hero-badge">✦ 검증된 프롬프트 12,400개+</div>
+    <h1>원하는 결과를 먼저 보고<br><em>프롬프트</em>를 선택하세요</h1>
+    <p>AI에게 뭐라고 물어봐야 할지 몰라도 괜찮아요.<br>결과 이미지를 보고 바로 쓸 수 있어요.</p>
+    <div class="search-bar">
+      <input type="text" placeholder="예) 지브리 스타일 내 사진, 쇼핑몰 상세페이지 문구..." id="heroSearch">
+      <button onclick="doSearch()">검색</button>
+    </div>
+    <div class="quick-tags">
+      <span class="qtag" onclick="doSearch('지브리')">🎨 지브리 스타일</span>
+      <span class="qtag" onclick="doSearch('야구장')">📸 야구장 사진</span>
+      <span class="qtag" onclick="doSearch('상세페이지')">🛒 상세페이지</span>
+      <span class="qtag" onclick="doSearch('광고')">📣 광고 문구</span>
+      <span class="qtag" onclick="doSearch('썸네일')">🎬 유튜브 썸네일</span>
+      <span class="qtag" onclick="doSearch('SNS')">✍️ SNS 게시글</span>
+    </div>
+  </div>
+
+  <!-- FILTER -->
+  <div class="filter-bar">
+    <span class="filter-label">카테고리</span>
+    <div class="filter-chip on" onclick="filterHome(this,'all')">전체</div>
+    <div class="filter-chip" onclick="filterHome(this,'이미지')">🎨 이미지 생성</div>
+    <div class="filter-chip" onclick="filterHome(this,'글쓰기')">✍️ 글쓰기</div>
+    <div class="filter-chip" onclick="filterHome(this,'영상')">🎬 영상</div>
+    <div class="filter-chip" onclick="filterHome(this,'업무')">⚡ 업무 자동화</div>
+    <div class="filter-chip" onclick="filterHome(this,'마케팅')">📣 마케팅</div>
+    <div class="filter-sep"></div>
+    <div class="filter-chip" onclick="filterHome(this,'free')">무료만</div>
+    <div class="filter-chip" onclick="filterHome(this,'chatgpt')">ChatGPT</div>
+    <div class="filter-chip" onclick="filterHome(this,'claude')">Claude</div>
+    <div class="filter-chip" onclick="filterHome(this,'midjourney')">Midjourney</div>
+  </div>
+
+  <!-- MASONRY FEED -->
+  <div class="feed-wrap">
+    <div class="feed-header">
+      <h2>지금 인기 프롬프트</h2>
+      <span class="feed-count">12,413개의 프롬프트</span>
+    </div>
+    <div class="masonry" id="masonry"></div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     SCREEN 2: 상세 페이지
+═══════════════════════════════════════════ -->
+<div class="screen" id="screen-detail">
+  <div class="detail-wrap">
+    <!-- LEFT -->
+    <div class="detail-left">
+      <button class="back-btn" onclick="goHome()">← 탐색으로 돌아가기</button>
+
+      <div class="detail-preview">
+        <div class="detail-preview-main" id="detail-main-img">
+          <div class="detail-preview-label">결과물 미리보기</div>
+          <span>🌸</span>
+        </div>
+        <div class="detail-preview-thumbs">
+          <div class="thumb active" onclick="selectThumb(this, '🌸')">🌸</div>
+          <div class="thumb" onclick="selectThumb(this, '🌿')">🌿</div>
+          <div class="thumb" onclick="selectThumb(this, '🌊')">🌊</div>
+          <div class="thumb" onclick="selectThumb(this, '🌙')">🌙</div>
+        </div>
+      </div>
+
+      <div class="detail-meta">
+        <div class="detail-tags">
+          <span class="dtag ai-badge chatgpt">ChatGPT</span>
+          <span class="dtag ai-badge claude">Claude</span>
+          <span class="dtag ai-badge midjourney">Midjourney</span>
+          <span class="dtag diff-badge diff-easy">쉬움</span>
+          <span class="dtag" style="background:var(--point-dim);color:var(--point);font-size:11px;font-family:var(--display);font-weight:600;padding:3px 10px;border-radius:6px;">🔥 이번 주 인기</span>
+        </div>
+        <h1 class="detail-title">지브리 감성 인물 사진 변환 프롬프트</h1>
+        <div class="detail-rating">
+          <span class="stars">★★★★★</span>
+          <span class="rating-val">4.9</span>
+          <span class="rating-count">(리뷰 287개)</span>
+          <span class="rating-uses">· 사용 8,214회</span>
+        </div>
+        <p class="detail-desc">내 사진을 지브리 스튜디오 애니메이션 스타일로 변환해주는 프롬프트예요. ChatGPT, Claude, Midjourney 3가지 버전을 모두 제공해서 어떤 AI를 쓰든 바로 사용할 수 있어요. 인물 특징을 자연스럽게 살리면서 지브리 특유의 따뜻한 색감과 배경을 만들어냅니다.</p>
+      </div>
+
+      <div class="ai-tabs">
+        <div class="ai-tab active" onclick="switchTab(this)">ChatGPT 버전</div>
+        <div class="ai-tab" onclick="switchTab(this)">Claude 버전</div>
+        <div class="ai-tab" onclick="switchTab(this)">Midjourney 버전</div>
+      </div>
+
+      <div class="prompt-box">
+        <div class="prompt-box-label">AI에게 이렇게 물어보세요</div>
+        <div class="prompt-text" id="prompt-text">아래 사진 속 인물을 지브리 스튜디오 애니메이션 스타일로 바꿔줘. 인물의 표정과 분위기는 그대로 살리되, 피부와 눈은 지브리 특유의 맑고 따뜻한 색감으로 표현해줘. 배경은 일본 시골 마을 풍경이나 꽃밭으로 자연스럽게 합성해주고, 전체적으로 여름 오후의 따뜻한 햇빛이 느껴지게 해줘.</div>
+        <button class="prompt-copy-btn" onclick="copyPrompt()">복사</button>
+      </div>
+
+      <div class="reviews">
+        <h3>리뷰 287개</h3>
+        <div class="review-item">
+          <div class="review-header">
+            <div class="review-avatar" style="background:rgba(108,99,255,0.2);color:var(--accent);">김</div>
+            <span class="review-name">김지은</span>
+            <span class="review-date">3일 전</span>
+          </div>
+          <div class="review-stars">★★★★★</div>
+          <p class="review-text">ChatGPT에 그대로 붙여넣었는데 첫 시도에 바로 지브리 느낌이 나왔어요! 배경까지 예쁘게 나와서 인스타에 바로 올렸습니다 ㅎㅎ</p>
+        </div>
+        <div class="review-item">
+          <div class="review-header">
+            <div class="review-avatar" style="background:rgba(255,101,132,0.15);color:var(--point);">박</div>
+            <span class="review-name">박민준</span>
+            <span class="review-date">1주 전</span>
+          </div>
+          <div class="review-stars">★★★★☆</div>
+          <p class="review-text">Midjourney 버전이 특히 색감이 예쁘게 나왔어요. 처음엔 비슷하게 안 나와서 프롬프트 조금 수정했는데 그 다음엔 완벽했어요.</p>
+        </div>
+        <div class="review-item">
+          <div class="review-header">
+            <div class="review-avatar" style="background:rgba(16,185,129,0.15);color:var(--green);">이</div>
+            <span class="review-name">이수진</span>
+            <span class="review-date">2주 전</span>
+          </div>
+          <div class="review-stars">★★★★★</div>
+          <p class="review-text">Claude 버전으로 했는데 설명이 너무 자세하게 나와서 오히려 더 좋았어요. AI가 어떻게 처리하는지 과정도 알려줘서 다음에 혼자서도 할 수 있을 것 같아요.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- BUY PANEL -->
+    <div class="buy-panel">
+      <div class="buy-price-row">
+        <span class="buy-price">3,900원</span>
+        <span class="buy-price-orig">7,000원</span>
+        <span class="buy-badge">44% 할인</span>
+      </div>
+
+      <div class="buy-includes">
+        <div class="buy-includes-title">포함 내용</div>
+        <div class="buy-include-item">ChatGPT / Claude / Midjourney 3가지 버전</div>
+        <div class="buy-include-item">사용 방법 단계별 가이드</div>
+        <div class="buy-include-item">결과물이 안 나올 때 팁 포함</div>
+        <div class="buy-include-item">업데이트 시 무료 재다운로드</div>
+      </div>
+
+      <div class="buy-ai-select">
+        <label>어떤 AI로 사용하세요?</label>
+        <div class="ai-select-grid">
+          <div class="ai-opt selected" onclick="selectAI(this)">ChatGPT</div>
+          <div class="ai-opt" onclick="selectAI(this)">Claude</div>
+          <div class="ai-opt" onclick="selectAI(this)">Midjourney</div>
+          <div class="ai-opt" onclick="selectAI(this)">모두 필요해요</div>
+        </div>
+      </div>
+
+      <button class="buy-btn" onclick="goPurchase()">3,900원에 구매하기</button>
+      <button class="buy-free-btn">미리보기 (일부 공개)</button>
+
+      <div class="seller-card">
+        <div class="seller-avatar">🎨</div>
+        <div>
+          <div style="display:flex;align-items:center;gap:6px;margin-bottom:3px;">
+            <span class="seller-name">AIPromptKR</span>
+            <span class="seller-badge">✓ 인증</span>
+          </div>
+          <div class="seller-stat">프롬프트 38개 · 판매 12,000회+</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     SCREEN 3: 결제
+═══════════════════════════════════════════ -->
+<div class="screen" id="screen-purchase">
+  <div class="purchase-wrap">
+    <h2>결제하기</h2>
+    <p class="step-sub">안전하게 결제 후 바로 사용할 수 있어요</p>
+
+    <div class="step-indicator">
+      <div class="step-item">
+        <div class="step-circle done">✓</div>
+        <span class="step-label">선택</span>
+      </div>
+      <div class="step-line"></div>
+      <div class="step-item">
+        <div class="step-circle current">2</div>
+        <span class="step-label current">결제</span>
+      </div>
+      <div class="step-line"></div>
+      <div class="step-item">
+        <div class="step-circle upcoming">3</div>
+        <span class="step-label">완료</span>
+      </div>
+    </div>
+
+    <div class="order-summary">
+      <div class="order-thumb">🌸</div>
+      <div class="order-info">
+        <div class="order-title">지브리 감성 인물 사진 변환 프롬프트</div>
+        <div class="order-ai">ChatGPT / Claude / Midjourney 버전 포함</div>
+      </div>
+      <div class="order-price">3,900원</div>
+    </div>
+
+    <!-- 계정 -->
+    <div class="form-section">
+      <div class="form-section-title">계정 정보</div>
+      <div class="form-row full">
+        <div class="form-group">
+          <label>이메일</label>
+          <input type="email" placeholder="example@email.com">
+        </div>
+      </div>
+    </div>
+
+    <!-- 결제 수단 -->
+    <div class="form-section">
+      <div class="form-section-title">결제 수단</div>
+      <div class="card-input-row">
+        <span style="font-size:18px;">💳</span>
+        <input type="text" placeholder="카드 번호 1234 5678 9012 3456">
+        <div class="card-icons">
+          <div class="card-icon-badge">VISA</div>
+          <div class="card-icon-badge">KB</div>
+          <div class="card-icon-badge">신한</div>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>유효기간</label>
+          <input type="text" placeholder="MM / YY">
+        </div>
+        <div class="form-group">
+          <label>CVC</label>
+          <input type="text" placeholder="123">
+        </div>
+      </div>
+    </div>
+
+    <!-- 금액 -->
+    <div class="price-breakdown">
+      <div class="price-row"><span>상품 금액</span><span>7,000원</span></div>
+      <div class="price-row"><span>할인 (44%)</span><span style="color:var(--green);">-3,100원</span></div>
+      <div class="price-row"><span>부가세 포함</span><span>0원</span></div>
+      <div class="price-row total"><span>최종 결제 금액</span><span class="val">3,900원</span></div>
+    </div>
+
+    <button class="pay-btn" onclick="goSuccess()">3,900원 결제하기</button>
+    <p class="pay-note">결제 후 즉시 프롬프트 전문을 확인할 수 있어요.<br>토스페이먼츠로 안전하게 처리됩니다. 환불은 구매 후 7일 이내 가능.</p>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     SCREEN 4: 구매 완료
+═══════════════════════════════════════════ -->
+<div class="screen" id="screen-success">
+  <div class="success-wrap">
+    <div class="success-icon">✓</div>
+    <h2>구매 완료!</h2>
+    <p>결제가 완료됐어요. 프롬프트를 복사해서<br>바로 AI에 붙여넣으세요.</p>
+
+    <div class="success-prompt-box">
+      <div class="lbl">지금 바로 사용하세요 — ChatGPT 버전</div>
+      <div class="txt">아래 사진 속 인물을 지브리 스튜디오 애니메이션 스타일로 바꿔줘. 인물의 표정과 분위기는 그대로 살리되, 피부와 눈은 지브리 특유의 맑고 따뜻한 색감으로 표현해줘. 배경은 일본 시골 마을 풍경이나 꽃밭으로 자연스럽게 합성해주고, 전체적으로 여름 오후의 따뜻한 햇빛이 느껴지게 해줘.</div>
+    </div>
+
+    <div class="success-actions">
+      <button class="success-btn-primary" onclick="copyPrompt(); showToast('프롬프트 복사 완료!')">프롬프트 복사하기</button>
+      <button class="success-btn-secondary" onclick="goHome()">더 탐색하기</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     SCREEN 5: 트렌드 베스트
+═══════════════════════════════════════════ -->
+<div class="screen" id="screen-purchase">
+  <div class="purchase-wrap">
+    <h2>결제하기</h2>
+    <p class="step-sub">안전하게 결제 후 바로 사용할 수 있어요</p>
+
+    <div class="step-indicator">
+      <div class="step-item">
+        <div class="step-circle done">✓</div>
+        <span class="step-label">선택</span>
+      </div>
+      <div class="step-line"></div>
+      <div class="step-item">
+        <div class="step-circle current">2</div>
+        <span class="step-label current">결제</span>
+      </div>
+      <div class="step-line"></div>
+      <div class="step-item">
+        <div class="step-circle upcoming">3</div>
+        <span class="step-label">완료</span>
+      </div>
+    </div>
+
+    <div class="order-summary">
+      <div class="order-thumb">🌸</div>
+      <div class="order-info">
+        <div class="order-title">지브리 감성 인물 사진 변환 프롬프트</div>
+        <div class="order-ai">ChatGPT / Claude / Midjourney 버전 포함</div>
+      </div>
+      <div class="order-price">3,900원</div>
+    </div>
+
+    <!-- 계정 -->
+    <div class="form-section">
+      <div class="form-section-title">계정 정보</div>
+      <div class="form-row full">
+        <div class="form-group">
+          <label>이메일</label>
+          <input type="email" placeholder="example@email.com">
+        </div>
+      </div>
+    </div>
+
+    <!-- 결제 수단 -->
+    <div class="form-section">
+      <div class="form-section-title">결제 수단</div>
+      <div class="card-input-row">
+        <span style="font-size:18px;">💳</span>
+        <input type="text" placeholder="카드 번호 1234 5678 9012 3456">
+        <div class="card-icons">
+          <div class="card-icon-badge">VISA</div>
+          <div class="card-icon-badge">KB</div>
+          <div class="card-icon-badge">신한</div>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>유효기간</label>
+          <input type="text" placeholder="MM / YY">
+        </div>
+        <div class="form-group">
+          <label>CVC</label>
+          <input type="text" placeholder="123">
+        </div>
+      </div>
+    </div>
+
+    <!-- 금액 -->
+    <div class="price-breakdown">
+      <div class="price-row"><span>상품 금액</span><span>7,000원</span></div>
+      <div class="price-row"><span>할인 (44%)</span><span style="color:var(--green);">-3,100원</span></div>
+      <div class="price-row"><span>부가세 포함</span><span>0원</span></div>
+      <div class="price-row total"><span>최종 결제 금액</span><span class="val">3,900원</span></div>
+    </div>
+
+    <button class="pay-btn" onclick="goSuccess()">3,900원 결제하기</button>
+    <p class="pay-note">결제 후 즉시 프롬프트 전문을 확인할 수 있어요.<br>토스페이먼츠로 안전하게 처리됩니다. 환불은 구매 후 7일 이내 가능.</p>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     SCREEN 4: 구매 완료
+═══════════════════════════════════════════ -->
+<div class="screen" id="screen-success">
+  <div class="success-wrap">
+    <div class="success-icon">✓</div>
+    <h2>구매 완료!</h2>
+    <p>결제가 완료됐어요. 프롬프트를 복사해서<br>바로 AI에 붙여넣으세요.</p>
+
+    <div class="success-prompt-box">
+      <div class="lbl">지금 바로 사용하세요 — ChatGPT 버전</div>
+      <div class="txt">아래 사진 속 인물을 지브리 스튜디오 애니메이션 스타일로 바꿔줘. 인물의 표정과 분위기는 그대로 살리되, 피부와 눈은 지브리 특유의 맑고 따뜻한 색감으로 표현해줘. 배경은 일본 시골 마을 풍경이나 꽃밭으로 자연스럽게 합성해주고, 전체적으로 여름 오후의 따뜻한 햇빛이 느껴지게 해줘.</div>
+    </div>
+
+    <div class="success-actions">
+      <button class="success-btn-primary" onclick="copyPrompt(); showToast('프롬프트 복사 완료!')">프롬프트 복사하기</button>
+      <button class="success-btn-secondary" onclick="goHome()">더 탐색하기</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     SCREEN 5: 트렌드 베스트
+═══════════════════════════════════════════ -->
+<div class="screen" id="screen-trend">
+
+  <!-- 히어로 -->
+  <div class="trend-hero">
+    <div class="trend-hero-eyebrow">🔥 매주 월요일 업데이트</div>
+    <h1>이번 주 <em>베스트</em> 프롬프트</h1>
+    <p>가장 많이 쓰이고 가장 많이 공유된 프롬프트만 골랐어요</p>
+    <div class="period-tabs">
+      <button class="period-tab active" onclick="switchPeriod(this,'weekly')">주간 베스트</button>
+      <button class="period-tab" onclick="switchPeriod(this,'monthly')">월간 베스트</button>
+    </div>
+  </div>
+
+  <div class="trend-wrap">
+
+    <!-- TOP 3 포디움 -->
+    <div class="trend-section-title" id="trend-period-label">이번 주 TOP 3</div>
+    <div class="podium">
+
+      <div class="podium-card rank1" onclick="goDetail()">
+        <div class="podium-img">
+          <div class="podium-rank">#1</div>
+          🌸
+          <div class="podium-trend-badge badge-hot">🔥 3주 연속</div>
+        </div>
+        <div class="podium-body">
+          <div class="podium-ai-row">
+            <span class="ai-badge midjourney">Midjourney</span>
+            <span class="diff-badge diff-easy">쉬움</span>
+          </div>
+          <div class="podium-title">지브리 감성 인물 사진 변환</div>
+          <div class="podium-stats">
+            <span>★ 4.9</span>
+            <span>사용 8,214회</span>
+            <span>♡ 3,102</span>
+          </div>
+          <div class="podium-price free">무료</div>
+        </div>
+      </div>
+
+      <div class="podium-card rank2" onclick="goDetail()">
+        <div class="podium-img">
+          <div class="podium-rank">#2</div>
+          📣
+          <div class="podium-trend-badge badge-up">▲ 5위 상승</div>
+        </div>
+        <div class="podium-body">
+          <div class="podium-ai-row">
+            <span class="ai-badge chatgpt">ChatGPT</span>
+            <span class="diff-badge diff-easy">쉬움</span>
+          </div>
+          <div class="podium-title">광고 소재 100개 한 번에 뽑기</div>
+          <div class="podium-stats">
+            <span>★ 4.9</span>
+            <span>사용 11,200회</span>
+            <span>♡ 2,871</span>
+          </div>
+          <div class="podium-price paid">9,900원</div>
+        </div>
+      </div>
+
+      <div class="podium-card rank3" onclick="goDetail()">
+        <div class="podium-img">
+          <div class="podium-rank">#3</div>
+          🛍️
+          <div class="podium-trend-badge badge-new">✦ 신규 진입</div>
+        </div>
+        <div class="podium-body">
+          <div class="podium-ai-row">
+            <span class="ai-badge claude">Claude</span>
+            <span class="diff-badge diff-mid">보통</span>
+          </div>
+          <div class="podium-title">쇼핑몰 상세페이지 문구 자동 생성</div>
+          <div class="podium-stats">
+            <span>★ 4.8</span>
+            <span>사용 5,721회</span>
+            <span>♡ 1,940</span>
+          </div>
+          <div class="podium-price paid">4,900원</div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- 4위~10위 리스트 -->
+    <div class="trend-section-title">4위 — 10위</div>
+    <div class="trend-list" style="margin-bottom:3rem;">
+
+      <div class="tlist-item" onclick="goDetail()">
+        <div class="tlist-rank">4</div>
+        <div class="tlist-emoji">🎬</div>
+        <div class="tlist-info">
+          <div class="tlist-title">숏폼 영상 생성 — 릴스·쇼츠 최적화</div>
+          <div class="tlist-meta"><span>Runway</span><span>★ 4.7</span><span>사용 4,330회</span></div>
+        </div>
+        <div class="tlist-right">
+          <span class="tlist-change change-up">▲ 2</span>
+          <span class="tlist-price free">무료</span>
+        </div>
+      </div>
+
+      <div class="tlist-item" onclick="goDetail()">
+        <div class="tlist-rank">5</div>
+        <div class="tlist-emoji">🏟️</div>
+        <div class="tlist-info">
+          <div class="tlist-title">야구장에서 찍은 것 같은 내 사진</div>
+          <div class="tlist-meta"><span>ChatGPT</span><span>★ 4.7</span><span>사용 3,100회</span></div>
+        </div>
+        <div class="tlist-right">
+          <span class="tlist-change change-same">— 유지</span>
+          <span class="tlist-price free">무료</span>
+        </div>
+      </div>
+
+      <div class="tlist-item" onclick="goDetail()">
+        <div class="tlist-rank">6</div>
+        <div class="tlist-emoji">🧠</div>
+        <div class="tlist-info">
+          <div class="tlist-title">ChatGPT 역할 부여로 전문가처럼 답변받기</div>
+          <div class="tlist-meta"><span>ChatGPT</span><span>★ 4.8</span><span>사용 2,980회</span></div>
+        </div>
+        <div class="tlist-right">
+          <span class="tlist-change change-new">✦ 신규</span>
+          <span class="tlist-price paid">2,900원</span>
+        </div>
+      </div>
+
+      <div class="tlist-item" onclick="goDetail()">
+        <div class="tlist-rank">7</div>
+        <div class="tlist-emoji">✍️</div>
+        <div class="tlist-info">
+          <div class="tlist-title">인스타 감성 SNS 캡션 자동 생성</div>
+          <div class="tlist-meta"><span>Claude</span><span>★ 4.5</span><span>사용 4,800회</span></div>
+        </div>
+        <div class="tlist-right">
+          <span class="tlist-change change-up">▲ 1</span>
+          <span class="tlist-price free">무료</span>
+        </div>
+      </div>
+
+      <div class="tlist-item" onclick="goDetail()">
+        <div class="tlist-rank">8</div>
+        <div class="tlist-emoji">🎨</div>
+        <div class="tlist-info">
+          <div class="tlist-title">브랜드 로고 컨셉 무드보드 이미지</div>
+          <div class="tlist-meta"><span>Midjourney</span><span>★ 4.7</span><span>사용 1,920회</span></div>
+        </div>
+        <div class="tlist-right">
+          <span class="tlist-change change-up">▲ 3</span>
+          <span class="tlist-price paid">6,900원</span>
+        </div>
+      </div>
+
+      <div class="tlist-item" onclick="goDetail()">
+        <div class="tlist-rank">9</div>
+        <div class="tlist-emoji">🌆</div>
+        <div class="tlist-info">
+          <div class="tlist-title">영화 포스터 느낌 나는 내 사진</div>
+          <div class="tlist-meta"><span>Midjourney</span><span>★ 4.8</span><span>사용 6,100회</span></div>
+        </div>
+        <div class="tlist-right">
+          <span class="tlist-change change-same">— 유지</span>
+          <span class="tlist-price paid">3,900원</span>
+        </div>
+      </div>
+
+      <div class="tlist-item" onclick="goDetail()">
+        <div class="tlist-rank">10</div>
+        <div class="tlist-emoji">💼</div>
+        <div class="tlist-info">
+          <div class="tlist-title">업무 이메일 상황별 빠르게 작성</div>
+          <div class="tlist-meta"><span>ChatGPT</span><span>★ 4.4</span><span>사용 7,300회</span></div>
+        </div>
+        <div class="tlist-right">
+          <span class="tlist-change change-up">▲ 2</span>
+          <span class="tlist-price free">무료</span>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- 카테고리별 1위 -->
+    <div class="trend-section-title">카테고리별 이번 주 1위</div>
+    <div class="cat-best-grid">
+
+      <div class="cat-best-card" onclick="goDetail()">
+        <div class="cat-best-header">
+          <span class="cat-best-icon">🎨</span>
+          <span class="cat-best-label">이미지 생성</span>
+        </div>
+        <div class="cat-best-title">지브리 감성 인물 사진 변환</div>
+        <div class="cat-best-stat">★ 4.9 · 사용 8,214회</div>
+      </div>
+
+      <div class="cat-best-card" onclick="goDetail()">
+        <div class="cat-best-header">
+          <span class="cat-best-icon">🧠</span>
+          <span class="cat-best-label">AI 더 똑똑하게</span>
+        </div>
+        <div class="cat-best-title">ChatGPT 역할 부여로 전문가 답변받기</div>
+        <div class="cat-best-stat">★ 4.8 · 사용 2,980회</div>
+      </div>
+
+      <div class="cat-best-card" onclick="goDetail()">
+        <div class="cat-best-header">
+          <span class="cat-best-icon">✍️</span>
+          <span class="cat-best-label">글쓰기·콘텐츠</span>
+        </div>
+        <div class="cat-best-title">쇼핑몰 상세페이지 문구 자동 생성</div>
+        <div class="cat-best-stat">★ 4.8 · 사용 5,721회</div>
+      </div>
+
+      <div class="cat-best-card" onclick="goDetail()">
+        <div class="cat-best-header">
+          <span class="cat-best-icon">⚡</span>
+          <span class="cat-best-label">업무 자동화</span>
+        </div>
+        <div class="cat-best-title">광고 소재 100개 한 번에 뽑기</div>
+        <div class="cat-best-stat">★ 4.9 · 사용 11,200회</div>
+      </div>
+
+      <div class="cat-best-card" onclick="goDetail()">
+        <div class="cat-best-header">
+          <span class="cat-best-icon">🎬</span>
+          <span class="cat-best-label">영상·음악</span>
+        </div>
+        <div class="cat-best-title">숏폼 영상 생성 — 릴스·쇼츠 최적화</div>
+        <div class="cat-best-stat">★ 4.7 · 사용 4,330회</div>
+      </div>
+
+      <div class="cat-best-card" onclick="goDetail()">
+        <div class="cat-best-header">
+          <span class="cat-best-icon">💻</span>
+          <span class="cat-best-label">개발·디자인</span>
+        </div>
+        <div class="cat-best-title">UI · 랜딩페이지 와이어프레임 설계</div>
+        <div class="cat-best-stat">★ 4.6 · 사용 1,440회</div>
+      </div>
+
+    </div>
+
+  </div>
+</div>
+<!-- ═══════════════════════════════════════════
+     SCREEN 6: 검색 결과
+═══════════════════════════════════════════ -->
+<div class="screen" id="screen-search">
+  <div class="search-result-header">
+    <div class="search-result-query" id="search-query-label">"<em id="search-query-text"></em>" 검색 결과</div>
+    <div class="search-result-meta" id="search-result-meta">0개의 프롬프트</div>
+
+    <div class="search-filter-bar">
+      <span style="font-size:12px;color:var(--subtle);font-family:var(--display);white-space:nowrap;">필터</span>
+      <div class="sfilter on" onclick="toggleSfilter(this,'all')">전체</div>
+      <div class="sfilter" onclick="toggleSfilter(this,'이미지')">🎨 이미지 생성</div>
+      <div class="sfilter" onclick="toggleSfilter(this,'글쓰기')">✍️ 글쓰기</div>
+      <div class="sfilter" onclick="toggleSfilter(this,'업무')">⚡ 업무 자동화</div>
+      <div class="sfilter" onclick="toggleSfilter(this,'영상')">🎬 영상·음악</div>
+      <div class="sfilter-sep"></div>
+      <div class="sfilter" onclick="toggleSfilter(this,'free')">무료만</div>
+      <div class="sfilter" onclick="toggleSfilter(this,'chatgpt')">ChatGPT</div>
+      <div class="sfilter" onclick="toggleSfilter(this,'claude')">Claude</div>
+      <div class="sfilter" onclick="toggleSfilter(this,'midjourney')">Midjourney</div>
+    </div>
+  </div>
+
+  <div style="max-width:1100px;margin:0 auto;padding:0 2.5rem 4rem;">
+    <div class="masonry" id="search-masonry"></div>
+    <div id="search-no-result" style="display:none;" class="no-result">
+      <div class="no-result-icon">🔍</div>
+      <h3 id="no-result-title">검색 결과가 없어요</h3>
+      <p>다른 키워드로 검색하거나 아래 인기 태그를 눌러보세요</p>
+      <div class="no-result-tags">
+        <span class="no-result-tag" onclick="doSearch('지브리')">지브리 스타일</span>
+        <span class="no-result-tag" onclick="doSearch('광고')">광고 문구</span>
+        <span class="no-result-tag" onclick="doSearch('사진')">사진 변환</span>
+        <span class="no-result-tag" onclick="doSearch('SNS')">SNS 게시글</span>
+        <span class="no-result-tag" onclick="doSearch('이메일')">이메일 작성</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     SCREEN 7: 마이페이지
+═══════════════════════════════════════════ -->
+<div class="screen" id="screen-mypage">
+  <div style="max-width:900px;margin:0 auto;padding:2.5rem;">
+
+    <!-- 프로필 헤더 -->
+    <div style="display:flex;align-items:center;gap:1.5rem;margin-bottom:2.5rem;padding-bottom:2rem;border-bottom:1px solid var(--border);">
+      <div style="width:72px;height:72px;border-radius:50%;background:var(--accent-dim);border:2px solid var(--accent-border);display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:700;font-family:var(--display);color:var(--accent);flex-shrink:0;" id="my-avatar-big">?</div>
+      <div>
+        <div style="font-family:var(--display);font-size:22px;font-weight:700;margin-bottom:4px;" id="my-name-big">로그인이 필요해요</div>
+        <div style="font-size:14px;color:var(--muted);" id="my-email-label"></div>
+        <div style="display:flex;gap:1.5rem;margin-top:.75rem;">
+          <div style="text-align:center;">
+            <div style="font-family:var(--display);font-size:18px;font-weight:700;" id="my-bought-count">0</div>
+            <div style="font-size:12px;color:var(--subtle);">구매한 프롬프트</div>
+          </div>
+          <div style="text-align:center;">
+            <div style="font-family:var(--display);font-size:18px;font-weight:700;" id="my-saved-count">0</div>
+            <div style="font-size:12px;color:var(--subtle);">저장한 프롬프트</div>
+          </div>
+        </div>
+      </div>
+      <button onclick="navigate('register')" style="margin-left:auto;background:var(--accent);border:none;border-radius:10px;color:#fff;font-family:var(--display);font-size:14px;font-weight:600;padding:10px 20px;cursor:pointer;">+ 프롬프트 등록</button>
+    </div>
+
+    <!-- 탭 -->
+    <div style="display:flex;gap:0;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:3px;margin-bottom:1.75rem;width:fit-content;">
+      <button class="period-tab active" id="my-tab-bought" onclick="switchMyTab('bought')">구매한 프롬프트</button>
+      <button class="period-tab" id="my-tab-saved" onclick="switchMyTab('saved')">저장한 프롬프트</button>
+      <button class="period-tab" id="my-tab-selling" onclick="switchMyTab('selling')">판매 중</button>
+    </div>
+
+    <!-- 구매한 프롬프트 -->
+    <div id="my-view-bought">
+      <div id="my-bought-empty" style="text-align:center;padding:4rem 2rem;">
+        <div style="font-size:3rem;margin-bottom:1rem;">🛍️</div>
+        <div style="font-family:var(--display);font-size:18px;font-weight:600;margin-bottom:.5rem;">아직 구매한 프롬프트가 없어요</div>
+        <div style="font-size:14px;color:var(--muted);margin-bottom:1.5rem;">마음에 드는 프롬프트를 구매하면 여기에 보관돼요</div>
+        <button onclick="goHome()" style="background:var(--accent);border:none;border-radius:10px;color:#fff;font-family:var(--display);font-size:14px;font-weight:600;padding:11px 24px;cursor:pointer;">프롬프트 탐색하기</button>
+      </div>
+      <div class="masonry" id="my-bought-grid" style="display:none;"></div>
+    </div>
+
+    <!-- 저장한 프롬프트 -->
+    <div id="my-view-saved" style="display:none;">
+      <div style="text-align:center;padding:4rem 2rem;">
+        <div style="font-size:3rem;margin-bottom:1rem;">♡</div>
+        <div style="font-family:var(--display);font-size:18px;font-weight:600;margin-bottom:.5rem;">저장한 프롬프트가 없어요</div>
+        <div style="font-size:14px;color:var(--muted);margin-bottom:1.5rem;">프롬프트 카드의 ♡를 누르면 여기에 저장돼요</div>
+        <button onclick="goHome()" style="background:var(--accent);border:none;border-radius:10px;color:#fff;font-family:var(--display);font-size:14px;font-weight:600;padding:11px 24px;cursor:pointer;">프롬프트 탐색하기</button>
+      </div>
+    </div>
+
+    <!-- 판매 중 -->
+    <div id="my-view-selling" style="display:none;">
+      <div style="text-align:center;padding:4rem 2rem;">
+        <div style="font-size:3rem;margin-bottom:1rem;">🎨</div>
+        <div style="font-family:var(--display);font-size:18px;font-weight:600;margin-bottom:.5rem;">아직 등록한 프롬프트가 없어요</div>
+        <div style="font-size:14px;color:var(--muted);margin-bottom:1.5rem;">내가 만든 프롬프트를 올리고 수익을 만들어보세요</div>
+        <button onclick="navigate('register')" style="background:var(--accent);border:none;border-radius:10px;color:#fff;font-family:var(--display);font-size:14px;font-weight:600;padding:11px 24px;cursor:pointer;">첫 프롬프트 등록하기</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     SCREEN 8: 프롬프트 등록
+═══════════════════════════════════════════ -->
+<div class="screen" id="screen-register">
+  <div style="max-width:680px;margin:0 auto;padding:2.5rem;">
+    <button class="back-btn" onclick="history.back()">← 뒤로가기</button>
+    <div style="font-family:var(--display);font-size:24px;font-weight:700;margin-bottom:.5rem;">프롬프트 등록하기</div>
+    <div style="font-size:14px;color:var(--muted);margin-bottom:2rem;">검증된 프롬프트를 공유하고 수익을 만들어보세요</div>
+
+    <!-- 기본 정보 -->
+    <div style="margin-bottom:1.75rem;">
+      <div style="font-size:12px;color:var(--subtle);font-family:var(--display);letter-spacing:.08em;text-transform:uppercase;margin-bottom:.75rem;">기본 정보</div>
+
+      <div class="modal-input-group">
+        <label>프롬프트 제목</label>
+        <input class="modal-input" type="text" placeholder="예) 지브리 감성 인물 사진 변환" id="reg-title">
+      </div>
+      <div class="modal-input-group">
+        <label>한 줄 설명</label>
+        <input class="modal-input" type="text" placeholder="어떤 결과물이 나오는지 간단히 설명해줘요" id="reg-desc">
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
+        <div class="modal-input-group" style="margin:0">
+          <label>카테고리</label>
+          <select class="modal-input" id="reg-cat">
+            <option>이미지</option>
+            <option>글쓰기</option>
+            <option>마케팅</option>
+            <option>업무</option>
+            <option>영상</option>
+          </select>
+        </div>
+        <div class="modal-input-group" style="margin:0">
+          <label>난이도</label>
+          <select class="modal-input" id="reg-diff">
+            <option>쉬움</option>
+            <option>보통</option>
+            <option>어려움</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="modal-input-group">
+        <label>사용 AI</label>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:4px;">
+          <div class="ai-opt selected" onclick="toggleRegAI(this)">ChatGPT</div>
+          <div class="ai-opt" onclick="toggleRegAI(this)">Claude</div>
+          <div class="ai-opt" onclick="toggleRegAI(this)">Midjourney</div>
+          <div class="ai-opt" onclick="toggleRegAI(this)">Gemini</div>
+          <div class="ai-opt" onclick="toggleRegAI(this)">Runway</div>
+          <div class="ai-opt" onclick="toggleRegAI(this)">Suno</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 프롬프트 내용 -->
+    <div style="margin-bottom:1.75rem;">
+      <div style="font-size:12px;color:var(--subtle);font-family:var(--display);letter-spacing:.08em;text-transform:uppercase;margin-bottom:.75rem;">프롬프트 내용</div>
+      <div class="modal-input-group">
+        <label>프롬프트 전문 <span style="color:var(--point);">*</span></label>
+        <textarea class="modal-input" id="reg-prompt" rows="6" placeholder="AI에게 입력하는 실제 프롬프트를 입력해줘요. [여기 입력] 같은 변수 표시를 쓰면 사용자가 쉽게 활용할 수 있어요." style="resize:vertical;line-height:1.7;"></textarea>
+      </div>
+      <div class="modal-input-group">
+        <label>사용 팁 (선택)</label>
+        <textarea class="modal-input" id="reg-tip" rows="3" placeholder="더 좋은 결과를 얻는 방법, 주의사항 등을 알려줘요" style="resize:vertical;line-height:1.7;"></textarea>
+      </div>
+    </div>
+
+    <!-- 결과물 이미지 -->
+    <div style="margin-bottom:1.75rem;">
+      <div style="font-size:12px;color:var(--subtle);font-family:var(--display);letter-spacing:.08em;text-transform:uppercase;margin-bottom:.75rem;">결과물 이미지</div>
+      <div id="reg-upload-area" style="border:2px dashed var(--border2);border-radius:12px;padding:2.5rem;text-align:center;cursor:pointer;transition:border-color .2s;" onclick="document.getElementById('reg-img-input').click()" ondragover="event.preventDefault();this.style.borderColor='var(--accent)'" ondrop="handleImgDrop(event)">
+        <div style="font-size:2.5rem;margin-bottom:.75rem;">🖼️</div>
+        <div style="font-size:14px;font-weight:500;margin-bottom:.4rem;">이미지를 드래그하거나 클릭해서 업로드</div>
+        <div style="font-size:12px;color:var(--subtle);">PNG, JPG · 최대 5MB · 최대 4장</div>
+        <input type="file" id="reg-img-input" accept="image/*" multiple style="display:none;" onchange="handleImgSelect(this)">
+      </div>
+      <div id="reg-img-preview" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;"></div>
+    </div>
+
+    <!-- 가격 설정 -->
+    <div style="margin-bottom:2rem;">
+      <div style="font-size:12px;color:var(--subtle);font-family:var(--display);letter-spacing:.08em;text-transform:uppercase;margin-bottom:.75rem;">가격 설정</div>
+      <div style="display:flex;gap:10px;margin-bottom:12px;">
+        <div class="ai-opt selected" id="price-free" onclick="setPriceType('free')" style="flex:1;text-align:center;padding:12px;">무료 공개</div>
+        <div class="ai-opt" id="price-paid" onclick="setPriceType('paid')" style="flex:1;text-align:center;padding:12px;">유료 판매</div>
+      </div>
+      <div id="price-input-wrap" style="display:none;">
+        <div class="modal-input-group">
+          <label>판매 가격 (원)</label>
+          <input class="modal-input" type="number" id="reg-price" placeholder="예) 3900" min="1000" step="100">
+        </div>
+        <div style="font-size:12px;color:var(--subtle);margin-top:4px;">플랫폼 수수료 20% 제외 후 정산돼요</div>
+      </div>
+    </div>
+
+    <button class="modal-submit" onclick="submitPrompt()" style="font-size:16px;padding:15px;">등록 신청하기</button>
+    <div style="font-size:12px;color:var(--subtle);text-align:center;margin-top:.75rem;line-height:1.7;">등록 후 에디터 검토를 거쳐 24시간 내 피드에 노출돼요</div>
+  </div>
+</div>
+
+<div class="toast" id="toast">
+  <div class="toast-dot"></div>
+  <span id="toast-msg">복사됐어요!</span>
+</div>
+
+<script>
+const cards = [
+  { emoji:'🌸', h:'h-tall',  ai:'midjourney', aiLabel:'Midjourney', diff:'easy', cat:'이미지', title:'지브리 감성 인물 사진 변환',      desc:'내 사진을 지브리 스타일로 바꿔주는 프롬프트. 색감과 배경까지 완성.',      stars:'4.9', uses:'8.2k', price:'3,900원', paid:true,
+    prompts:{'ChatGPT 버전':'아래 사진 속 인물을 지브리 스튜디오 애니메이션 스타일로 바꿔줘. 인물의 표정과 분위기는 그대로 살리되, 피부와 눈은 지브리 특유의 맑고 따뜻한 색감으로 표현해줘. 배경은 일본 시골 마을 풍경이나 꽃밭으로 자연스럽게 합성해주고, 전체적으로 여름 오후의 따뜻한 햇빛이 느껴지게 해줘.','Claude 버전':'첨부한 사진 속 인물을 지브리 스튜디오 스타일 일러스트레이션으로 변환해줘. 미야자키 하야오 감독 특유의 따뜻하고 섬세한 표현 방식으로, 인물의 눈과 피부를 애니메이션 특유의 맑은 질감으로 바꿔줘. 배경은 하늘과 자연이 어우러진 평화로운 농촌 풍경으로 구성해줘.','Midjourney 버전':'/imagine portrait of a person, Studio Ghibli anime style, Hayao Miyazaki art direction, soft warm lighting, summer countryside background, delicate line art, watercolor texture, gentle color palette, 4k --ar 3:4 --style raw --v 6'}
+  },
+  { emoji:'🏟️', h:'h-med',  ai:'chatgpt', aiLabel:'ChatGPT', diff:'easy', cat:'이미지', title:'야구장에서 찍은 것 같은 사진',      desc:'내 사진을 야구장 관중석 배경으로 자연스럽게 합성해줘요.',            stars:'4.7', uses:'3.1k', price:'무료', paid:false,
+    prompts:{'ChatGPT 버전':'내 사진 속 인물을 야구장 관중석에 앉아 있는 것처럼 자연스럽게 합성해줘. 낮 경기라 햇빛이 살짝 비치는 느낌이고, 뒤에 관중들이 흐릿하게 보이면 좋겠어. 유니폼은 입지 않아도 되고 캐주얼한 옷 그대로도 OK.','Claude 버전':'첨부 사진의 인물을 야구장 외야 관중석 배경에 합성해줘. 자연광이 들어오는 낮 시간대 경기 분위기로, 배경은 초점이 살짝 흐리게 처리해서 인물이 도드라지게 해줘.','Midjourney 버전':'/imagine person sitting in baseball stadium bleachers, daytime game, natural sunlight, crowd in background bokeh, casual clothes, realistic photo style --ar 4:5 --v 6'}
+  },
+  { emoji:'🛍️', h:'h-short', ai:'claude', aiLabel:'Claude', diff:'mid', cat:'글쓰기', title:'쇼핑몰 상세페이지 문구 자동 생성', desc:'상품명과 특징만 입력하면 설득력 있는 상세페이지 카피를 뽑아줘요.',     stars:'4.8', uses:'5.7k', price:'4,900원', paid:true,
+    prompts:{'ChatGPT 버전':'너는 지금부터 쇼핑몰 카피라이터야. 내가 상품 정보를 알려주면 구매를 유도하는 상세페이지 문구를 작성해줘. 형식: ① 핵심 캐치프라이즈 1줄 ② 상품 소개 3~4줄 ③ 주요 특징 3가지 (불릿포인트) ④ 구매 유도 마무리 문장. 상품명: [여기 입력], 특징: [여기 입력]','Claude 버전':'쇼핑몰 상세페이지 카피를 작성해줘. 고객이 구매 버튼을 누르고 싶어지도록 감성적이면서도 신뢰감 있는 문체로 써줘. 상품: [여기 입력], 타겟 고객: [여기 입력], 핵심 장점: [여기 입력]','Midjourney 버전':'(이미지 생성용) product photo of [상품명], clean white background, professional e-commerce style, soft shadow, high quality --ar 1:1 --v 6'}
+  },
+  { emoji:'📣', h:'h-med', ai:'chatgpt', aiLabel:'ChatGPT', diff:'easy', cat:'마케팅', title:'광고 소재 100개 한 번에 뽑기',      desc:'타겟과 상품 정보만 알려주면 다양한 광고 문구를 대량 생성해줘요.',      stars:'4.9', uses:'11k',  price:'9,900원', paid:true,
+    prompts:{'ChatGPT 버전':'다음 상품의 SNS 광고 문구를 100개 만들어줘. 각 문구는 2줄 이내, 이모지 포함. 문구 유형: 혜택 강조형 30개, 감성형 30개, 질문형 20개, 긴급성 강조형 20개. 상품: [여기 입력], 타겟: [여기 입력]','Claude 버전':'광고 카피 100개를 생성해줘. 각 카피는 페이스북/인스타그램 광고에 바로 쓸 수 있도록 짧고 임팩트 있게. 상품 정보: [여기 입력]','Midjourney 버전':'(썸네일용) bold advertisement poster for [상품], vibrant colors, modern design, Korean style marketing visual --ar 4:5 --v 6'}
+  },
+  { emoji:'🎬', h:'h-tall', ai:'midjourney', aiLabel:'Midjourney', diff:'mid', cat:'영상', title:'유튜브 썸네일 임팩트 있게 만들기', desc:'클릭률 높은 썸네일을 AI로 제작하는 프롬프트 모음.',                     stars:'4.6', uses:'2.4k', price:'무료', paid:false,
+    prompts:{'ChatGPT 버전':'유튜브 썸네일에 들어갈 텍스트와 구도를 기획해줘. 클릭률을 높이는 썸네일의 3요소(강렬한 표정/텍스트/색상 대비)를 반영해서 시각화 방향을 알려줘. 영상 주제: [여기 입력]','Claude 버전':'유튜브 썸네일 기획안을 3가지 버전으로 만들어줘. 각 버전마다 배경색, 텍스트, 인물 표정, 강조 포인트를 설명해줘. 영상 제목: [여기 입력]','Midjourney 버전':'/imagine YouTube thumbnail, shocked face expression, bold red and yellow text overlay, high contrast background, ultra realistic, viral style --ar 16:9 --v 6'}
+  },
+  { emoji:'✍️', h:'h-short', ai:'claude', aiLabel:'Claude', diff:'easy', cat:'글쓰기', title:'인스타 감성 SNS 게시글 작성',        desc:'사진에 맞는 자연스러운 인스타 캡션을 바로 뽑아줘요.',                  stars:'4.5', uses:'4.8k', price:'무료', paid:false,
+    prompts:{'ChatGPT 버전':'인스타그램에 올릴 게시글 캡션을 써줘. 자연스럽고 공감가는 문체로, 해시태그 10개도 포함해줘. 사진 내용: [여기 입력], 분위기: [여기 입력]','Claude 버전':'인스타그램 캡션 3가지 버전으로 만들어줘. ① 감성 ② 유머 ③ 정보 전달형. 각각 해시태그 포함. 상황: [여기 입력]','Midjourney 버전':'(피드 이미지용) aesthetic instagram photo style, warm tones, lifestyle photography, natural light, minimal composition --ar 4:5 --v 6'}
+  },
+  { emoji:'🎨', h:'h-med', ai:'midjourney', aiLabel:'Midjourney', diff:'mid', cat:'이미지', title:'브랜드 로고 컨셉 이미지 생성',      desc:'브랜드 키워드를 넣으면 로고 무드보드 이미지를 만들어줘요.',            stars:'4.7', uses:'1.9k', price:'6,900원', paid:true,
+    prompts:{'ChatGPT 버전':'브랜드 로고 방향을 기획해줘. 브랜드명, 키워드, 색상 방향으로 로고 컨셉 3가지를 제안해줘. 브랜드명: [입력], 키워드: [입력]','Claude 버전':'브랜드 아이덴티티 기획서를 만들어줘. 로고 방향, 컬러 시스템, 타이포그래피, 적용 예시까지 디자이너에게 넘길 수 있는 수준으로 작성해줘.','Midjourney 버전':'/imagine minimalist logo design for [브랜드명], clean vector style, white background, professional branding --ar 1:1 --v 6 --style raw'}
+  },
+  { emoji:'💼', h:'h-short', ai:'chatgpt', aiLabel:'ChatGPT', diff:'easy', cat:'업무', title:'업무 이메일 빠르게 작성하기',          desc:'상황만 설명하면 정중하고 명확한 비즈니스 이메일을 작성해줘요.',         stars:'4.4', uses:'7.3k', price:'무료', paid:false,
+    prompts:{'ChatGPT 버전':'비즈니스 이메일을 작성해줘. 정중하고 명확하게, 핵심만 전달되게 해줘. 상황: [여기 입력], 받는 사람: [여기 입력], 전달할 내용: [여기 입력]','Claude 버전':'이메일 3가지 버전으로 써줘. ① 격식체(상사용) ② 세미포멀(거래처용) ③ 친근한(동료용). 상황: [여기 입력]','Midjourney 버전':'해당 없음 — 이 프롬프트는 텍스트 AI 전용이에요.'}
+  },
+  { emoji:'🌆', h:'h-tall', ai:'midjourney', aiLabel:'Midjourney', diff:'mid', cat:'이미지', title:'영화 포스터 느낌 나는 내 사진',     desc:'내 사진을 할리우드 영화 포스터 스타일로 변환해줘요.',                   stars:'4.8', uses:'6.1k', price:'3,900원', paid:true,
+    prompts:{'ChatGPT 버전':'내 사진을 영화 포스터 스타일로 만들고 싶어. 포스터에 넣을 카피 문구 5개도 제안해줘. 장르: [여기 입력]','Claude 버전':'영화 포스터 컨셉을 기획해줘. 내 사진을 주인공으로 한 영화를 상상하고, 제목, 카피, 색감, 분위기를 포함한 기획안을 만들어줘.','Midjourney 버전':'/imagine cinematic movie poster featuring a person, dramatic lighting, film grain, epic composition, [장르] genre style, bold typography space at top, 4k --ar 2:3 --v 6'}
+  },
+  { emoji:'📊', h:'h-med', ai:'claude', aiLabel:'Claude', diff:'mid', cat:'업무', title:'마케팅 보고서 자동 초안 작성',           desc:'데이터를 주면 인사이트 포함한 보고서 초안을 만들어줘요.',               stars:'4.6', uses:'2.2k', price:'7,900원', paid:true,
+    prompts:{'ChatGPT 버전':'마케팅 성과 보고서 초안을 작성해줘. 인사이트와 다음 달 액션 아이템까지 포함해줘. 형식: 요약 → 주요 지표 → 분석 → 개선 방향. 데이터: [여기 입력]','Claude 버전':'아래 마케팅 데이터로 임원진 보고용 보고서를 작성해줘. 수치는 표로 정리하고, 핵심 인사이트 3가지와 다음 분기 전략을 포함해줘. 데이터: [여기 입력]','Midjourney 버전':'해당 없음 — 이 프롬프트는 텍스트 AI 전용이에요.'}
+  },
+  { emoji:'🌊', h:'h-short', ai:'chatgpt', aiLabel:'ChatGPT', diff:'easy', cat:'이미지', title:'여행 사진 감성 보정 프롬프트',         desc:'여행 사진을 SNS용으로 감성 있게 편집하는 방법을 알려줘요.',             stars:'4.5', uses:'3.6k', price:'무료', paid:false,
+    prompts:{'ChatGPT 버전':'내 여행 사진을 인스타에 올리기 좋게 감성적으로 편집하고 싶어. 어떤 필터와 보정 방향을 써야 하는지 알려줘. 사진 분위기: [여기 입력], 여행지: [여기 입력]','Claude 버전':'여행 사진 보정 가이드를 만들어줘. 밝기, 대비, 채도, 색온도 수치와 함께 라이트룸/스냅시드 기준으로 단계별로 알려줘. 원하는 무드: [여기 입력]','Midjourney 버전':'/imagine travel photography, [여행지], golden hour lighting, moody atmosphere, film photography style, Fujifilm aesthetic --ar 4:5 --v 6'}
+  },
+  { emoji:'🤖', h:'h-med', ai:'claude', aiLabel:'Claude', diff:'mid', cat:'업무', title:'챗봇 시나리오 기획 자동화',              desc:'서비스 정보를 주면 챗봇 대화 흐름을 설계해줘요.',                       stars:'4.7', uses:'1.4k', price:'12,900원', paid:true,
+    prompts:{'ChatGPT 버전':'우리 서비스용 챗봇 대화 시나리오를 만들어줘. 고객 FAQ 유형별로 분기 처리되는 플로우를 설계해줘. 서비스: [여기 입력], 주요 FAQ: [여기 입력]','Claude 버전':'챗봇 시나리오를 설계해줘. 시작 인사 → 의도 파악 → 답변 분기 → 마무리까지 전체 흐름을 표 형식으로 만들어줘. 각 분기마다 대화 예시도 포함해줘.','Midjourney 버전':'해당 없음 — 이 프롬프트는 텍스트 AI 전용이에요.'}
+  },
+  { emoji:'🧠', h:'h-short', ai:'chatgpt', aiLabel:'ChatGPT', diff:'easy', cat:'업무', title:'AI 역할 부여로 전문가 답변 받기',      desc:'"너는 ~이야" 한 줄로 AI 답변 품질을 2배 높이는 방법.',                  stars:'4.8', uses:'9.1k', price:'무료', paid:false,
+    prompts:{'ChatGPT 버전':'너는 지금부터 [분야] 분야의 15년 경력 전문가야. 나는 초보자니까 쉽고 친절하게 설명해줘. 모르는 게 있으면 솔직히 말하고, 틀린 내용은 바로잡아줘. 첫 번째 질문: [여기 입력]','Claude 버전':'너는 [분야] 전문가야. 내 질문에 답할 때 ① 핵심 답변 ② 이유/근거 ③ 주의사항 ④ 추천 다음 단계 순서로 구조화해서 답해줘. 질문: [여기 입력]','Midjourney 버전':'해당 없음 — 이 프롬프트는 텍스트 AI 전용이에요.'}
+  },
+  { emoji:'📝', h:'h-med', ai:'chatgpt', aiLabel:'ChatGPT', diff:'easy', cat:'글쓰기', title:'자기소개서 AI로 다듬기',              desc:'내용만 주면 합격률 높은 자소서로 바꿔줘요.',                            stars:'4.7', uses:'5.2k', price:'2,900원', paid:true,
+    prompts:{'ChatGPT 버전':'내 자기소개서 초안을 다듬어줘. 지원 직무와 회사에 맞게 강점을 부각하고, 구체적인 수치와 성과를 포함해서 설득력 있게 고쳐줘. 지원 직무: [입력], 회사: [입력], 초안: [입력]','Claude 버전':'자기소개서를 검토하고 개선해줘. 현재 버전의 약점을 먼저 짚어주고, STAR 기법이 잘 드러나게 개선된 버전을 작성해줘.','Midjourney 버전':'해당 없음 — 이 프롬프트는 텍스트 AI 전용이에요.'}
+  },
+  { emoji:'🏠', h:'h-short', ai:'midjourney', aiLabel:'Midjourney', diff:'easy', cat:'이미지', title:'인테리어 시뮬레이션 이미지',        desc:'내 방을 원하는 스타일로 바꿔보는 AI 인테리어.',                          stars:'4.5', uses:'2.7k', price:'무료', paid:false,
+    prompts:{'ChatGPT 버전':'내 방 사진을 [인테리어 스타일]로 리모델링하면 어떻게 바뀔지 묘사해줘. 가구, 색상, 조명, 소품 배치까지 구체적으로 설명해줘.','Claude 버전':'원하는 인테리어 스타일로 방을 꾸미는 계획을 세워줘. 예산 [금액] 내에서 우선순위 높은 변경 사항부터 단계별로 알려줘.','Midjourney 버전':'/imagine [인테리어 스타일] living room interior design, natural light, cozy atmosphere, modern furniture, high quality architectural visualization --ar 16:9 --v 6'}
+  },
+];
+
+let currentCardIndex = 0;
+
+function makeCardEl(c, idx, targetMasonryId) {
+  const el = document.createElement('div');
+  el.className = 'pcard';
+  const imgContent = c.img
+    ? `<img src="${c.img}" style="width:100%;height:100%;object-fit:cover;display:block;" alt="${c.title}">`
+    : c.emoji;
+  el.innerHTML = `
+    <div class="pcard-img">
+      <div class="pcard-img-inner ${c.h}" style="${c.img ? 'padding:0;overflow:hidden;' : ''}">${imgContent}</div>
+      <div class="pcard-img-overlay">
+        <button class="pcard-copy-btn" onclick="event.stopPropagation();showToast('프롬프트 미리보기')">미리보기</button>
+      </div>
+    </div>
+    <div class="pcard-body">
+      <div class="pcard-ai-row">
+        <span class="ai-badge ${c.ai}">${c.aiLabel}</span>
+        <span class="diff-badge ${c.diff==='easy'?'diff-easy':'diff-mid'}">${c.diff==='easy'?'쉬움':'보통'}</span>
+      </div>
+      <div class="pcard-title">${c.title}</div>
+      <div class="pcard-desc">${c.desc}</div>
+    </div>
+    <div class="pcard-foot">
+      <span class="pcard-foot-star">★</span>
+      <span class="pcard-foot-stat">${c.stars} · ${c.uses}회</span>
+      <span class="pcard-foot-price ${c.paid?'paid':'free'}">${c.price}</span>
+      <button class="heart-btn" onclick="event.stopPropagation();toggleHeart(this)">♡</button>
+    </div>`;
+  el.addEventListener('click', () => { currentCardIndex = idx; goDetail(); });
+  return el;
+}
+
+function filterCards(filter) {
+  return cards.filter(c => {
+    if (filter === 'all')       return true;
+    if (filter === 'free')      return !c.paid;
+    if (filter === 'chatgpt')   return c.ai === 'chatgpt';
+    if (filter === 'claude')    return c.ai === 'claude';
+    if (filter === 'midjourney')return c.ai === 'midjourney';
+    return c.cat === filter;
+  });
+}
+
+function buildMasonry(filter = 'all') {
+  const m = document.getElementById('masonry');
+  m.innerHTML = '';
+  const hdr = document.querySelector('#screen-home .feed-header h2');
+  const cnt = document.querySelector('#screen-home .feed-count');
+  const filtered = filterCards(filter);
+  hdr.textContent = filter === 'all' ? '지금 인기 프롬프트' : `${filter} 프롬프트`;
+  cnt.textContent = `${filtered.length}개의 프롬프트`;
+  filtered.forEach((c, i) => {
+    const idx = cards.indexOf(c);
+    m.appendChild(makeCardEl(c, idx, 'masonry'));
+  });
+}
+
+function filterHome(el, filter) {
+  document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('on'));
+  el.classList.add('on');
+  buildMasonry(filter);
+}
+
+function toggleHeart(btn) {
+  btn.style.color = btn.dataset.on ? 'var(--subtle)' : 'var(--point)';
+  btn.textContent = btn.dataset.on ? '♡' : '♥';
+  btn.dataset.on = btn.dataset.on ? '' : '1';
+}
+
+let currentQuery = '';
+let searchFilter = 'all';
+
+function doSearch(query) {
+  // 검색어 수집 (인자 or 인풋 값)
+  const q = (query || document.getElementById('heroSearch')?.value || document.getElementById('navSearchInput')?.value || '').trim();
+  if (!q) { showToast('검색어를 입력해주세요'); return; }
+
+  currentQuery = q;
+  searchFilter = 'all';
+
+  // 필터 초기화
+  document.querySelectorAll('.sfilter').forEach((f, i) => {
+    f.classList.toggle('on', i === 0);
+  });
+
+  // 검색 실행
+  const results = searchCards(q, 'all');
+  renderSearchResults(q, results);
+  navigate('search');
+
+  // 네비 검색창에도 반영
+  const navInput = document.getElementById('navSearchInput');
+  if (navInput) navInput.value = q;
+}
+
+function searchCards(q, filter) {
+  const keyword = q.toLowerCase();
+  return cards.filter(c => {
+    const matchKeyword =
+      c.title.toLowerCase().includes(keyword) ||
+      c.desc.toLowerCase().includes(keyword) ||
+      c.aiLabel.toLowerCase().includes(keyword);
+
+    if (!matchKeyword) return false;
+    if (filter === 'all') return true;
+    if (filter === 'free') return !c.paid;
+    if (filter === 'chatgpt') return c.ai === 'chatgpt';
+    if (filter === 'claude') return c.ai === 'claude';
+    if (filter === 'midjourney') return c.ai === 'midjourney';
+    if (filter === '이미지') return ['midjourney'].includes(c.ai);
+    if (filter === '글쓰기') return c.ai === 'claude' || c.title.includes('글') || c.title.includes('SNS') || c.title.includes('이메일') || c.title.includes('카피');
+    if (filter === '업무') return c.title.includes('보고서') || c.title.includes('이메일') || c.title.includes('광고') || c.title.includes('챗봇');
+    if (filter === '영상') return c.title.includes('영상') || c.title.includes('썸네일');
+    return true;
+  });
+}
+
+function renderSearchResults(q, results) {
+  const label = document.getElementById('search-query-label');
+  const meta  = document.getElementById('search-result-meta');
+  const masonry = document.getElementById('search-masonry');
+  const noResult = document.getElementById('search-no-result');
+
+  label.innerHTML = `"<em id="search-query-text">${q}</em>" 검색 결과`;
+  meta.textContent = results.length > 0
+    ? `${results.length}개의 프롬프트를 찾았어요`
+    : '';
+
+  if (results.length === 0) {
+    masonry.innerHTML = '';
+    noResult.style.display = 'block';
+    document.getElementById('no-result-title').textContent = `"${q}"에 대한 결과가 없어요`;
+    return;
+  }
+
+  noResult.style.display = 'none';
+  masonry.innerHTML = '';
+  results.forEach(c => {
+    const idx = cards.indexOf(c);
+    const el = makeCardEl(c, idx, 'search-masonry');
+    // 제목 하이라이트
+    el.querySelector('.pcard-title').innerHTML = highlight(c.title, currentQuery);
+    masonry.appendChild(el);
+  });
+}
+
+function highlight(text, query) {
+  if (!query) return text;
+  const re = new RegExp(`(${query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+  return text.replace(re, `<span style="color:var(--accent);font-weight:600;">$1</span>`);
+}
+
+function toggleSfilter(el, filter) {
+  document.querySelectorAll('.sfilter').forEach(f => f.classList.remove('on'));
+  el.classList.add('on');
+  searchFilter = filter;
+  const results = searchCards(currentQuery, filter);
+  renderSearchResults(currentQuery, results);
+}
+
+// 네비 검색창 엔터 처리
+document.getElementById('navSearchInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter') doSearch();
+});
+document.getElementById('heroSearch').addEventListener('keydown', e => {
+  if (e.key === 'Enter') doSearch();
+});
+
+/* ── Supabase 설정 ── */
+// ✅ 아래 두 값을 본인 Supabase 프로젝트 값으로 교체하세요
+const SUPABASE_URL = 'https://vxaqtbbjeisrpdgthdrv.supabase.co';
+const SUPABASE_KEY = 'YOUR_PUBLISHABLE_KEY_HERE'; // 재발급한 키 여기에 붙여넣기
+
+let supabase = null;
+let currentUser = null;
+
+// Supabase SDK 로드 후 초기화
+async function initSupabase() {
+  const { createClient } = await import('https://esm.sh/@supabase/supabase-js@2');
+  supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+  // 이미 로그인된 세션 복원
+  const { data: { session } } = await supabase.auth.getSession();
+  if (session?.user) onLoginSuccess(session.user);
+
+  // 로그인 상태 변화 감지 (OAuth 콜백 포함)
+  supabase.auth.onAuthStateChange((_event, session) => {
+    if (session?.user) {
+      onLoginSuccess(session.user);
+      closeLogin();
+    }
+  });
+}
+initSupabase();
+
+/* ── 모달 제어 ── */
+function openLogin(tab = 'login') {
+  if (currentUser) { showToast('이미 로그인됐어요 👋'); return; }
+  switchModalTab(tab);
+  document.getElementById('modal-backdrop').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeLogin() {
+  document.getElementById('modal-backdrop').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+function handleBackdropClick(e) {
+  if (e.target === document.getElementById('modal-backdrop')) closeLogin();
+}
+
+function switchModalTab(tab) {
+  ['login','signup','success','forgot'].forEach(v => {
+    document.getElementById('view-' + v).style.display = 'none';
+  });
+  document.getElementById('view-' + tab).style.display = 'block';
+  document.querySelectorAll('.modal-tab').forEach(t => t.classList.remove('active'));
+  const tabEl = document.getElementById('tab-' + tab);
+  if (tabEl) tabEl.classList.add('active');
+  const taglines = {
+    login:  'AI 크리에이터의 세계에 오신 걸 환영해요',
+    signup: '지금 가입하면 인기 프롬프트 3개를 무료로 드려요 🎁',
+    forgot: '비밀번호를 재설정해드릴게요',
+  };
+  document.getElementById('modal-tagline').textContent = taglines[tab] || '';
+}
+
+function togglePw(inputId, btn) {
+  const input = document.getElementById(inputId);
+  const isHidden = input.type === 'password';
+  input.type = isHidden ? 'text' : 'password';
+  btn.textContent = isHidden ? '숨기기' : '보기';
+}
+
+/* ── 소셜 로그인 ── */
+async function socialLogin(provider) {
+  if (!supabase) { showToast('잠시 후 다시 시도해주세요'); return; }
+  const providerMap = { '카카오': 'kakao', '구글': 'google' };
+  const { error } = await supabase.auth.signInWithOAuth({
+    provider: providerMap[provider],
+    options: { redirectTo: window.location.href }
+  });
+  if (error) showToast('로그인 중 오류가 발생했어요: ' + error.message);
+}
+
+/* ── 이메일 로그인 ── */
+async function emailLogin() {
+  if (!supabase) { showToast('잠시 후 다시 시도해주세요'); return; }
+  const email = document.getElementById('login-email').value.trim();
+  const pw    = document.getElementById('login-pw').value;
+  if (!email) { showToast('이메일을 입력해주세요'); return; }
+  if (!pw)    { showToast('비밀번호를 입력해주세요'); return; }
+
+  setSubmitLoading('view-login', true);
+  const { data, error } = await supabase.auth.signInWithPassword({ email, password: pw });
+  setSubmitLoading('view-login', false);
+
+  if (error) {
+    const msg = error.message.includes('Invalid') ? '이메일 또는 비밀번호가 틀렸어요' : error.message;
+    showToast(msg);
+    return;
+  }
+  onLoginSuccess(data.user);
+  closeLogin();
+}
+
+/* ── 이메일 회원가입 ── */
+async function emailSignup() {
+  if (!supabase) { showToast('잠시 후 다시 시도해주세요'); return; }
+  const name  = document.getElementById('signup-name').value.trim();
+  const nick  = document.getElementById('signup-nick').value.trim();
+  const email = document.getElementById('signup-email').value.trim();
+  const pw    = document.getElementById('signup-pw').value;
+  const pw2   = document.getElementById('signup-pw2').value;
+
+  if (!name || !nick || !email || !pw) { showToast('모든 항목을 입력해주세요'); return; }
+  if (pw.length < 8) { showToast('비밀번호는 8자 이상이어야 해요'); return; }
+  if (pw !== pw2)    { showToast('비밀번호가 일치하지 않아요'); return; }
+
+  setSubmitLoading('view-signup', true);
+  const { data, error } = await supabase.auth.signUp({
+    email, password: pw,
+    options: { data: { full_name: name, username: nick } }
+  });
+  setSubmitLoading('view-signup', false);
+
+  if (error) { showToast(error.message); return; }
+
+  // 이메일 확인이 필요한 경우
+  if (data.user && !data.session) {
+    document.getElementById('modal-success-title').textContent = '이메일을 확인해주세요 📧';
+    document.getElementById('modal-success-desc').textContent =
+      `${email}로 인증 링크를 보냈어요.\n확인 후 로그인할 수 있어요.`;
+  } else {
+    document.getElementById('modal-success-title').textContent = nick + '님, 환영해요! 🎉';
+    document.getElementById('modal-success-desc').textContent =
+      '올크리에이터 회원이 됐어요.\n인기 프롬프트 3개를 무료로 저장해드렸어요.';
+    if (data.user) onLoginSuccess(data.user);
+  }
+  ['login','signup','forgot'].forEach(v =>
+    document.getElementById('view-' + v).style.display = 'none'
+  );
+  document.getElementById('view-success').style.display = 'block';
+  document.getElementById('modal-tagline').textContent = '';
+  document.querySelectorAll('.modal-tab').forEach(t => t.classList.remove('active'));
+}
+
+/* ── 비밀번호 찾기 ── */
+function showForgot() { switchModalTab('forgot'); }
+
+async function sendReset() {
+  if (!supabase) { showToast('잠시 후 다시 시도해주세요'); return; }
+  const email = document.getElementById('forgot-email').value.trim();
+  if (!email) { showToast('이메일을 입력해주세요'); return; }
+
+  const { error } = await supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: window.location.href
+  });
+  if (error) { showToast(error.message); return; }
+  showToast('재설정 링크를 보냈어요. 이메일을 확인해주세요 📧');
+  switchModalTab('login');
+}
+
+/* ── 유저 드롭다운 ── */
+function toggleUserMenu() {
+  document.getElementById('user-menu').classList.toggle('open');
+}
+function closeUserMenu() {
+  document.getElementById('user-menu').classList.remove('open');
+}
+// 외부 클릭 시 닫기 — theme-btn 등 다른 버튼은 제외
+document.addEventListener('click', e => {
+  const menu = document.getElementById('user-menu');
+  const themeBtn = document.getElementById('theme-btn');
+  if (!menu.contains(e.target) && e.target !== themeBtn) closeUserMenu();
+});
+
+/* ── 로그인 성공 처리 ── */
+function onLoginSuccess(user) {
+  currentUser = user;
+  const nick = user.user_metadata?.username || user.email?.split('@')[0] || '크리에이터';
+  const initial = nick.charAt(0).toUpperCase();
+
+  // 로그인 버튼 숨기고 유저 메뉴 표시
+  document.getElementById('nav-login-btn').style.display = 'none';
+  const userMenu = document.getElementById('user-menu');
+  userMenu.style.display = 'block';
+  document.getElementById('user-avatar').textContent = initial;
+  document.getElementById('user-name-label').textContent = nick;
+}
+
+/* ── 로그아웃 ── */
+async function doLogout() {
+  closeUserMenu();
+  if (supabase) await supabase.auth.signOut();
+  currentUser = null;
+
+  // 유저 메뉴 숨기고 로그인 버튼 복원
+  document.getElementById('user-menu').style.display = 'none';
+  const loginBtn = document.getElementById('nav-login-btn');
+  loginBtn.style.display = 'block';
+  loginBtn.onclick = () => openLogin('login');
+
+  showToast('로그아웃됐어요');
+  goHome();
+}
+
+/* ── 버튼 로딩 상태 ── */
+function setSubmitLoading(viewId, loading) {
+  const btn = document.querySelector('#' + viewId + ' .modal-submit');
+  if (!btn) return;
+  btn.disabled = loading;
+  btn.textContent = loading ? '처리 중...' : (viewId === 'view-login' ? '이메일로 로그인' : '회원가입');
+  btn.style.opacity = loading ? '0.6' : '1';
+}
+
+// ESC 키로 닫기
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeLogin();
+});
+
+
+
+/* ── 다크/라이트 모드 ── */
+function toggleTheme() {
+  const isLight = document.body.classList.toggle('light');
+  document.getElementById('theme-btn').textContent = isLight ? '☀️' : '🌙';
+  localStorage.setItem('theme', isLight ? 'light' : 'dark');
+}
+
+// 저장된 테마 복원
+(function() {
+  const saved = localStorage.getItem('theme');
+  if (saved === 'light') {
+    document.body.classList.add('light');
+    document.addEventListener('DOMContentLoaded', () => {
+      const btn = document.getElementById('theme-btn');
+      if (btn) btn.textContent = '☀️';
+    });
+  }
+})();
+
+function navigate(name, { push = true } = {}) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-' + name).classList.add('active');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+
+  const navMap = { home:'nav-explore', trend:'nav-trend', search:'nav-explore', mypage:'nav-explore', register:'nav-explore' };
+  document.querySelectorAll('.nav-links a').forEach(a => a.classList.remove('nav-active'));
+  const navId = navMap[name];
+  if (navId) document.getElementById(navId)?.classList.add('nav-active');
+
+  if (push) history.pushState({ screen: name }, '', '#' + name);
+}
+
+function goMypage() {
+  if (!currentUser) { openLogin('login'); return; }
+  const nick = currentUser.user_metadata?.username || currentUser.email?.split('@')[0] || '크리에이터';
+  const initial = nick.charAt(0).toUpperCase();
+  document.getElementById('my-avatar-big').textContent = initial;
+  document.getElementById('my-name-big').textContent = nick + '님';
+  document.getElementById('my-email-label').textContent = currentUser.email || '';
+  switchMyTab('bought');
+  navigate('mypage');
+}
+
+function switchMyTab(tab) {
+  ['bought','saved','selling'].forEach(t => {
+    document.getElementById('my-view-' + t).style.display = t === tab ? 'block' : 'none';
+    document.getElementById('my-tab-' + t).classList.toggle('active', t === tab);
+  });
+}
+
+/* ── 프롬프트 등록 ── */
+function toggleRegAI(el) { el.classList.toggle('selected'); }
+
+function setPriceType(type) {
+  document.getElementById('price-free').classList.toggle('selected', type === 'free');
+  document.getElementById('price-paid').classList.toggle('selected', type === 'paid');
+  document.getElementById('price-input-wrap').style.display = type === 'paid' ? 'block' : 'none';
+}
+
+function handleImgSelect(input) {
+  const files = Array.from(input.files).slice(0, 4);
+  renderImgPreview(files);
+}
+function handleImgDrop(e) {
+  e.preventDefault();
+  document.getElementById('reg-upload-area').style.borderColor = 'var(--border2)';
+  const files = Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('image/')).slice(0, 4);
+  renderImgPreview(files);
+}
+function renderImgPreview(files) {
+  const wrap = document.getElementById('reg-img-preview');
+  wrap.innerHTML = '';
+  files.forEach(file => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      const div = document.createElement('div');
+      div.style.cssText = 'position:relative;width:80px;height:80px;';
+      div.innerHTML = `<img src="${e.target.result}" style="width:80px;height:80px;object-fit:cover;border-radius:8px;border:1px solid var(--border2);">
+        <button onclick="this.parentElement.remove()" style="position:absolute;top:-6px;right:-6px;width:20px;height:20px;border-radius:50%;background:var(--point);border:none;color:#fff;font-size:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;">✕</button>`;
+      wrap.appendChild(div);
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+function submitPrompt() {
+  const title = document.getElementById('reg-title').value.trim();
+  const desc  = document.getElementById('reg-desc').value.trim();
+  const prompt = document.getElementById('reg-prompt').value.trim();
+  if (!title) { showToast('제목을 입력해주세요'); return; }
+  if (!desc)  { showToast('한 줄 설명을 입력해주세요'); return; }
+  if (!prompt){ showToast('프롬프트 내용을 입력해주세요'); return; }
+  if (!currentUser) { openLogin('login'); return; }
+
+  // 실제 구현 시 Supabase에 저장
+  showToast('등록 신청이 완료됐어요! 검토 후 24시간 내 노출돼요 🎉');
+  setTimeout(() => goMypage(), 1500);
+}
+
+const navMap = { home:'nav-explore', trend:'nav-trend', search:'nav-explore', mypage:'nav-explore', register:'nav-explore' };
+
+window.addEventListener('popstate', e => {
+  const screen = e.state?.screen || 'home';
+  navigate(screen, { push: false });
+});
+
+history.replaceState({ screen: 'home' }, '', '#home');
+
+function goHome()     { navigate('home'); }
+function goDetail() {
+  const c = cards[currentCardIndex];
+  if (!c) { navigate('detail'); return; }
+
+  // 제목, 설명
+  document.querySelector('.detail-title').textContent = c.title;
+  document.querySelector('.detail-desc').textContent = c.desc;
+
+  // 미리보기 이미지
+  const mainImg = document.getElementById('detail-main-img');
+  if (c.img) {
+    mainImg.innerHTML = `<div class="detail-preview-label">결과물 미리보기</div><img src="${c.img}" style="width:100%;height:100%;object-fit:cover;" alt="${c.title}">`;
+  } else {
+    mainImg.innerHTML = `<div class="detail-preview-label">결과물 미리보기</div><span>${c.emoji}</span>`;
+  }
+
+  // 태그
+  document.querySelector('.detail-tags').innerHTML = `
+    <span class="dtag ai-badge ${c.ai}">${c.aiLabel}</span>
+    <span class="dtag diff-badge ${c.diff==='easy'?'diff-easy':'diff-mid'}">${c.diff==='easy'?'쉬움':'보통'}</span>
+    ${c.cat?`<span class="dtag" style="background:var(--accent-dim);color:var(--accent);font-size:11px;font-family:var(--display);font-weight:600;padding:3px 10px;border-radius:6px;">${c.cat}</span>`:''}
+  `;
+
+  // 프롬프트 탭 — 카드별로 다르게
+  const prompts = c.prompts || { 'ChatGPT 버전': '이 프롬프트는 준비 중이에요.' };
+  const tabKeys = Object.keys(prompts);
+  const tabsEl = document.querySelector('.ai-tabs');
+  tabsEl.innerHTML = tabKeys.map((k,i) =>
+    `<button class="ai-tab${i===0?' active':''}" onclick="switchDetailTab(this,'${k}')">${k}</button>`
+  ).join('');
+  document.getElementById('prompt-text').textContent = prompts[tabKeys[0]];
+
+  // 가격
+  document.querySelector('.buy-price').textContent = c.price === '무료' ? '무료' : c.price;
+  const buyBtn = document.querySelector('.buy-btn');
+  buyBtn.textContent = c.price === '무료' ? '무료로 복사하기' : `${c.price}에 구매하기`;
+  buyBtn.onclick = c.price === '무료' ? () => copyPrompt() : () => goPurchase();
+
+  navigate('detail');
+}
+
+function switchDetailTab(btn, key) {
+  document.querySelectorAll('.ai-tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  const c = cards[currentCardIndex];
+  document.getElementById('prompt-text').textContent = c.prompts?.[key] || '준비 중이에요.';
+}
+function goCardDetail(title) {
+  const idx = cards.findIndex(c => c.title === title);
+  currentCardIndex = idx >= 0 ? idx : 0;
+  goDetail();
+}
+
+function goPurchase() { navigate('purchase'); }
+function goSuccess()  { navigate('success'); }
+function goTrend()    { navigate('trend'); }
+
+// 레거시 호환 (혹시 남은 곳 있을 경우)
+function showScreen(name) { navigate(name); }
+function setNavActive(id) {
+  document.querySelectorAll('.nav-links a').forEach(a => a.classList.remove('nav-active'));
+  document.getElementById(id)?.classList.add('nav-active');
+}
+
+function switchPeriod(btn, period) {
+  document.querySelectorAll('.period-tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  const label = document.getElementById('trend-period-label');
+  label.textContent = period === 'weekly' ? '이번 주 TOP 3' : '이번 달 TOP 3';
+  showToast(period === 'weekly' ? '주간 베스트로 전환했어요' : '월간 베스트로 전환했어요');
+}
+
+function switchTab(el) {
+  document.querySelectorAll('.ai-tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  const tab = el.textContent;
+  const texts = {
+    'ChatGPT 버전': '아래 사진 속 인물을 지브리 스튜디오 애니메이션 스타일로 바꿔줘. 인물의 표정과 분위기는 그대로 살리되, 피부와 눈은 지브리 특유의 맑고 따뜻한 색감으로 표현해줘. 배경은 일본 시골 마을 풍경이나 꽃밭으로 자연스럽게 합성해주고, 전체적으로 여름 오후의 따뜻한 햇빛이 느껴지게 해줘.',
+    'Claude 버전': '첨부한 사진 속 인물을 지브리 스튜디오 스타일 일러스트레이션으로 변환해줘. 미야자키 하야오 감독 특유의 따뜻하고 섬세한 표현 방식으로, 인물의 눈과 피부를 애니메이션 특유의 맑은 질감으로 바꿔줘. 배경은 하늘과 자연이 어우러진 평화로운 농촌 풍경으로 구성해줘.',
+    'Midjourney 버전': '/imagine 내 사진 속 인물, Studio Ghibli anime style, Hayao Miyazaki art direction, soft warm lighting, summer countryside background, delicate line art, watercolor texture, gentle color palette, 4k --ar 3:4 --style raw --v 6',
+  };
+  document.getElementById('prompt-text').textContent = texts[tab] || texts['ChatGPT 버전'];
+}
+
+function selectThumb(el, emoji) {
+  document.querySelectorAll('.thumb').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  const main = document.getElementById('detail-main-img');
+  main.querySelector('span').textContent = emoji;
+}
+
+function selectAI(el) {
+  document.querySelectorAll('.ai-opt').forEach(o => o.classList.remove('selected'));
+  el.classList.add('selected');
+}
+
+let toastTimer;
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  document.getElementById('toast-msg').textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2200);
+}
+
+async function copyPrompt() {
+  const text = document.getElementById('prompt-text')?.textContent?.trim();
+  if (!text) { showToast('복사할 프롬프트가 없어요'); return; }
+  try {
+    await navigator.clipboard.writeText(text);
+    showToast('복사 완료! AI에 붙여넣으세요 ✓');
+  } catch (e) {
+    // clipboard API 안 되는 환경 fallback
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+    showToast('복사 완료! AI에 붙여넣으세요 ✓');
+  }
+}
+
+buildMasonry();
+</script>
+</body>
+</html>
