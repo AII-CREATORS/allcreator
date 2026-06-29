@@ -28,31 +28,10 @@ SupabaseManager = class SupabaseManager
     {
         this.client = supabase.createClient(this.SUPABASE_URL, this.SUPABASE_KEY);
 
-        this.client.auth.onAuthStateChange(async (event, session) =>
+        // ※ onAuthStateChange 안에서 DB 쿼리 금지 — Supabase v2 데드락 발생
+        this.client.auth.onAuthStateChange((event, session) =>
         {
             console.log('[Auth Event]', event);
-
-            if (event === 'SIGNED_IN') {
-                const user = session.user;
-                const { data: profile } = await this.client
-                    .from('users')
-                    .select('username, gender, birth_date')
-                    .eq('id', user.id)
-                    .single();
-
-                if (!profile || profile.username.startsWith('user_')) {
-                    console.log('[Auth] 추가 정보 입력 필요');
-                    // TODO: 추가 정보 입력 View로 전환
-                } else {
-                    console.log('[Auth] 로그인 완료:', user.email);
-                    // TODO: 메인 View로 전환
-                }
-            }
-
-            if (event === 'SIGNED_OUT') {
-                console.log('[Auth] 로그아웃 완료');
-                // TODO: 로그인 View로 전환
-            }
         });
 
         console.log('[SupabaseManager] 초기화 완료');

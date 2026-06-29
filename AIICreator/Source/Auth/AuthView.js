@@ -19,6 +19,7 @@ class AuthView extends AView
 		this._injectStyle()
 		this._renderHTML()
 		this._bindEvents()
+		this._loadSavedEmail()
 		this.sb = SupabaseManager.getInstance()
 	}
 
@@ -48,11 +49,16 @@ class AuthView extends AView
 						'<button class="auth-tab" data-tab="signup">회원가입</button>' +
 					'</div>' +
 
-					'<!-- 로그인 패널 -->' +
+					// ── 로그인 패널 (이메일 → 체크박스 → 비밀번호 → 버튼)
 					'<div class="auth-panel" id="panel-login">' +
 						'<div class="ac-input-group">' +
 							'<label class="ac-label">이메일</label>' +
 							'<input class="ac-input" type="email" id="login-email" placeholder="email@example.com">' +
+						'</div>' +
+						'<div class="auth-remember">' +
+							'<label class="auth-remember-label">' +
+								'<input type="checkbox" id="chk-remember"> 이메일 저장' +
+							'</label>' +
 						'</div>' +
 						'<div class="ac-input-group" style="margin-top:12px">' +
 							'<label class="ac-label">비밀번호</label>' +
@@ -61,7 +67,7 @@ class AuthView extends AView
 						'<button class="ac-btn ac-btn-primary ac-w-full" id="btn-login" style="margin-top:20px">로그인</button>' +
 					'</div>' +
 
-					'<!-- 회원가입 패널 -->' +
+					// ── 회원가입 패널
 					'<div class="auth-panel" id="panel-signup" style="display:none">' +
 						'<div class="ac-input-group">' +
 							'<label class="ac-label">이메일</label>' +
@@ -111,11 +117,28 @@ class AuthView extends AView
 			'.auth-tabs{display:flex;margin-bottom:24px;background:var(--color-surface-2);border-radius:var(--radius-md);padding:4px;}' +
 			'.auth-tab{flex:1;padding:9px;border:none;background:transparent;color:var(--color-text-muted);font-size:0.9375rem;font-weight:700;font-family:var(--font-body);border-radius:calc(var(--radius-md) - 2px);cursor:pointer;transition:background var(--transition),color var(--transition);}' +
 			'.auth-tab.active{background:var(--color-accent);color:#fff;}' +
+			'.auth-remember{margin-top:8px;}' +
+			'.auth-remember-label{display:flex;align-items:center;gap:8px;font-size:0.875rem;color:var(--color-text-muted);cursor:pointer;user-select:none;-webkit-user-select:none;}' +
+			'.auth-remember-label input[type=checkbox]{width:15px;height:15px;accent-color:var(--color-accent);cursor:pointer;flex-shrink:0;}' +
 			'.auth-social-btn{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:11px;border:2px solid var(--color-border);border-radius:var(--radius-md);background:transparent;color:var(--color-text);font-size:0.9375rem;font-weight:500;font-family:var(--font-body);cursor:pointer;transition:border-color var(--transition),background var(--transition);}' +
 			'.auth-social-btn:hover{border-color:var(--color-border-light);background:var(--color-surface-2);}' +
 			'.auth-social-kakao{background:#FEE500;border-color:#FEE500;color:#3C1E1E;}' +
 			'.auth-social-kakao:hover{background:#F0D800;border-color:#F0D800;}'
 		document.head.appendChild(style)
+	}
+
+	// ─────────────────────────────────────────
+	// 이메일 저장 (localStorage)
+	// ─────────────────────────────────────────
+
+	_loadSavedEmail()
+	{
+		var saved = localStorage.getItem('ac_saved_email')
+		if (!saved) return
+		var emailInput  = this.getElement().querySelector('#login-email')
+		var chkRemember = this.getElement().querySelector('#chk-remember')
+		if (emailInput)  emailInput.value   = saved
+		if (chkRemember) chkRemember.checked = true
 	}
 
 	// ─────────────────────────────────────────
@@ -138,15 +161,64 @@ class AuthView extends AView
 
 		// 로그인
 		el.querySelector('#btn-login').addEventListener('click', function() { self._onLogin() })
-		el.querySelector('#login-pw').addEventListener('keydown', function(e) { if (e.key === 'Enter') self._onLogin() })
 
 		// 회원가입
 		el.querySelector('#btn-signup').addEventListener('click', function() { self._onSignup() })
-		el.querySelector('#signup-pw2').addEventListener('keydown', function(e) { if (e.key === 'Enter') self._onSignup() })
 
 		// 소셜
 		el.querySelector('#btn-google').addEventListener('click', function() { self._onGoogleLogin() })
 		el.querySelector('#btn-kakao').addEventListener('click', function() { self._onKakaoLogin() })
+
+		// Tab 키 명시적 처리 (SpiderGen 프레임워크가 Tab 이벤트를 가로채는 경우 대비)
+		this._bindTabKey()
+	}
+
+	_bindTabKey()
+	{
+		var el = this.getElement()
+
+		// 로그인 패널 Tab 순서: 이메일 → 비밀번호 → 로그인버튼
+		var loginEmail = el.querySelector('#login-email')
+		var loginPw    = el.querySelector('#login-pw')
+		var btnLogin   = el.querySelector('#btn-login')
+
+		loginEmail.addEventListener('keydown', function(e)
+		{
+			if (e.key === 'Tab') { e.preventDefault(); loginPw.focus() }
+			if (e.key === 'Enter') { loginPw.focus() }
+		})
+		loginPw.addEventListener('keydown', function(e)
+		{
+			if (e.key === 'Tab') { e.preventDefault(); btnLogin.focus() }
+			// Enter → 로그인은 btn-login click 이벤트로 처리
+		})
+		loginPw.addEventListener('keyup', function(e)
+		{
+			if (e.key === 'Enter') { btnLogin.click() }
+		})
+
+		// 회원가입 패널 Tab 순서: 이메일 → 비밀번호 → 비밀번호 확인 → 가입버튼
+		var signupEmail = el.querySelector('#signup-email')
+		var signupPw    = el.querySelector('#signup-pw')
+		var signupPw2   = el.querySelector('#signup-pw2')
+		var btnSignup   = el.querySelector('#btn-signup')
+
+		signupEmail.addEventListener('keydown', function(e)
+		{
+			if (e.key === 'Tab') { e.preventDefault(); signupPw.focus() }
+		})
+		signupPw.addEventListener('keydown', function(e)
+		{
+			if (e.key === 'Tab') { e.preventDefault(); signupPw2.focus() }
+		})
+		signupPw2.addEventListener('keydown', function(e)
+		{
+			if (e.key === 'Tab') { e.preventDefault(); btnSignup.focus() }
+		})
+		signupPw2.addEventListener('keyup', function(e)
+		{
+			if (e.key === 'Enter') { btnSignup.click() }
+		})
 	}
 
 	_switchTab(tab)
@@ -172,6 +244,7 @@ class AuthView extends AView
 		var el    = this.getElement()
 		var email = el.querySelector('#login-email').value.trim()
 		var pw    = el.querySelector('#login-pw').value
+		var chk   = el.querySelector('#chk-remember')
 
 		if (!email || !pw)
 		{
@@ -183,19 +256,31 @@ class AuthView extends AView
 		btn.disabled    = true
 		btn.textContent = '로그인 중...'
 
-		var result = await this.sb.signInWithEmail(email, pw)
-
-		btn.disabled    = false
-		btn.textContent = '로그인'
-
-		if (result.error)
+		try
 		{
-			ToastManager.error('로그인 실패: ' + result.error.message)
+			var result = await this.sb.signInWithEmail(email, pw)
+
+			if (result.error)
+			{
+				btn.disabled    = false
+				btn.textContent = '로그인'
+				ToastManager.error('로그인 실패: ' + result.error.message)
+			}
+			else
+			{
+				if (chk && chk.checked) localStorage.setItem('ac_saved_email', email)
+				else localStorage.removeItem('ac_saved_email')
+
+				ToastManager.success('로그인 성공!')
+				this._goToMain()
+			}
 		}
-		else
+		catch (e)
 		{
-			ToastManager.success('로그인 성공!')
-			this._goToMain()
+			btn.disabled    = false
+			btn.textContent = '로그인'
+			ToastManager.error('오류 발생: ' + e.message)
+			console.error('[AuthView] _onLogin error:', e)
 		}
 	}
 
@@ -206,39 +291,34 @@ class AuthView extends AView
 		var pw    = el.querySelector('#signup-pw').value
 		var pw2   = el.querySelector('#signup-pw2').value
 
-		if (!email || !pw || !pw2)
-		{
-			ToastManager.error('모든 항목을 입력해주세요')
-			return
-		}
-		if (pw.length < 8)
-		{
-			ToastManager.error('비밀번호는 8자 이상이어야 합니다')
-			return
-		}
-		if (pw !== pw2)
-		{
-			ToastManager.error('비밀번호가 일치하지 않습니다')
-			return
-		}
+		if (!email || !pw || !pw2) { ToastManager.error('모든 항목을 입력해주세요'); return }
+		if (pw.length < 8)         { ToastManager.error('비밀번호는 8자 이상이어야 합니다'); return }
+		if (pw !== pw2)            { ToastManager.error('비밀번호가 일치하지 않습니다'); return }
 
 		var btn = el.querySelector('#btn-signup')
 		btn.disabled    = true
 		btn.textContent = '가입 중...'
 
-		var result = await this.sb.signUpWithEmail(email, pw)
-
-		btn.disabled    = false
-		btn.textContent = '회원가입'
-
-		if (result.error)
+		try
 		{
-			ToastManager.error('가입 실패: ' + result.error.message)
+			var result = await this.sb.signUpWithEmail(email, pw)
+
+			if (result.error) ToastManager.error('가입 실패: ' + result.error.message)
+			else
+			{
+				ToastManager.success('가입 완료! 이메일 인증 후 로그인해주세요')
+				this._switchTab('login')
+			}
 		}
-		else
+		catch (e)
 		{
-			ToastManager.success('가입 완료! 이메일 인증 후 로그인해주세요')
-			this._switchTab('login')
+			ToastManager.error('오류 발생: ' + e.message)
+			console.error('[AuthView] _onSignup error:', e)
+		}
+		finally
+		{
+			btn.disabled    = false
+			btn.textContent = '회원가입'
 		}
 	}
 
@@ -260,6 +340,14 @@ class AuthView extends AView
 
 	_goToMain()
 	{
-		theApp.mainContainer.open('Source/MainView.lay')
+		try
+		{
+			theApp.mainContainer.open('Source/MainView.lay')
+		}
+		catch (e)
+		{
+			console.error('[AuthView] _goToMain error:', e)
+			ToastManager.error('화면 전환 오류: ' + e.message)
+		}
 	}
 }

@@ -1,5 +1,8 @@
 {
-	"changed": [],
+	"changed": [
+		"C:\\Users\\dicki\\AII CREATOR\\allcreator\\AIICreator\\bin\\Library\\SupabaseManager.js",
+		"C:\\Users\\dicki\\AII CREATOR\\allcreator\\AIICreator\\bin\\Source\\Auth\\AuthView.js"
+	],
 	"version": "5.1.1",
 	"C:\\Users\\dicki\\AII CREATOR\\allcreator\\AIICreator\\Template\\AIICreatorApp_global.css": 1782701649436.6206,
 	"C:\\Users\\dicki\\AII CREATOR\\allcreator\\AIICreator\\Framework\\afc\\library\\ARect.js": 1782693623482.5632,
@@ -150,13 +153,13 @@
 	"C:\\Users\\dicki\\AII CREATOR\\allcreator\\AIICreator\\Framework\\afc\\style\\afc.css": 1782693623491.5627,
 	"C:\\Users\\dicki\\AII CREATOR\\allcreator\\AIICreator\\Framework\\afc\\style\\comp.css": 1782693623492.567,
 	"C:\\Users\\dicki\\AII CREATOR\\allcreator\\AIICreator\\Framework\\afc\\style\\basicStyle.css": 1782693623491.5627,
-	"C:\\Users\\dicki\\AII CREATOR\\allcreator\\AIICreator\\Library\\SupabaseManager.js": 1782701649435.118,
-	"C:\\Users\\dicki\\AII CREATOR\\allcreator\\AIICreator\\Source\\AIICreatorApp.js": 1782701896971.301,
-	"C:\\Users\\dicki\\AII CREATOR\\allcreator\\AIICreator\\Source\\MainView.js": 1782700563627.235,
+	"C:\\Users\\dicki\\AII CREATOR\\allcreator\\AIICreator\\Library\\SupabaseManager.js": 1782706331193.9727,
+	"C:\\Users\\dicki\\AII CREATOR\\allcreator\\AIICreator\\Source\\AIICreatorApp.js": 1782704634978.7297,
+	"C:\\Users\\dicki\\AII CREATOR\\allcreator\\AIICreator\\Source\\MainView.js": 1782704750329.8408,
 	"C:\\Users\\dicki\\AII CREATOR\\allcreator\\AIICreator\\Template\\styler.stl": 1782693623495.5627,
 	"C:\\Users\\dicki\\AII CREATOR\\allcreator\\AIICreator\\Source\\MainView.lay": 1782693623494.563,
 	"concat": true,
 	"C:\\Users\\dicki\\AII CREATOR\\allcreator\\AIICreator\\Library\\ToastManager.js": 1782701649435.118,
-	"C:\\Users\\dicki\\AII CREATOR\\allcreator\\AIICreator\\Source\\Auth\\AuthView.js": 1782701890982.034,
-	"C:\\Users\\dicki\\AII CREATOR\\allcreator\\AIICreator\\Source\\Auth\\AuthView.lay": 1782704119491.1328
+	"C:\\Users\\dicki\\AII CREATOR\\allcreator\\AIICreator\\Source\\Auth\\AuthView.js": 1782706380044.4607,
+	"C:\\Users\\dicki\\AII CREATOR\\allcreator\\AIICreator\\Source\\Auth\\AuthView.lay": 1782704634980.8425
 }
