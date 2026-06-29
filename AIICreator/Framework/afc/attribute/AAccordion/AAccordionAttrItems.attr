@@ -1,0 +1,166 @@
+
+window.AAccordionAttrItems = function() 
+{
+    const labelStyle = { width: '30%', height: '100%', textAlign: 'right', marginRight: '5px' },
+        viewStyle = { width: '100%', height: '25px', padding: '2px', whiteSpace: 'nowrap' }
+
+    const attrItems = 
+    {
+        'Items': 
+        {
+            name: 'AView',
+            style: { width: '100%', height: 'auto', padding: '2px' },
+            children:
+            [
+                {
+                    name: 'AView', 
+                    style: viewStyle,
+                    children:               //Label - TextField
+                    [
+                        {
+                            name: 'ALabel',
+                            text: 'Item Height',
+                            style: labelStyle,
+                        },
+                        {
+                            name: 'ATextField',
+                            id: "data-item-height",
+                            group: 'ATTR_VALUE',
+                            event: 'change',
+                            listener: 'onTextValueChange',
+                            style: { width: '60%', height: '100%' }
+                        }
+                    ]
+                },
+
+                {
+                    name: 'AView',
+                    style: viewStyle,
+                    children:
+                    [
+                        {
+                            name: 'AButton',
+                            id: 'AddBtn',
+                            text: 'add',
+                            event: 'click',
+                            listener: 'onAddItemBtnClick',
+                            style: { width: '40px', height: '22px' }
+                        },
+                        {
+                            name: 'AButton',
+                            id: 'EditBtn',
+                            text: 'edit',
+                            event: 'click',
+                            listener: 'onEditItemBtnClick',
+                            style: { width: '40px', height: '22px', marginLeft: '5px' }
+                        },                       
+                        {
+                            name: 'AButton',
+                            id: 'DelBtn',
+                            text: 'del',
+                            event: 'click',
+                            listener: 'onDeleteItemBtnClick',
+                            style: { width: '40px', height: '22px', marginLeft: '5px' }
+                        },                
+                        {
+                            name: 'AButton',
+                            id: 'UP',
+                            text: '↑',
+                            event: 'click',
+                            listener: 'onMoveBtnClick',
+                            style: { width: '30px', height: '22px', marginLeft: '5px' }
+                        },
+                        {
+                            name: 'AButton',
+                            id: 'DOWN',
+                            text: '↓',
+                            event: 'click',
+                            listener: 'onMoveBtnClick',
+                            style: { width: '30px', height: '22px', marginLeft: '5px' }
+                        }                        
+                    ]
+                },
+
+                {
+                    name: 'AView', 
+                    style: { width: '100%', height: 'auto', padding: '2px' },
+                    children:
+                    [
+                        {
+                            name: 'AGrid',
+                            id: "data-iteminfo-",
+                            group: 'MATTR_VALUE',
+                            events: ['select', 'dblclick'],
+                            listeners: ['onIteminfoSelect', 'onIteminfoDblClick'],
+                            style: { width: '100%', height: 'auto' },
+                            columns: [ '30%', '' ]
+                        }
+                    ]
+                },                
+            ]
+        },
+
+        'Option': 
+        {
+            name: 'AView',
+            style: { width: '100%', height: 'auto', padding: '2px' },
+            children:
+            [
+                {
+                    name: 'AView',
+                    style: viewStyle,
+                    children:
+                    [
+                        {
+                            name: 'ACheckBox',
+                            text: 'Insert Item Show',
+                            id: 'data-show-content',
+                            group: 'ATTR_VALUE',
+                            event: 'click',
+                            listener: 'onCheckBtnClick',
+                            style: { width: '50%', height: '100%', display: 'inline-block' }
+                        },
+                        {
+                            name: 'ACheckBox',
+                            text: 'Single Show',
+                            id: 'data-single-show',
+                            group: 'ATTR_VALUE',
+                            event: 'click',
+                            listener: 'onCheckBtnClick',
+                            style: { width: '50%', height: '100%', display: 'inline-block' }
+                        }
+                    ]
+                },
+                {
+                    name: 'AView',
+                    style: viewStyle,
+                    children:
+                    [
+                        {
+                            name: 'ACheckBox',
+                            text: 'No Animation',
+                            id: 'data-no-animation',
+                            group: 'ATTR_VALUE',
+                            event: 'click',
+                            listener: 'onCheckBtnClick',
+                            style: { width: '50%', height: '100%', display: 'inline-block' }
+                        },
+                        {
+                            name: 'ACheckBox',
+                            text: 'No Toggle',
+                            id: 'data-no-toggle',
+                            group: 'ATTR_VALUE',
+                            event: 'click',
+                            listener: 'onCheckBtnClick',
+                            style: { width: '50%', height: '100%', display: 'inline-block' }
+                        }
+                    ]
+                },            
+            ]
+        }   
+    }
+
+    return attrItems
+
+}
+

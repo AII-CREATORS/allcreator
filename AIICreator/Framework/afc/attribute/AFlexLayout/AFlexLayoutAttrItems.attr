@@ -1,0 +1,131 @@
+
+window.AFlexLayoutAttrItems = function() 
+{
+    const labelStyle = { width: '30%', height: '100%', textAlign: 'right', marginRight: '5px' },
+        viewStyle = { width: '100%', height: '25px', padding: '2px', whiteSpace: 'nowrap' }
+
+    const attrItems = 
+    {
+        'Data': 
+        {
+            name: 'AView',
+            style: { width: '100%', height: 'auto', padding: '2px' },
+            children:
+            [
+                {
+                    name: 'AView', 
+                    style: viewStyle,
+                    children:
+                    [
+                        {
+                            name: 'ALabel',
+                            text: 'Direction',
+                            style: labelStyle,
+                        },
+                        {
+                            name: 'ASelectBox',
+                            id: "flex-direction",
+                            group: 'CSS_VALUE',
+                            event: 'change',
+                            listener: 'onSelectValueChange',
+                            style: { width: '60%', height: '100%' },
+                            items : [ ['row','row'], ['row-reverse','row-reverse'], ['column','column'], ['column-reverse','column-reverse'] ]
+                        }
+                    ]
+                },
+
+                {
+                    name: 'AView',
+                    style: viewStyle,
+                    children:
+                    [
+                        {
+                            name: 'ALabel',
+                            text: 'Wrap',
+                            style: labelStyle,
+                        },
+                        {
+                            name: 'ASelectBox',
+                            id: "flex-wrap",
+                            group: 'CSS_VALUE',
+                            event: 'change',
+                            listener: 'onSelectValueChange',
+                            style: { width: '60%', height: '100%' },
+                            items : [ ['nowrap','nowrap'], ['wrap','wrap'], ['wrap-reverse','wrap-reverse'] ]
+                        }
+                    ]
+                },
+                {
+                    name: 'AView', 
+                    style: viewStyle,
+                    children:
+                    [
+                        {
+                            name: 'ALabel',
+                            text: 'Justify Content',
+                            style: labelStyle,
+                        },
+                        {
+                            name: 'ASelectBox',
+                            id: "justify-content",
+                            group: 'CSS_VALUE',
+                            event: 'change',
+                            listener: 'onSelectValueChange',
+                            style: { width: '60%', height: '100%' },
+                            items : [ ['flex-start','flex-start'], ['center','center'], ['flex-end','flex-end'],['space-between','space-between'],['space-around','space-around'],['space-evenly','space-evenly'] ]
+                        }
+                    ]
+                },
+
+                {
+                    name: 'AView',
+                    style: viewStyle,
+                    children:
+                    [
+                        {
+                            name: 'ALabel',
+                            text: 'Align Items',
+                            style: labelStyle,
+                        },
+                        {
+                            name: 'ASelectBox',
+                            id: "align-items",
+                            group: 'CSS_VALUE',
+                            event: 'change',
+                            listener: 'onSelectValueChange',
+                            style: { width: '60%', height: '100%' },
+                            items : [ ['flex-start','flex-start'], ['center','center'], ['flex-end','flex-end'],['stretch','stretch'],['flex-end','flex-end'] ]
+                        }
+                    ]
+                },
+                {
+                    name: 'AView', 
+                    style: viewStyle,
+                    children:
+                    [
+                        {
+                            name: 'ALabel',
+                            text: 'Align Content',
+                            style: labelStyle,
+                        },
+                        {
+                            name: 'ASelectBox',
+                            id: "align-content",
+                            group: 'CSS_VALUE',
+                            event: 'change',
+                            listener: 'onSelectValueChange',
+                            style: { width: '60%', height: '100%' },
+                            items : [ ['flex-start','flex-start'], ['center','center'], ['flex-end','flex-end'],['stretch','stretch'],['space-between','space-between'],['space-around','space-around'] ]
+                        }
+                    ]
+                },
+
+            ]
+        },
+
+    }
+
+    return attrItems
+
+}
+

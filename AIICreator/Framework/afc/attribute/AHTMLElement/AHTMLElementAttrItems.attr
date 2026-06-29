@@ -1,0 +1,46 @@
+
+window.AHTMLElementAttrItems = function() 
+{
+    const labelStyle = { width: '35%', height: '100%', textAlign: 'right', marginRight: '5px' },
+        viewStyle = { width: '100%', height: '25px', padding: '2px' }
+
+    const attrItems = 
+    {
+        'Data': 
+        {
+            name: 'AView',
+            style: { width: '100%', height: 'auto', padding: '2px' },
+            children:
+            [
+                {
+                    name: 'AView', 
+                    style: viewStyle,
+                    children:
+                    [
+                        {
+                            name: 'ALabel',
+                            text: 'Text',
+                            tooltip: '버튼의 텍스트를 입력해 주세요.',
+                            style: labelStyle,
+                        },
+                        {
+                            name: 'ATextField',
+                            id: "Text",
+                            group: 'SET_VALUE',
+                            event: 'change',
+                            listener: 'onTextValueChange',
+                            style: { width: '60%', height: '100%' }
+                        }
+                    ]
+                },
+                
+            ]
+        },
+
+          
+    }
+
+    return attrItems
+
+}
+

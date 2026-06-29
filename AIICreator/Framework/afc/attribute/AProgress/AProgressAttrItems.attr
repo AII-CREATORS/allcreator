@@ -1,0 +1,15 @@
+
+window.AProgressAttrItems = function() 
+{
+    const labelStyle = { width: '30%', height: '100%', textAlign: 'right', marginRight: '5px' },
+        viewStyle = { width: '100%', height: '25px', padding: '2px', whiteSpace: 'nowrap' }
+
+    const attrItems = 
+    {
+         
+    }
+
+    return attrItems
+
+}
+

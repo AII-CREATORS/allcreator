@@ -1,0 +1,147 @@
+ 
+window.AGridAttrItems = function() 
+{
+    const labelStyle = { width: '50%', height: '100%', textAlign: 'right', marginRight: '5px' },
+        viewStyle = { width: '100%', height: '25px', padding: '2px', whiteSpace: 'nowrap' }
+
+    const attrItems = 
+    {
+        'Option': 
+        {
+            name: 'AView',
+            style: { width: '100%', height: 'auto', padding: '2px' },
+            children:
+            [
+                {
+                    name: 'AView',
+                    style: viewStyle,
+                    children:
+                    [
+                         {
+                            name: 'ACheckBox',
+                            text: 'Hide Header',
+                            id: 'data-hide-header',
+                            group: 'ATTR_VALUE',
+                            event: 'click',
+                            listener: 'onCheckBtnClick',
+                            style: { width: '50%', height: '100%', display: 'inline-block' }
+                        },
+                        {
+                            name: 'ACheckBox',
+                            text: 'Hide Footer',
+                            id: 'data-hide-footer',
+                            group: 'ATTR_VALUE',
+                            event: 'click',
+                            listener: 'onCheckBtnClick',
+                            style: { width: '50%', height: '100%', display: 'inline-block' }
+                        }
+                    ]
+                },
+                {
+                    name: 'AView',
+                    style: viewStyle,
+                    children:
+                    [
+                        {
+                            name: 'ACheckBox',
+                            text: 'Fullrow Select',
+                            id: 'data-fullrow-select',
+                            group: 'ATTR_VALUE',
+                            event: 'click',
+                            listener: 'onCheckBtnClick',
+                            style: { width: '50%', height: '100%', display: 'inline-block' }
+                        },
+                        {
+                            name: 'ACheckBox',
+                            text: 'Single Select',
+                            id: 'data-single-select',
+                            group: 'ATTR_VALUE',
+                            event: 'click',
+                            listener: 'onCheckBtnClick',
+                            style: { width: '50%', height: '100%', display: 'inline-block' }
+                        }
+                    ]
+                },            
+                 {
+                    name: 'AView',
+                    style: viewStyle,
+                    children:
+                    [
+                        {
+                            name: 'ACheckBox',
+                            text: 'Flexible Row',
+                            id: 'data-flexible-row',
+                            group: 'ATTR_VALUE',
+                            event: 'click',
+                            listener: 'onCheckBtnClick',
+                            style: { width: '50%', height: '100%', display: 'inline-block' }
+                        },
+                        {
+                            name: 'ACheckBox',
+                            text: 'Selectable',
+                            id: 'data-selectable',
+                            group: 'ATTR_VALUE',
+                            event: 'click',
+                            listener: 'onCheckBtnClick',
+                            style: { width: '50%', height: '100%', display: 'inline-block' }
+                        },
+                    ]
+                },            
+                 {
+                    name: 'AView',
+                    style: viewStyle,
+                    children:
+                    [
+                        {
+                            name: 'ACheckBox',
+                            text: 'Clear Row Template',
+                            id: 'data-clear-rowtmpl',
+                            group: 'ATTR_VALUE',
+                            event: 'click',
+                            listener: 'onCheckBtnClick',
+                            style: { width: '50%', height: '100%', display: 'inline-block' }
+                        },
+                        {
+                            name: 'ACheckBox',
+                            text: 'Sortable',
+                            id: 'data-sortable',
+                            group: 'ATTR_VALUE',
+                            event: 'click',
+                            listener: 'onCheckBtnClick',
+                            style: { width: '50%', height: '100%', display: 'inline-block' }
+                        }
+                    ]
+                },
+                {
+                    name: 'AView',
+                    style: viewStyle,
+                    children:
+                    [
+                        {
+                            name: 'ACheckBox',
+                            text: 'Column Resize',
+                            id: 'data-column-resize',
+                            group: 'ATTR_VALUE',
+                            event: 'click',
+                            listener: 'onCheckBtnClick',
+                            style: { width: '50%', height: '100%', display: 'inline-block' }
+                        }, 
+                        {
+                            name: 'ACheckBox',
+                            text: 'Width Changable',
+                            id: 'data-width-changable',
+                            group: 'ATTR_VALUE',
+                            event: 'click',
+                            listener: 'onCheckBtnClick',
+                            style: { width: '50%', height: '100%', display: 'inline-block' }
+                        },
+                    ]
+                },            
+            ]
+        }    
+    }
+
+    return attrItems
+
+}
+

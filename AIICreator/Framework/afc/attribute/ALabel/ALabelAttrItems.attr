@@ -1,0 +1,101 @@
+
+window.ALabelAttrItems = function() 
+{
+    const labelStyle = { width: '30%', height: '100%', textAlign: 'right', marginRight: '5px' },
+        viewStyle = { width: '100%', height: '25px', padding: '2px', whiteSpace: 'nowrap' }
+
+    const attrItems = 
+    {
+        'Data': 
+        {
+            name: 'AView',
+            style: { width: '100%', height: 'auto', padding: '2px' },
+            children:
+            [
+                {
+                    name: 'AView', 
+                    style: viewStyle,
+                    children:
+                    [
+                        {
+                            name: 'ALabel',
+                            text: 'Text',
+                            style: labelStyle,
+                        },
+                        {
+                            name: 'ATextField',
+                            id: "Text",
+                            group: 'SET_VALUE',
+                            event: 'change',
+                            listener: 'onTextValueChange',
+                            style: { width: '60%', height: '100%' }
+                        }
+                    ]
+                },
+
+                {
+                    name: 'AView',
+                    style: viewStyle,
+                    children:
+                    [
+                        {
+                            name: 'ALabel',
+                            text: 'Align',
+                            style: labelStyle,
+                        },
+                        {
+                            name: 'ASelectBox',
+                            id: "text-align",
+                            group: 'CSS_VALUE',
+                            event: 'change',
+                            listener: 'onSelectValueChange',
+                            style: { width: '60%', height: '100%' },
+                            items : [ ['left','left'], ['center','center'], ['right','right'] ]
+                        }
+                    ]
+                },
+               {
+                    name: 'AView',
+                    style: viewStyle,
+                    children:
+                    [
+                        {
+                            name: 'ALabel',
+                            text: 'Line Break',
+                            style: labelStyle,
+                        },
+                        {
+                            name: 'ASelectBox',
+                            id: "word-break",
+                            group: 'CSS_VALUE',
+                            event: 'change',
+                            listener: 'onSelectValueChange',
+                            style: { width: '60%', height: '100%' },
+                            items : [ ['break word','normal'], ['break all','break-all'] ]
+                        }
+                    ]
+                },
+                 {
+                    name: 'AView',
+                    style: viewStyle,
+                    children:
+                    [
+                        {
+                            name: 'ACheckBox',
+                            text: 'pre formatted',
+                            id: 'data-pre',
+                            group: 'ATTR_VALUE',
+                            event: 'click',
+                            listener: 'onCheckBtnClick',
+                            style: { marginLeft:'calc(30% + 5px)', width: 'auto', height: '100%', display: 'inline-block' }
+                        }
+                    ]
+                },
+            ]
+        }
+    }
+
+    return attrItems
+
+}
+

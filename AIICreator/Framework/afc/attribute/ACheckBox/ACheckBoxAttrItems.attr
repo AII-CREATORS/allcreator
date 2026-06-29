@@ -1,0 +1,154 @@
+
+window.ACheckBoxAttrItems = function() 
+{
+    const labelStyle = { width: '30%', height: '100%', textAlign: 'right', marginRight: '5px' },
+        viewStyle = { width: '100%', height: '25px', padding: '2px', whiteSpace: 'nowrap' }
+
+    const attrItems = 
+    {
+        'Data': 
+        {
+            name: 'AView',
+            style: { width: '100%', height: 'auto', padding: '2px' },
+            children:
+            [
+                {
+                    name: 'AView', 
+                    style: viewStyle,
+                    children:
+                    [
+                        {
+                            name: 'ALabel',
+                            text: 'Text',
+                            style: labelStyle,
+                        },
+                        {
+                            name: 'ATextField',
+                            id: "Text",
+                            group: 'SET_VALUE',
+                            event: 'change',
+                            listener: 'onTextValueChange',
+                            style: { width: '60%', height: '100%' }
+                        }
+                    ]
+                },
+
+                {
+                    name: 'AView',
+                    style: viewStyle,
+                    children:
+                    [
+                        {
+                            name: 'ALabel',
+                            text: 'Align',
+                            style: labelStyle,
+                        },
+                        {
+                            name: 'ASelectBox',
+                            id: "justify-content",
+                            group: 'CSS_VALUE',
+                            event: 'change',
+                            listener: 'onSelectValueChange',
+                            style: { width: '60%', height: '100%' },
+                            items : [ ['left','flex-start'], ['center','center'], ['right','flex-end'] ]
+                        }
+                    ]
+                },
+
+                {
+                    name: 'AView',
+                    style: viewStyle,
+                    children:
+                    [
+                        {
+                            name: 'ALabel',
+                            text: 'Check Pos',
+                            style: labelStyle,
+                        },
+                        {
+                            name: 'ASelectBox',
+                            id: "CheckAlign",
+                            group: 'SET_VALUE',
+                            event: 'change',
+                            listener: 'onSelectValueChange',
+                            style: { width: '60%', height: '100%' },
+                            items : [ ['left','left'], ['right','right'] ]
+                        }
+                    ]
+                }
+
+            ]
+        },
+
+        'Value': 
+        {
+            name: 'AView',
+            style: { width: '100%', height: 'auto', padding: '2px' },
+            children:
+            [
+                {
+                    name: 'AView',
+                    style: viewStyle,
+                    children:
+                    [
+                        {
+                            name: 'ALabel',
+                            text: 'Check',
+                            style: labelStyle,
+                        },
+                        {
+                            name: 'ATextField',
+                            id: "data-check-value",
+                            group: 'ATTR_VALUE',
+                            event: 'change',
+                            listener: 'onTextValueChange',
+                            style: { width: '60%', height: '100%' }
+                        }
+                    ]
+                },
+                
+                {
+                    name: 'AView',
+                    style: viewStyle,
+                    children:
+                    [
+                        {
+                            name: 'ALabel',
+                            text: 'Uncheck',
+                            style: labelStyle,
+                        },
+                        {
+                            name: 'ATextField',
+                            id: "data-uncheck-value",
+                            group: 'ATTR_VALUE',
+                            event: 'change',
+                            listener: 'onTextValueChange',
+                            style: { width: '60%', height: '100%' }
+                        }
+                    ]
+                },
+                
+                {
+                    name: 'AView',
+                    style: viewStyle,
+                    children:
+                    [
+                        {
+                            name: 'ACheckBox',
+                            text: 'setCheck',
+                            id: 'Check',
+                            group: 'SET_VALUE',
+                            event: 'click',
+                            listener: 'onCheckBtnClick',
+                            style: { width: 'calc(30% + 21px)', height: '100%', display: 'inline-block', backgroundPosition: 'right center', paddingRight: '21px', textAlign: 'right' }
+                        },
+                    ]
+                },
+            ]
+        }    
+    }
+
+    return attrItems
+
+}
+

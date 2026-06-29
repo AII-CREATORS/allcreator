@@ -1,0 +1,190 @@
+
+window.ATabViewAttrItems = function() 
+{
+    const labelStyle = { width: '30%', height: '100%', textAlign: 'right', marginRight: '5px' },
+        viewStyle = { width: '100%', height: '25px', padding: '2px', whiteSpace: 'nowrap' }
+
+    const attrItems = 
+    {
+        'Tab': 
+        {
+            name: 'AView',
+            style: { width: '100%', height: 'auto', padding: '2px' },
+            children:
+            [
+                {
+                    name: 'AView', 
+                    style: viewStyle,
+                    children:               //Label - TextField
+                    [
+                        {
+                            name: 'ALabel',
+                            text: 'Width',
+                            style: labelStyle,
+                        },
+                        {
+                            name: 'ATextField',
+                            id: "tab-width",
+                            group: 'CSS_VALUE',
+                            event: 'change',
+                            listener: 'onNumberValueChange',
+                            style: { width: '60%', height: '100%' }
+                        }
+                    ]
+                },
+                {
+                    name: 'AView', 
+                    style: viewStyle,
+                    children:               //Label - TextField
+                    [
+                        {
+                            name: 'ALabel',
+                            text: 'Height',
+                            style: labelStyle,
+                        },
+                        {
+                            name: 'ATextField',
+                            id: "tab-height",
+                            group: 'CSS_VALUE',
+                            event: 'change',
+                            listener: 'onNumberValueChange',
+                            style: { width: '60%', height: '100%' }
+                        }
+                    ]
+                },
+                {
+                    name: 'AView',
+                    style: viewStyle,
+                    children:
+                    [
+                        {
+                            name: 'ACheckBox',
+                            text: 'Hidden',
+                            id: 'tab-display',
+                            group: 'CSS_VALUE',
+                            event: 'click',
+                            listener: 'onCheckBtnClick',
+                            style: { marginLeft:'calc(30% + 5px)', width: 'auto', height: '100%', display: 'inline-block' }
+                        }
+                    ]
+                },
+                {
+                    name: 'AView',
+                    style: viewStyle,
+                    children:
+                    [
+                        {
+                            name: 'ACheckBox',
+                            text: 'Select History',
+                            id: 'data-tab-history',
+                            group: 'ATTR_VALUE',
+                            event: 'click',
+                            listener: 'onCheckBtnClick',
+                            style: { marginLeft:'calc(30% + 5px)', width: 'auto', height: '100%', display: 'inline-block' }
+                        }
+                    ]
+                },
+            ]
+        },        
+        'Items': 
+        {
+            name: 'AView',
+            style: { width: '100%', height: 'auto', padding: '2px' },
+            children:
+            [
+                {
+                    name: 'AView', 
+                    style: viewStyle,
+                    children:               //Label - TextField
+                    [
+                        {
+                            name: 'ALabel',
+                            text: 'Select',
+                            style: labelStyle,
+                        },
+                        {
+                            name: 'ATextField',
+                            placeholder: 'ID',
+                            id: "data-tab-select",
+                            group: 'ATTR_VALUE',
+                            event: 'change',
+                            listener: 'onTextValueChange',
+                            style: { width: '60%', height: '100%' }
+                        }
+                    ]
+                },
+
+                {
+                    name: 'AView',
+                    style: viewStyle,
+                    children:
+                    [
+                        {
+                            name: 'AButton',
+                            id: 'AddBtn',
+                            text: 'add',
+                            event: 'click',
+                            listener: 'onAddTabBtnClick',
+                            style: { width: '40px', height: '22px' }
+                        },
+                        {
+                            name: 'AButton',
+                            id: 'EditBtn',
+                            text: 'edit',
+                            event: 'click',
+                            listener: 'onEditTabBtnClick',
+                            style: { width: '40px', height: '22px', marginLeft: '5px' }
+                        },                       
+                        {
+                            name: 'AButton',
+                            id: 'DelBtn',
+                            text: 'del',
+                            event: 'click',
+                            listener: 'onRemoveTabBtnClick',
+                            style: { width: '40px', height: '22px', marginLeft: '5px' }
+                        },                
+                        {
+                            name: 'AButton',
+                            id: 'UP',
+                            text: '↑',
+                            event: 'click',
+                            listener: 'onMoveBtnClick',
+                            style: { width: '30px', height: '22px', marginLeft: '5px' }
+                        },
+                        {
+                            name: 'AButton',
+                            id: 'DOWN',
+                            text: '↓',
+                            event: 'click',
+                            listener: 'onMoveBtnClick',
+                            style: { width: '30px', height: '22px', marginLeft: '5px' }
+                        }                        
+                    ]
+                },
+
+                {
+                    name: 'AView', 
+                    style: { width: '100%', height: 'auto', padding: '2px' },
+                    children:
+                    [
+                        {
+                            name: 'AGrid',
+                            id: "data-tabinfo-",
+                            group: 'MATTR_VALUE',
+                            events: ['select', 'dblclick'],
+                            listeners: ['onDataTabinfoSelect', 'onDataTabinfoDblClick'],
+                            style: { width: '100%', height: 'auto' },
+                            columns: [ '', '', '50%' ]
+                        }
+                    ]
+                },                
+            ]
+        },
+
+          
+    }
+
+    return attrItems
+
+}
+

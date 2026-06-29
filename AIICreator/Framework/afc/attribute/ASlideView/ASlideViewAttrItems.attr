@@ -1,0 +1,46 @@
+
+window.ASlideViewAttrItems = function() 
+{
+    const labelStyle = { width: '30%', height: '100%', textAlign: 'right', marginRight: '5px' },
+        viewStyle = { width: '100%', height: '25px', padding: '2px', whiteSpace: 'nowrap' }
+
+    const attrItems = 
+    {
+      
+        'Option': 
+        {
+            name: 'AView',
+            style: { width: '100%', height: 'auto', padding: '2px' },
+            children:
+            [
+
+                {
+                    name: 'AView',
+                    style: viewStyle,
+                    children:
+                    [
+                        {
+                            name: 'ALabel',
+                            text: 'Direction',
+                            style: labelStyle,
+                        },
+                        {
+                            name: 'ASelectBox',
+                            id: "data-direction",
+                            group: 'ATTR_VALUE',
+                            event: 'change',
+                            listener: 'onSelectValueChange',
+                            style: { width: '60%', height: '100%' },
+                            items : [ ['horizontal','horizontal'], ['vertical','vertical']]
+                        }
+                    ]
+                },
+            ]
+        }    
+  
+    }
+
+    return attrItems
+
+}
+

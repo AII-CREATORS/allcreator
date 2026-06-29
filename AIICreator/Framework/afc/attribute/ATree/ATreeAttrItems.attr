@@ -1,0 +1,88 @@
+ 
+window.ATreeAttrItems = function() 
+{
+    const labelStyle = { width: '30%', height: '100%', textAlign: 'right', marginRight: '5px' },
+        viewStyle = { width: '100%', height: '25px', padding: '2px', whiteSpace: 'nowrap' }
+
+    const attrItems = 
+    {
+        'Option': 
+        {
+            name: 'AView',
+            style: { width: '100%', height: 'auto', padding: '2px' },
+            children:
+            [
+                {
+                    name: 'AView',
+                    style: viewStyle,
+                    children:
+                    [
+                        {
+                            name: 'ACheckBox',
+                            text: 'Single Select',
+                            id: 'data-single-select',
+                            group: 'ATTR_VALUE',
+                            event: 'click',
+                            listener: 'onCheckBtnClick',
+                            style: { width: '50%', height: '100%', display: 'inline-block' }
+                        },
+                        {
+                            name: 'ACheckBox',
+                            text: 'Full Select',
+                            id: 'data-full-select',
+                            group: 'ATTR_VALUE',
+                            event: 'click',
+                            listener: 'onCheckBtnClick',
+                            style: { width: '50%', height: '100%', display: 'inline-block' }
+                        }
+                    ]
+                },
+                {
+                    name: 'AView',
+                    style: viewStyle,
+                    children:
+                    [
+                        {
+                            name: 'ACheckBox',
+                            text: 'Draggable',
+                            id: 'data-draggable',
+                            group: 'ATTR_VALUE',
+                            event: 'click',
+                            listener: 'onCheckBtnClick',
+                            style: { width: '50%', height: '100%', display: 'inline-block' }
+                        },
+                        {
+                            name: 'ACheckBox',
+                            text: 'Use History',
+                            id: 'data-use-history',
+                            group: 'ATTR_VALUE',
+                            event: 'click',
+                            listener: 'onCheckBtnClick',
+                            style: { width: '50%', height: '100%', display: 'inline-block' }
+                        }
+                    ]
+                },
+                {
+                    name: 'AView',
+                    style: viewStyle,
+                    children:
+                    [
+                        {
+                            name: 'ACheckBox',
+                            text: 'Maintain selection order',
+                            id: 'data-maintain-order',
+                            group: 'ATTR_VALUE',
+                            event: 'click',
+                            listener: 'onCheckBtnClick',
+                            style: { width: '60%', height: '100%', display: 'inline-block' }
+                        },
+                    ]
+                },                        
+            ]
+        }    
+    }
+
+    return attrItems
+
+}
+

@@ -1,0 +1,86 @@
+
+window.AVerticalAttrItems = function() 
+{
+    const labelStyle = { width: '30%', height: '100%', textAlign: 'right', marginRight: '5px' },
+        viewStyle = { width: '100%', height: '25px', padding: '2px', whiteSpace: 'nowrap' }
+
+    const attrItems = 
+    {
+        'Data': 
+        {
+            name: 'AView',
+            style: { width: '100%', height: 'auto', padding: '2px' },
+            children:
+            [
+                {
+                    name: 'AView',
+                    style: viewStyle,
+                    children:
+                    [
+                        {
+                            name: 'ALabel',
+                            text: 'Align Content',
+                            style: labelStyle,
+                        },
+                        {
+                            name: 'ASelectBox',
+                            id: "justify-content",
+                            group: 'CSS_VALUE',
+                            event: 'change',
+                            listener: 'onSelectValueChange',
+                            style: { width: '60%', height: '100%' },
+                            items : [ ['top','flex-start'], ['center','center'], ['bottom','flex-end'], ['space-between','space-between'], ['space-around','space-around'], ['space-evenly','space-evenly'] ]
+                        }
+                    ]
+                },
+                {
+                    name: 'AView',
+                    style: viewStyle,
+                    children:
+                    [
+                        {
+                            name: 'ALabel',
+                            text: 'Order',
+                            style: labelStyle,
+                        },
+                        {
+                            name: 'ASelectBox',
+                            id: "flex-direction",
+                            group: 'CSS_VALUE',
+                            event: 'change',
+                            listener: 'onSelectValueChange',
+                            style: { width: '60%', height: '100%' },
+                            items : [ ['default','column'], ['reverse','column-reverse'] ]
+                        }
+                    ]
+                },
+                {
+                    name: 'AView',
+                    style: viewStyle,
+                    children:
+                    [
+                        {
+                            name: 'ALabel',
+                            text: 'Stretch Content',
+                            style: labelStyle,
+                        },
+                        {
+                            name: 'ASelectBox',
+                            id: "align-items",
+                            group: 'CSS_VALUE',
+                            event: 'change',
+                            listener: 'onSelectValueChange',
+                            style: { width: '60%', height: '100%' },
+                            items : [ ['none','center'], ['stretch','stretch'] ]
+                        }
+                    ]
+                },
+
+            ]
+        },
+    }
+
+    return attrItems
+
+}
+

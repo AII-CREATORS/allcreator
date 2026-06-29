@@ -1,0 +1,59 @@
+
+window.AViewAttrItems = function() 
+{
+    const labelStyle = { width: '30%', height: '100%', textAlign: 'right', marginRight: '5px' }
+    const viewStyle = { width: '100%', height: '25px', padding: '2px', whiteSpace: 'nowrap' }
+
+    const attrItems = 
+    {
+        'Data': 
+        {
+            name: 'AView',
+            style: { width: '100%', height: 'auto', padding: '2px' },
+            children:
+            [
+                {
+                    name: 'AView',
+                    style: viewStyle,
+                    children:
+                    [
+                        {
+                            name: 'ALabel',
+                            text: 'Load Url',
+                            style: labelStyle,
+                        },
+                        {
+                            name: 'ATextField',
+                            id: "data-load-url",
+                            group: 'ATTR_VALUE',
+                            event: 'change',
+                            listener: 'onTextValueChange',
+                            style: { width: '60%', height: '100%' }
+                        }
+                    ]
+                },
+
+                {
+                    name: 'AView',
+                    style: viewStyle,
+                    children:
+                    [
+                        {
+                            name: 'ACheckBox',
+                            text: 'getData As Array',
+                            id: 'data-option-getdata-as-array',
+                            group: 'ATTR_VALUE',
+                            event: 'click',
+                            listener: 'onCheckBtnClick',
+                            style: { marginLeft:'calc(30% + 5px)', width: 'auto', height: '100%', display: 'inline-block' }
+                        }
+                    ]
+                }
+            ]
+        },
+    }    
+
+    return attrItems
+
+}
+

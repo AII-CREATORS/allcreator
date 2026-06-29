@@ -1,0 +1,202 @@
+
+window.ATextFieldAttrItems = function() 
+{
+    const labelStyle = { width: '30%', height: '100%', textAlign: 'right', marginRight: '5px' },
+        viewStyle = { width: '100%', height: '25px', padding: '2px', whiteSpace: 'nowrap' }
+
+    const attrItems = 
+    {
+        'Data': 
+        {
+            name: 'AView',
+            style: { width: '100%', height: 'auto', padding: '2px' },
+            children:
+            [
+                {
+                    name: 'AView', 
+                    style: viewStyle,
+                    children:
+                    [
+                        {
+                            name: 'ALabel',
+                            text: 'Text',
+                            style: labelStyle,
+                        },
+                        {
+                            name: 'ATextField',
+                            id: "AttrValue",
+                            group: 'SET_VALUE',
+                            event: 'change',
+                            listener: 'onTextValueChange',
+                            style: { width: '60%', height: '100%' }
+                        }
+                    ]
+                },
+
+                {
+                    name: 'AView',
+                    style: viewStyle,
+                    children:
+                    [
+                        {
+                            name: 'ALabel',
+                            text: 'Placeholder',
+                            style: labelStyle,
+                        },
+                        {
+                            name: 'ATextField',
+                            id: "placeholder",
+                            group: 'ATTR_VALUE',
+                            event: 'change',
+                            listener: 'onTextValueChange',
+                            style: { width: '60%', height: '100%' },
+                        }
+                    ]
+                },
+                
+                {
+                    name: 'AView',
+                    style: viewStyle,
+                    children:
+                    [
+                        {
+                            name: 'ALabel',
+                            text: 'Date Type',
+                            style: labelStyle,
+                        },
+                        {
+                            name: 'ASelectBox',
+                            id: "type",
+                            group: 'ATTR_VALUE',
+                            event: 'change',
+                            listener: 'onSelectValueChange',
+                            style: { width: '60%', height: '100%' },
+                            items : [ ['text','text'], ['search','search'], ['password','password'], ['number','number'],['email','email'], ['tel','tel'], ['file','file'], ['color','color'],['time','time'], ['date','date'], ['week','week'], ['month','month'] ]
+                        }
+                    ]
+                },
+
+                {
+                    name: 'AView',
+                    style: viewStyle,
+                    children:
+                    [
+                        {
+                            name: 'ALabel',
+                            text: 'Align',
+                            style: labelStyle,
+                        },
+                        {
+                            name: 'ASelectBox',
+                            id: "text-align",
+                            group: 'CSS_VALUE',
+                            event: 'change',
+                            listener: 'onSelectValueChange',
+                            style: { width: '60%', height: '100%' },
+                            items : [ ['left','left'], ['center','center'], ['right','right'] ]
+                        }
+                    ]
+                },
+
+                {
+                    name: 'AView',
+                    style: viewStyle,
+                    children:
+                    [
+                        {
+                            name: 'ALabel',
+                            text: 'MaxLength',
+                            style: labelStyle,
+                        },
+                        {
+                            name: 'ATextField',
+                            id: "maxlength",
+                            group: 'ATTR_VALUE',
+                            type: 'number',
+                            event: 'change',
+                            listener: 'onNumberValueChange',
+                            style: { width: '60%', height: '100%' },
+                        }
+                    ]
+                },
+
+                {
+                    name: 'AView',
+                    style: viewStyle,
+                    children:
+                    [
+                        {
+                            name: 'ALabel',
+                            id: 'label',
+                            text: 'IME',
+                            style: labelStyle,
+                        },
+                        {
+                            name: 'ASelectBox',
+                            id: "ime-mode",
+                            group: 'ATTR_VALUE',
+                            event: 'change',
+                            listener: 'onSelectValueChange',
+                            style: { width: '60%', height: '100%' },
+                            items : [ ['none'], ['english','inactive'], ['korean','active'] ]
+                        }
+                    ]
+                },
+            ]
+        },
+
+        'Option': 
+        {
+            name: 'AView',
+            style: { width: '100%', height: 'auto', padding: '2px' },
+            children:
+            [
+                {
+                    name: 'AView',
+                    style: viewStyle,
+                    children:
+                    [
+                        {
+                            name: 'ACheckBox',
+                            text: 'TimerChange',
+                            id: 'data-timer-change',
+                            group: 'ATTR_VALUE',
+                            event: 'click',
+                            listener: 'onCheckBtnClick',
+                            style: { width: '50%', height: '100%', display: 'inline-block' }
+                        },
+                        {
+                            name: 'ACheckBox',
+                            text: 'FocusSelection',
+                            id: 'data-option-focus-selection',
+                            group: 'ATTR_VALUE',
+                            event: 'click',
+                            listener: 'onCheckBtnClick',
+                            style: { width: '50%', height: '100%', display: 'inline-block' }
+                        }
+                    ]
+                },
+                {
+                    name: 'AView',
+                    style: viewStyle,
+                    children:
+                    [
+                        {
+                            name: 'ACheckBox',
+                            text: 'AutoTab',
+                            id: 'data-auto-tab',
+                            group: 'ATTR_VALUE',
+                            event: 'click',
+                            listener: 'onCheckBtnClick',
+                            style: { width: '50%', height: '100%', display: 'inline-block' }
+                        }
+                    ]
+                },            
+            ]
+        }    
+    }
+
+    return attrItems
+
+}
+

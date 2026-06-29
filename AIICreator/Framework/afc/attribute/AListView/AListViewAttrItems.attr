@@ -1,0 +1,220 @@
+ 
+window.AListViewAttrItems = function() 
+{
+    const labelStyle = { width: '30%', height: '100%', textAlign: 'right', marginRight: '5px' },
+        viewStyle = { width: '100%', height: '25px', padding: '2px', whiteSpace: 'nowrap' }
+
+    const attrItems = 
+    {
+         'Item': 
+        {
+            name: 'AView',
+            style: { width: '100%', height: 'auto', padding: '2px' },
+             children:
+            [
+                {
+                    name: 'AView', 
+                    style: viewStyle,
+                    children:
+                    [
+                        {
+                            name: 'ALabel',
+                            text: 'Height',
+                            style: labelStyle,
+                        },
+                        {
+                            name: 'ATextField',
+                            id: "item-height",
+                            group: 'CSS_VALUE',
+                            event: 'change',
+                            listener: 'onNumberValueChange',
+                            style: { width: '60%', height: '100%' }
+                        }
+                    ]
+                },
+                {
+                    name: 'AView', 
+                    style: viewStyle,
+                    children:
+                    [
+                        {
+                            name: 'ALabel',
+                            text: 'Gap',
+                            style: labelStyle,
+                        },
+                        {
+                            name: 'ATextField',
+                            id: "item-gap",
+                            group: 'ATTR_VALUE',
+                            event: 'change',
+                            listener: 'onNumberValueChange',
+                            style: { width: '60%', height: '100%' }
+                        }
+                    ]
+                }
+            ],
+        },
+
+        'Contents': 
+        {
+            name: 'AView',
+            style: { width: '100%', height: 'auto', padding: '2px' },
+            children:
+            [
+                {
+                    name: 'AView', 
+                    style: viewStyle,
+                    children:
+                    [
+                        {
+                            name: 'ALabel',
+                            text: 'Default Url',
+                            id: "ALabel4",
+                            style: labelStyle,
+                        },
+                        {
+                            name: 'ATextField',
+                            id: "data-default-url",
+                            group: 'ATTR_VALUE',
+                            event: 'change',
+                            listener: 'onTextValueChange',
+                            style: { width: '60%', height: '100%' }
+                        }
+                    ]
+                },
+                {
+                    name: 'AView',
+                    style: Object.assign({textAlign: 'right'}, viewStyle),
+                    children:
+                    [
+                        {
+                            name: 'AButton',
+                            id: 'AddBtn',
+                            text: 'add',
+                            event: 'click',
+                            listener: 'onAddItemBtnClick',
+                            style: { width: '40px', height: '22px' }
+                        },
+                        {
+                            name: 'AButton',
+                            id: 'EditBtn',
+                            text: 'edit',
+                            event: 'click',
+                            listener: 'onEditItemBtnClick',
+                            style: { width: '40px', height: '22px', marginLeft: '5px' }
+                        },
+                        {
+                            name: 'AButton',
+                            id: 'DelBtn',
+                            text: 'del',
+                            event: 'click',
+                            listener: 'onDeleteItemBtnClick',
+                            style: { width: '40px', height: '22px', marginLeft: '5px' }
+                        },
+                        {
+                            name: 'AButton',
+                            id: 'UP',
+                            text: '↑',
+                            event: 'click',
+                            listener: 'onMoveBtnClick',
+                            style: { width: '30px', height: '22px', marginLeft: '5px' }
+                        },
+                        {
+                            name: 'AButton',
+                            id: 'DOWN',
+                            text: '↓',
+                            event: 'click',
+                            listener: 'onMoveBtnClick',
+                            style: { width: '30px', height: '22px', marginLeft: '5px', marginRight: '1px' }
+                        },
+                    ]
+                },
+
+                {
+                    name: 'AView', 
+                    style: { width: '100%', height: 'auto', padding: '2px' },
+                    children:
+                    [
+                        {
+                            name: 'AGrid',
+                            id: "data-iteminfo-",
+                            group: 'MATTR_VALUE',
+                            events: ['select', 'dblclick'],
+                            listeners: ['onIteminfoSelect', 'onIteminfoDblClick'],
+                            style: { width: '100%', height: 'auto' },
+                            columns: [ '100%', '' ]
+                        }
+                    ]
+                },          
+            ]
+        },
+
+        'Option': 
+        {
+            name: 'AView',
+            style: { width: '100%', height: '90px', padding: '2px' },
+            children:
+            [
+                {
+                    name: 'AView',
+                    style: viewStyle,
+                    children:
+                    [
+                         {
+                            name: 'ALabel',
+                            text: 'Direction',
+                            style: labelStyle,
+                        },
+                          {
+                            name: 'ASelectBox',
+                            id: "data-direction",
+                            group: 'ATTR_VALUE',
+                            event: 'change',
+                            listener: 'onSelectValueChange',
+                            style: { width: '60%', height: '100%' },
+                            items : [ ['vertical','vertical'], ['horizontal','horizontal'] ]
+                        },
+                         {
+                    name: 'AView',
+                    style: viewStyle,
+                    children:
+                    [
+                        {
+                            name: 'ACheckBox',
+                            text: 'Selectable',
+                            id: 'data-selectable',
+                            group: 'ATTR_VALUE',
+                            event: 'click',
+                            listener: 'onCheckBtnClick',
+                            style: { marginLeft:'calc(30% + 5px)', width: 'auto', height: '100%', display: 'inline-block' }
+                        }
+                    ]
+                },
+
+                {
+                    name: 'AView',
+                    style: viewStyle,
+                    children:
+                    [
+                        {
+                            name: 'ACheckBox',
+                            text: 'Wrap',
+                            id: 'data-wrap',
+                            group: 'ATTR_VALUE',
+                            event: 'click',
+                            listener: 'onCheckBtnClick',
+                            style: { marginLeft:'calc(30% + 5px)', width: 'auto', height: '100%', display: 'inline-block' }
+                        }
+                    ]
+                },
+                    ]
+                },
+               
+            ]
+        }    
+    }
+
+    return attrItems
+
+}
+

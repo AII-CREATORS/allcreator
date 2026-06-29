@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+	<head>
+	<meta charset="utf-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <!-- Supabase JS SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+	<title>AIICreatorApp</title>
+
+	
+	<link rel="stylesheet" href="Framework/afc/style/afc.css"/>
+	<link rel="stylesheet" href="Framework/afc/style/comp.css"/>
+	<link rel="stylesheet" href="Framework/afc/style/basicStyle.css"/>
+
+	<link rel="stylesheet" href="Template/styler.css"/>
+	<link rel="stylesheet" href="Template/AIICreatorApp_global.css"/>
+
+
+
+	
+	<script>
+	//Electron 과 추가 라이브러리(예, jQuery 등) 와의 충돌 방지
+    //시뮬레이터에서 사용
+	window.nodeRequire = window.require;
+	delete window.require;
+	delete window.exports;
+    delete window.module;
+
+    var theApp = null;
+    var PROJECT_OPTION = {
+    "build": {
+        "bridgeName": "none",
+        "frwLoadOption": "inTimeLoad"
+    },
+    "general": {
+        "autoScale": false,
+        "phoneDocWidth": 0,
+        "tabletDocWidth": 0,
+        "queryFormat": "qry",
+        "scaleVal": 1,
+        "userScalable": false,
+        "tabletMinWidth": 500,
+        "flavor": "common"
+    },
+    "deployment": {
+        "checkVersion": false
+    },
+    "unitUrl": ""
+};
+    
+    document.addEventListener("DOMContentLoaded", () => 
+    {
+		if(window._version) _version.setFileVersion();
+		
+        if(afc.import) afc.import("Source/AIICreatorApp.js");
+        else afc.loadScript("Source/AIICreatorApp.js");		
+
+        afc.scriptReady(() =>
+        {
+            window.theApp = new window["AIICreatorApp"]();
+            window.theApp.isLoadTheme = false;
+            
+            if(PROJECT_OPTION.unitUrl) window.theApp.unitTest(PROJECT_OPTION.unitUrl);
+            else window.theApp.onReady();
+        });
+    });
+    </script>
+
+	<script defer src="lib.js"></script>
+
+
+
+
+		
+	</head>
+	<body class="_global_style_">
+	</body>
+</html>

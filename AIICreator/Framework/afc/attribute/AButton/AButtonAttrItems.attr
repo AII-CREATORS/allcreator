@@ -1,0 +1,229 @@
+
+window.AButtonAttrItems = function() 
+{
+    const labelStyle = { width: '30%', height: '100%', textAlign: 'right', marginRight: '5px' },
+        viewStyle = { width: '100%', height: '25px', padding: '2px', whiteSpace: 'nowrap' }
+
+    const attrItems = 
+    {
+        'Data': 
+        {
+            name: 'AView',
+            style: { width: '100%', height: 'auto', padding: '2px' },
+            children:
+            [
+                {
+                    name: 'AView', 
+                    style: viewStyle,
+                    children:
+                    [
+                        {
+                            name: 'ALabel',
+                            text: 'Text',
+                            style: labelStyle,
+                        },
+                        {
+                            name: 'ATextField',
+                            id: "Text",
+                            group: 'SET_VALUE',
+                            event: 'change',
+                            listener: 'onTextValueChange',
+                            style: { width: '60%', height: '100%' }
+                        }
+                    ]
+                },
+
+                {
+                    name: 'AView',
+                    style: viewStyle,
+                    children:
+                    [
+                        {
+                            name: 'ALabel',
+                            text: 'Align',
+                            style: labelStyle,
+                        },
+                        {
+                            name: 'ASelectBox',
+                            id: "text-align",
+                            group: 'CSS_VALUE',
+                            event: 'change',
+                            listener: 'onSelectValueChange',
+                            style: { width: '60%', height: '100%' },
+                            items : [ ['left','left'], ['center','center'], ['right','right'] ]
+                        }
+                    ]
+                },
+                {
+                    name: 'AView',
+                    style: viewStyle,
+                    children:
+                    [
+                        {
+                            name: 'ALabel',
+                            text: 'Icon',
+                            style: labelStyle,
+                        },
+                        {
+                            name: 'ATextField',
+                            id: "Image",
+                            group: 'SET_VALUE',
+                            event: 'change',
+                            listener: 'onTextValueChange',
+                            style: { width: '50%', height: '100%', marginRight: '2px' }
+                        },
+                        {
+                            name: 'AButton',
+                            text: '...',
+                            event: 'click',
+                            listener: 'onImagePickerClick',
+                            style: { width: '25px', height: '100%' }
+                        }
+                    ]
+                },
+
+                {
+                    name: 'AView',
+                    style: viewStyle,
+                    children:
+                    [
+                        {
+                            name: 'ACheckBox',
+                            text: 'After Text',
+                            id: 'data-aftertext',
+                            group: 'ATTR_VALUE',
+                            event: 'click',
+                            listener: 'onCheckBtnClick',
+                            style: { marginLeft:'calc(30% + 5px)', width: 'auto', height: '100%', display: 'inline-block' }
+                        }
+                    ]
+                },
+
+                {
+                    name: 'AView',
+                    style: viewStyle,
+                    children:
+                    [
+                        {
+                            name: 'ACheckBox',
+                            text: 'New Line Text',
+                            id: 'data-newline',
+                            group: 'ATTR_VALUE',
+                            event: 'click',
+                            listener: 'onCheckBtnClick',
+                            style: { marginLeft:'calc(30% + 5px)', width: 'auto', height: '100%', display: 'inline-block' }
+                        }
+                    ]
+                },
+
+                {
+                    name: 'AView',
+                    style: viewStyle,
+                    children:
+                    [
+                        {
+                            name: 'ALabel',
+                            text: 'Icon Margin',
+                            style: labelStyle,
+                        },
+                        {
+                            name: 'ATextField',
+                            placeholder: 'top right bottom left',
+                            id: "IconMargin",
+                            group: 'SET_VALUE',
+                            event: 'change',
+                            listener: 'onTextValueChange',
+                            style: { width: '60%', height: '100%' }
+                        }
+                    ]
+                },
+
+                {
+                    name: 'AView',
+                    style: viewStyle,
+                    children:
+                    [
+                        {
+                            name: 'ALabel',
+                            text: 'Icon Size',
+                            style: labelStyle,
+                        },
+                        {
+                            name: 'ATextField',
+                            placeholder: '50px 100%',
+                            id: "IconSize",
+                            group: 'SET_VALUE',
+                            event: 'change',
+                            listener: 'onTextValueChange',
+                            style: { width: '60%', height: '100%' }
+                        }
+                    ]
+                },
+
+            ]
+        },
+
+        'Option': 
+        {
+            name: 'AView',
+            style: { width: '100%', height: 'auto', padding: '2px' },
+            children:
+            [
+                {
+                    name: 'AView',
+                    style: viewStyle,
+                    children:
+                    [
+                        {
+                            name: 'ACheckBox',
+                            text: 'Fast Click',
+                            id: 'data-speed-button',
+                            group: 'ATTR_VALUE',
+                            event: 'click',
+                            listener: 'onCheckBtnClick',
+                            style: { width: '50%', height: '100%', display: 'inline-block' }
+                        },
+                        {
+                            name: 'ACheckBox',
+                            text: 'Tool Button',
+                            id: 'data-tool-button',
+                            group: 'ATTR_VALUE',
+                            event: 'click',
+                            listener: 'onCheckBtnClick',
+                            style: { width: '50%', height: '100%', display: 'inline-block' }
+                        }
+                    ]
+                },
+                {
+                    name: 'AView',
+                    style: viewStyle,
+                    children:
+                    [
+                        {
+                            name: 'ACheckBox',
+                            text: 'Check Button',
+                            id: 'data-check-button',
+                            group: 'ATTR_VALUE',
+                            event: 'click',
+                            listener: 'onCheckBtnClick',
+                            style: { width: '50%', height: '100%', display: 'inline-block' }
+                        },
+                        {
+                            name: 'ACheckBox',
+                            text: 'Off DownState',
+                            id: 'data-off-downstate',
+                            group: 'ATTR_VALUE',
+                            event: 'click',
+                            listener: 'onCheckBtnClick',
+                            style: { width: '50%', height: '100%', display: 'inline-block' }
+                        }
+                    ]
+                },            
+            ]
+        }    
+    }
+
+    return attrItems
+
+}
+
