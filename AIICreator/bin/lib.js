@@ -15112,6 +15112,25 @@ SupabaseManager = class SupabaseManager
         return error;
     }
 
+    async uploadAvatar(userId, file)
+    {
+        var ext  = file.name.split('.').pop().toLowerCase();
+        var path = userId + '/avatar.' + ext;
+
+        // upsert: true → 같은 경로 파일 덮어쓰기
+        const { error: uploadError } = await this.client.storage
+            .from('avatars')
+            .upload(path, file, { upsert: true, contentType: file.type });
+
+        if (uploadError) return { url: null, error: uploadError };
+
+        const { data } = this.client.storage
+            .from('avatars')
+            .getPublicUrl(path);
+
+        return { url: data.publicUrl, error: null };
+    }
+
     async signInWithEmail(email, password)
     {
         const { data, error } = await this.client.auth.signInWithPassword({ email, password });

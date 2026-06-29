@@ -135,6 +135,7 @@ MainView = class MainView extends AView
 			'<div class="ac-avatar nav-avatar" id="nav-avatar">' + initial + '</div>' +
 			'<div class="nav-dropdown" id="nav-dropdown" style="display:none">' +
 				'<div class="nav-dropdown-email">' + this.currentUser.email + '</div>' +
+				'<button class="nav-dropdown-item" id="btn-mypage">마이페이지</button>' +
 				'<button class="nav-dropdown-item" id="btn-logout">로그아웃</button>' +
 			'</div>'
 
@@ -142,6 +143,11 @@ MainView = class MainView extends AView
 		{
 			var dd = area.querySelector('#nav-dropdown')
 			dd.style.display = dd.style.display === 'none' ? '' : 'none'
+		})
+
+		area.querySelector('#btn-mypage').addEventListener('click', function()
+		{
+			theApp.mainContainer.open('Source/MyPage/MyPageView.lay')
 		})
 
 		area.querySelector('#btn-logout').addEventListener('click', async function()
