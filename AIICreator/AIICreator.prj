@@ -31,6 +31,13 @@
             "relType": 1,
             "path": "Library\\",
             "comment": ""
+          },
+          {
+            "type": 5,
+            "name": "ToastManager.js",
+            "action": 9,
+            "relType": 1,
+            "path": "Library\\"
           }
         ]
       },
