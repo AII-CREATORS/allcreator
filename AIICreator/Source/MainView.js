@@ -373,9 +373,9 @@ class MainView extends AView
 			query = query.eq('ai_tool_id', this.currentToolId)
 
 		if (this.currentPrice === 'free')
-			query = query.eq('price', 0)
+			query = query.eq('price', '0')
 		else if (this.currentPrice === 'paid')
-			query = query.gt('price', 0)
+			query = query.neq('price', '0')
 
 		if (this.currentType !== 'all')
 			query = query.eq('prompt_type', this.currentType)
@@ -478,7 +478,7 @@ class MainView extends AView
 
 	_onCardClick(id)
 	{
-		console.log('[MainView] prompt clicked:', id)
-		// TODO: STEP 7 - 프롬프트 상세 화면으로 이동
+		window._currentPromptId = id
+		theApp.mainContainer.open('Source/Prompt/PromptDetailView.lay')
 	}
 }

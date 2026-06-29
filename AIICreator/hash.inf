@@ -1,8 +1,8 @@
 {
 	"changed": [
-		"C:\\Users\\dicki\\AII CREATOR\\allcreator\\AIICreator\\bin\\Library\\SupabaseManager.js",
 		"C:\\Users\\dicki\\AII CREATOR\\allcreator\\AIICreator\\bin\\Source\\MainView.js",
-		"C:\\Users\\dicki\\AII CREATOR\\allcreator\\AIICreator\\bin\\Source\\Auth\\AuthView.js"
+		"C:\\Users\\dicki\\AII CREATOR\\allcreator\\AIICreator\\bin\\Source\\Prompt\\PromptDetailView.js",
+		"C:\\Users\\dicki\\AII CREATOR\\allcreator\\AIICreator\\bin\\Source\\Prompt\\PromptDetailView.html"
 	],
 	"version": "5.1.1",
 	"C:\\Users\\dicki\\AII CREATOR\\allcreator\\AIICreator\\Template\\AIICreatorApp_global.css": 1782701649436.6206,
@@ -156,11 +156,13 @@
 	"C:\\Users\\dicki\\AII CREATOR\\allcreator\\AIICreator\\Framework\\afc\\style\\basicStyle.css": 1782693623491.5627,
 	"C:\\Users\\dicki\\AII CREATOR\\allcreator\\AIICreator\\Library\\SupabaseManager.js": 1782706623498.1572,
 	"C:\\Users\\dicki\\AII CREATOR\\allcreator\\AIICreator\\Source\\AIICreatorApp.js": 1782704634978.7297,
-	"C:\\Users\\dicki\\AII CREATOR\\allcreator\\AIICreator\\Source\\MainView.js": 1782706831282.3003,
+	"C:\\Users\\dicki\\AII CREATOR\\allcreator\\AIICreator\\Source\\MainView.js": 1782707417903.9695,
 	"C:\\Users\\dicki\\AII CREATOR\\allcreator\\AIICreator\\Template\\styler.stl": 1782693623495.5627,
 	"C:\\Users\\dicki\\AII CREATOR\\allcreator\\AIICreator\\Source\\MainView.lay": 1782693623494.563,
 	"concat": true,
 	"C:\\Users\\dicki\\AII CREATOR\\allcreator\\AIICreator\\Library\\ToastManager.js": 1782701649435.118,
 	"C:\\Users\\dicki\\AII CREATOR\\allcreator\\AIICreator\\Source\\Auth\\AuthView.js": 1782706623499.1604,
-	"C:\\Users\\dicki\\AII CREATOR\\allcreator\\AIICreator\\Source\\Auth\\AuthView.lay": 1782704634980.8425
+	"C:\\Users\\dicki\\AII CREATOR\\allcreator\\AIICreator\\Source\\Auth\\AuthView.lay": 1782704634980.8425,
+	"C:\\Users\\dicki\\AII CREATOR\\allcreator\\AIICreator\\Source\\Prompt\\PromptDetailView.js": 1782707382778.219,
+	"C:\\Users\\dicki\\AII CREATOR\\allcreator\\AIICreator\\Source\\Prompt\\PromptDetailView.lay": 1782707429684.6045
 }
