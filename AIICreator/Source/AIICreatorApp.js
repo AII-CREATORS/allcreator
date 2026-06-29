@@ -14,7 +14,7 @@ class AIICreatorApp extends AApplication
 		super.onReady();
 
 		this.setMainContainer(new APage('main'))
-		this.mainContainer.open('Source/MainView.lay')
+		this.mainContainer.open('Source/Auth/AuthView.lay')
 
 		//TODO:edit here
 
