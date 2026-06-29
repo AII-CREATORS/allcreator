@@ -1,28 +1,3 @@
-<div align="center">
-	
-<h2>📋 공급망관리를 위한 주문관리 시스템 📋</h2>
-</div>
-
-<div align="center">
-	
-![PIOMS_로고](https://github.com/beyond-sw-camp/be04-fin-PI.Akatsuki-PIOMS/assets/149561287/c73fe627-caa9-4a4f-ac14-5545b72c0b8e)
-
-</div>
-
-<div align="right">
-
-[![Hits](https://hits.seeyoufarm.com/api/count/incr/badge.svg?url=https%3A%2F%2Fgithub.com%2Fbeyond-sw-camp%2Fbe04-4th-PI-MoodHolic.git&count_bg=%23006EFF&title_bg=%23767676&icon=keybase.svg&icon_color=%23E7E7E7&title=Today&edge_flat=false)](https://hits.seeyoufarm.com)
-</div>
-
-<h2 align="left">👥 PIOMS의 구성원을 소개합니다!</h2>
-
-|<img src="https://avatars.githubusercontent.com/u/81796274?v=4" width="170" height="160"/>|<img src="https://avatars.githubusercontent.com/u/122339395?v=4" width="170" height="160"/>|<img src="https://avatars.githubusercontent.com/u/101622086?v=4" width="170" height="160"/>|<img src="https://avatars.githubusercontent.com/u/149561287?v=4" width="170" height="160"/>|<img src="https://avatars.githubusercontent.com/u/22255663?v=4" width="170" height="160"/>|
-|:-:|:-:|:-:|:-:|:-:|
-|[@jaehyeon-SMU](https://github.com/jaehyeon-SMU)|악덕<br/>[@Virtue14](https://github.com/Virtue14)|신동호<br/>[@letsplaycoding](https://github.com/letsplaycoding)|[@Bodrami](https://github.com/Bodrami)|hyunwoo<br/>[@daersh](https://github.com/daersh)|
-<br>
-<div align="center">
-<a href="https://github.com/beyond-sw-camp/be04-fin-PI.Akatsuki-PIOMS/wiki"/>Here's our Wiki!!
-</div>
 <br>
 <h2 align="left">🛠️ Technology Stack</h2>
 <div align="left">
