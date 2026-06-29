@@ -1,9 +1,7 @@
 {
-	"changed": [
-		"C:\\Users\\dicki\\AII CREATOR\\allcreator\\AIICreator\\bin\\Template\\AIICreatorApp_global.css"
-	],
+	"changed": [],
 	"version": "5.1.1",
-	"C:\\Users\\dicki\\AII CREATOR\\allcreator\\AIICreator\\Template\\AIICreatorApp_global.css": 1782701568017.4585,
+	"C:\\Users\\dicki\\AII CREATOR\\allcreator\\AIICreator\\Template\\AIICreatorApp_global.css": 1782701649436.6206,
 	"C:\\Users\\dicki\\AII CREATOR\\allcreator\\AIICreator\\Framework\\afc\\library\\ARect.js": 1782693623482.5632,
 	"C:\\Users\\dicki\\AII CREATOR\\allcreator\\AIICreator\\Framework\\afc\\library\\AUtil.js": 1782693623483.5637,
 	"C:\\Users\\dicki\\AII CREATOR\\allcreator\\AIICreator\\Framework\\afc\\library\\afc.js": 1782693623490.5627,
@@ -152,11 +150,11 @@
 	"C:\\Users\\dicki\\AII CREATOR\\allcreator\\AIICreator\\Framework\\afc\\style\\afc.css": 1782693623491.5627,
 	"C:\\Users\\dicki\\AII CREATOR\\allcreator\\AIICreator\\Framework\\afc\\style\\comp.css": 1782693623492.567,
 	"C:\\Users\\dicki\\AII CREATOR\\allcreator\\AIICreator\\Framework\\afc\\style\\basicStyle.css": 1782693623491.5627,
-	"C:\\Users\\dicki\\AII CREATOR\\allcreator\\AIICreator\\Library\\SupabaseManager.js": 1782700933166.5332,
+	"C:\\Users\\dicki\\AII CREATOR\\allcreator\\AIICreator\\Library\\SupabaseManager.js": 1782701649435.118,
 	"C:\\Users\\dicki\\AII CREATOR\\allcreator\\AIICreator\\Source\\AIICreatorApp.js": 1782693623493.5627,
 	"C:\\Users\\dicki\\AII CREATOR\\allcreator\\AIICreator\\Source\\MainView.js": 1782700563627.235,
 	"C:\\Users\\dicki\\AII CREATOR\\allcreator\\AIICreator\\Template\\styler.stl": 1782693623495.5627,
 	"C:\\Users\\dicki\\AII CREATOR\\allcreator\\AIICreator\\Source\\MainView.lay": 1782693623494.563,
 	"concat": true,
-	"C:\\Users\\dicki\\AII CREATOR\\allcreator\\AIICreator\\Library\\ToastManager.js": 1782701350308.615
+	"C:\\Users\\dicki\\AII CREATOR\\allcreator\\AIICreator\\Library\\ToastManager.js": 1782701649435.118
 }
