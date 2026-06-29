@@ -15096,10 +15096,20 @@ SupabaseManager = class SupabaseManager
         return user;
     }
 
-    async signUpWithEmail(email, password)
+    async signUpWithEmail(email, password, metadata)
     {
-        const { data, error } = await this.client.auth.signUp({ email, password });
+        var options = metadata ? { data: metadata } : undefined;
+        const { data, error } = await this.client.auth.signUp({ email, password, options });
         return { data, error };
+    }
+
+    async updateUserProfile(userId, profile)
+    {
+        const { error } = await this.client
+            .from('users')
+            .update(profile)
+            .eq('id', userId);
+        return error;
     }
 
     async signInWithEmail(email, password)

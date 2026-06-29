@@ -74,12 +74,31 @@ AuthView = class AuthView extends AView
 							'<input class="ac-input" type="email" id="signup-email" placeholder="email@example.com">' +
 						'</div>' +
 						'<div class="ac-input-group" style="margin-top:12px">' +
+							'<label class="ac-label">닉네임 <span class="auth-required">*</span></label>' +
+							'<input class="ac-input" type="text" id="signup-displayname" placeholder="다른 사람들에게 보일 이름">' +
+						'</div>' +
+						'<div class="ac-input-group" style="margin-top:12px">' +
 							'<label class="ac-label">비밀번호</label>' +
 							'<input class="ac-input" type="password" id="signup-pw" placeholder="8자 이상 입력">' +
 						'</div>' +
 						'<div class="ac-input-group" style="margin-top:12px">' +
 							'<label class="ac-label">비밀번호 확인</label>' +
 							'<input class="ac-input" type="password" id="signup-pw2" placeholder="비밀번호 재입력">' +
+						'</div>' +
+						'<div style="display:flex;gap:12px;margin-top:12px">' +
+							'<div class="ac-input-group" style="flex:1">' +
+								'<label class="ac-label">성별</label>' +
+								'<select class="ac-input" id="signup-gender">' +
+									'<option value="">선택 안함</option>' +
+									'<option value="male">남성</option>' +
+									'<option value="female">여성</option>' +
+									'<option value="other">기타</option>' +
+								'</select>' +
+							'</div>' +
+							'<div class="ac-input-group" style="flex:1.5">' +
+								'<label class="ac-label">생년월일</label>' +
+								'<input class="ac-input" type="date" id="signup-birthdate">' +
+							'</div>' +
 						'</div>' +
 						'<button class="ac-btn ac-btn-primary ac-w-full" id="btn-signup" style="margin-top:20px">회원가입</button>' +
 					'</div>' +
@@ -123,7 +142,9 @@ AuthView = class AuthView extends AView
 			'.auth-social-btn{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:11px;border:2px solid var(--color-border);border-radius:var(--radius-md);background:transparent;color:var(--color-text);font-size:0.9375rem;font-weight:500;font-family:var(--font-body);cursor:pointer;transition:border-color var(--transition),background var(--transition);}' +
 			'.auth-social-btn:hover{border-color:var(--color-border-light);background:var(--color-surface-2);}' +
 			'.auth-social-kakao{background:#FEE500;border-color:#FEE500;color:#3C1E1E;}' +
-			'.auth-social-kakao:hover{background:#F0D800;border-color:#F0D800;}'
+			'.auth-social-kakao:hover{background:#F0D800;border-color:#F0D800;}' +
+			'.auth-required{color:var(--color-point);font-size:0.75rem;}' +
+			'.ac-input option{background:var(--color-surface);color:var(--color-text);}'
 		document.head.appendChild(style)
 	}
 
@@ -286,14 +307,21 @@ AuthView = class AuthView extends AView
 
 	async _onSignup()
 	{
-		var el    = this.getElement()
-		var email = el.querySelector('#signup-email').value.trim()
-		var pw    = el.querySelector('#signup-pw').value
-		var pw2   = el.querySelector('#signup-pw2').value
+		var el          = this.getElement()
+		var email       = el.querySelector('#signup-email').value.trim()
+		var displayName = el.querySelector('#signup-displayname').value.trim()
+		var pw          = el.querySelector('#signup-pw').value
+		var pw2         = el.querySelector('#signup-pw2').value
+		var gender      = el.querySelector('#signup-gender').value
+		var birthDate   = el.querySelector('#signup-birthdate').value
 
-		if (!email || !pw || !pw2) { ToastManager.error('모든 항목을 입력해주세요'); return }
-		if (pw.length < 8)         { ToastManager.error('비밀번호는 8자 이상이어야 합니다'); return }
-		if (pw !== pw2)            { ToastManager.error('비밀번호가 일치하지 않습니다'); return }
+		if (!email || !displayName || !pw || !pw2)
+		{
+			ToastManager.error('이메일, 닉네임, 비밀번호는 필수 항목입니다')
+			return
+		}
+		if (pw.length < 8) { ToastManager.error('비밀번호는 8자 이상이어야 합니다'); return }
+		if (pw !== pw2)    { ToastManager.error('비밀번호가 일치하지 않습니다'); return }
 
 		var btn = el.querySelector('#btn-signup')
 		btn.disabled    = true
@@ -301,14 +329,30 @@ AuthView = class AuthView extends AView
 
 		try
 		{
-			var result = await this.sb.signUpWithEmail(email, pw)
+			// 1) auth 가입 — full_name을 metadata로 전달 → 트리거가 display_name에 반영
+			var result = await this.sb.signUpWithEmail(email, pw, { full_name: displayName })
 
-			if (result.error) ToastManager.error('가입 실패: ' + result.error.message)
-			else
+			if (result.error)
 			{
-				ToastManager.success('가입 완료! 이메일 인증 후 로그인해주세요')
-				this._switchTab('login')
+				ToastManager.error('가입 실패: ' + result.error.message)
+				return
 			}
+
+			// 2) gender/birth_date 프로필 업데이트 (가입 즉시 세션이 생성되므로 바로 UPDATE 가능)
+			var userId = result.data && result.data.user ? result.data.user.id : null
+			if (userId)
+			{
+				var profile = {}
+				if (gender)    profile.gender     = gender
+				if (birthDate) profile.birth_date = birthDate
+				if (displayName) profile.display_name = displayName
+
+				if (Object.keys(profile).length > 0)
+					await this.sb.updateUserProfile(userId, profile)
+			}
+
+			ToastManager.success('가입 완료!')
+			this._switchTab('login')
 		}
 		catch (e)
 		{

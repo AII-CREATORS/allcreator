@@ -152,7 +152,7 @@ class MainView extends AView
 
 		area.querySelector('#btn-register').addEventListener('click', function()
 		{
-			ToastManager.info('프롬프트 등록 기능은 준비 중입니다')
+			theApp.mainContainer.open('Source/Prompt/PromptRegisterView.lay')
 		})
 	}
 
