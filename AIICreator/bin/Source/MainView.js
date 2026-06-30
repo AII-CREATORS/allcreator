@@ -53,6 +53,7 @@ MainView = class MainView extends AView
 			onLogin:    function()   { theApp.mainContainer.open('Source/Auth/AuthView.lay') },
 			onRegister: function()   { theApp.mainContainer.open('Source/Prompt/PromptRegisterView.lay') },
 			onMyPage:   function()   { theApp.mainContainer.open('Source/MyPage/MyPageView.lay') },
+			onAdmin:    function()   { theApp.mainContainer.open('Source/Admin/AdminView.lay') },
 			onLogout:   async function()
 			{
 				await self.sb.signOut()
@@ -93,7 +94,20 @@ MainView = class MainView extends AView
 	async _bootstrap()
 	{
 		this.currentUser = await this.sb.getUser()
-		this.navBar.render(this.currentUser)
+
+		// public.users에서 role 조회 (관리자 버튼 노출 여부 결정)
+		var profile = null
+		if (this.currentUser)
+		{
+			var { data } = await this.sb.getClient()
+				.from('users')
+				.select('role, display_name')
+				.eq('id', this.currentUser.id)
+				.single()
+			profile = data
+		}
+
+		this.navBar.render(this.currentUser, profile)
 
 		var aiTools = await this._fetchAITools()
 		this.filterBar.render(aiTools)
@@ -120,7 +134,7 @@ MainView = class MainView extends AView
 
 		var query = this.sb.getClient()
 			.from('prompts')
-			.select('id, title, description, price, prompt_type, like_count, view_count, users(username), ai_tools(name)')
+			.select('id, title, description, price, prompt_type, like_count, view_count, users!user_id(username), ai_tools(name)')
 			.is('deleted_at', null)
 			.eq('status', 'published')
 

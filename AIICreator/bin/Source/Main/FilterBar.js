@@ -178,12 +178,4 @@ FilterBar = class FilterBar
 
 		el.querySelectorAll('#fb-type-chips .fb-chip').forEach(function(c) { c.classList.remove('active') })
 		var typeAll = el.querySelector('[data-type="all"]')
-		if (typeAll) typeAll.classList.add('active')
-
-		var sortEl = el.querySelector('#fb-sort')
-		if (sortEl) sortEl.value = 'latest'
-
-		this._onChange()
-		ToastManager.info('필터가 초기화되었습니다')
-	}
-}
+		if (typeAll) typeAll.classList.

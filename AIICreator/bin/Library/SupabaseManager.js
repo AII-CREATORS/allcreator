@@ -84,37 +84,24 @@ SupabaseManager = class SupabaseManager
 
     _getRedirectUrl()
     {
-        // file:// 프로토콜에서는 OAuth 리다이렉트 불가 — HTTP 서버 필요
-        // 현재 페이지 URL에서 hash/query 제거하여 redirectTo로 사용
         var href = window.location.href
         return href.split('#')[0].split('?')[0]
     }
 
-    async signInWithGoogle()
+    async _signInWithOAuth(provider)
     {
         if (window.location.protocol === 'file:')
-        {
-            return { message: 'OAuth는 HTTP 서버 환경에서만 동작합니다. 로컬 서버를 실행하거나 배포 환경에서 테스트해주세요.' }
-        }
+            return { message: 'OAuth는 HTTP 서버 환경에서만 동작합니다.' }
+
         var { error } = await this.client.auth.signInWithOAuth({
-            provider: 'google',
-            options: { redirectTo: this._getRedirectUrl() }
+            provider: provider,
+            options:  { redirectTo: this._getRedirectUrl() }
         })
         return error
     }
 
-    async signInWithKakao()
-    {
-        if (window.location.protocol === 'file:')
-        {
-            return { message: 'OAuth는 HTTP 서버 환경에서만 동작합니다. 로컬 서버를 실행하거나 배포 환경에서 테스트해주세요.' }
-        }
-        var { error } = await this.client.auth.signInWithOAuth({
-            provider: 'kakao',
-            options: { redirectTo: this._getRedirectUrl() }
-        })
-        return error
-    }
+    async signInWithGoogle() { return this._signInWithOAuth('google') }
+    async signInWithKakao()  { return this._signInWithOAuth('kakao')  }
 
     // OAuth 로그인 후 public.users row 보장
     // 트리거가 미발동한 경우(identity link 등)를 코드에서 보완

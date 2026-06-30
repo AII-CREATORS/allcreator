@@ -312,7 +312,7 @@ PromptRegisterView = class PromptRegisterView extends AView
 				prompt_type:    type,
 				difficulty:     difficulty,
 				price:          String(price),
-				status:         'published'
+				status:         'pending'
 			}
 
 			if (categoryId) row.category_id = categoryId
@@ -325,11 +325,10 @@ PromptRegisterView = class PromptRegisterView extends AView
 
 			if (result.error) throw new Error(result.error.message)
 
-			ToastManager.success('프롬프트가 등록되었습니다!')
+			ToastManager.success('프롬프트가 등록되었습니다! 관리자 검수 후 게시됩니다.')
 
-			// 등록한 프롬프트 상세 화면으로 이동
-			window._currentPromptId = result.data.id
-			theApp.mainContainer.open('Source/Prompt/PromptDetailView.lay')
+			// 메인으로 이동 (pending 상태라 상세 진입 불필요)
+			theApp.mainContainer.open('Source/MainView.lay')
 		}
 		catch (e)
 		{

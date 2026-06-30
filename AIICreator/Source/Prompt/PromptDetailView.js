@@ -59,7 +59,6 @@ class PromptDetailView extends AView
 		}
 		catch (e)
 		{
-			console.error('[PromptDetailView] _bootstrap error:', e)
 			ToastManager.error('불러오기 실패: ' + e.message)
 		}
 	}
@@ -68,7 +67,7 @@ class PromptDetailView extends AView
 	{
 		var result = await this.sb.getClient()
 			.from('prompts')
-			.select('id, title, description, prompt_content, prompt_type, price, difficulty, like_count, save_count, view_count, created_at, users(id, username), ai_tools(name), categories(name)')
+			.select('id, title, description, prompt_content, prompt_type, price, difficulty, like_count, save_count, view_count, created_at, users!user_id(id, username), ai_tools(name), categories(name)')
 			.eq('id', this.promptId)
 			.single()
 
@@ -80,40 +79,26 @@ class PromptDetailView extends AView
 	{
 		if (!this.currentUser) return
 
-		// 좋아요 여부
-		var likeResult = await this.sb.getClient()
-			.from('prompt_likes')
-			.select('id')
-			.eq('prompt_id', this.promptId)
-			.eq('user_id', this.currentUser.id)
-			.maybeSingle()
-		this.isLiked = !!(likeResult.data)
+		var sb  = this.sb.getClient()
+		var uid = this.currentUser.id
+		var pid = this.promptId
 
-		// 저장 여부
-		var saveResult = await this.sb.getClient()
-			.from('prompt_saves')
-			.select('id')
-			.eq('prompt_id', this.promptId)
-			.eq('user_id', this.currentUser.id)
-			.maybeSingle()
-		this.isSaved = !!(saveResult.data)
+		// 좋아요, 저장 병렬 조회
+		var queries = [
+			sb.from('prompt_likes').select('id').eq('prompt_id', pid).eq('user_id', uid).maybeSingle(),
+			sb.from('prompt_saves').select('id').eq('prompt_id', pid).eq('user_id', uid).maybeSingle()
+		]
 
-		// 구매 여부 (무료는 항상 true)
-		if (Number(this.prompt.price) === 0)
-		{
-			this.isPurchased = true
-		}
-		else
-		{
-			var orderResult = await this.sb.getClient()
-				.from('orders')
-				.select('id')
-				.eq('prompt_id', this.promptId)
-				.eq('buyer_id', this.currentUser.id)
-				.eq('status', 'completed')
-				.maybeSingle()
-			this.isPurchased = !!(orderResult.data)
-		}
+		// 유료 프롬프트면 구매 여부도 병렬 추가
+		var isFree = Number(this.prompt.price) === 0
+		if (!isFree)
+			queries.push(sb.from('orders').select('id').eq('prompt_id', pid).eq('buyer_id', uid).eq('status', 'completed').maybeSingle())
+
+		var results = await Promise.all(queries)
+
+		this.isLiked     = !!(results[0].data)
+		this.isSaved     = !!(results[1].data)
+		this.isPurchased = isFree ? true : !!(results[2] && results[2].data)
 	}
 
 	// ─────────────────────────────────────────

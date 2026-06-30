@@ -67,7 +67,7 @@ PromptDetailView = class PromptDetailView extends AView
 	{
 		var result = await this.sb.getClient()
 			.from('prompts')
-			.select('id, title, description, prompt_content, prompt_type, price, difficulty, like_count, save_count, view_count, created_at, users(id, username), ai_tools(name), categories(name)')
+			.select('id, title, description, prompt_content, prompt_type, price, difficulty, like_count, save_count, view_count, created_at, users!user_id(id, username), ai_tools(name), categories(name)')
 			.eq('id', this.promptId)
 			.single()
 

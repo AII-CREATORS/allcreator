@@ -561,15 +561,11 @@ MyPageView = class MyPageView extends AView
 		{
 			card.addEventListener('click', function()
 			{
-				window._currentPromptId = card.getAttribute('data-id')
+				window._currentPromptId = card.dataset.id
 				theApp.mainContainer.open('Source/Prompt/PromptDetailView.lay')
 			})
 		})
 	}
-
-	// ─────────────────────────────────────────
-	// 화면 전환
-	// ─────────────────────────────────────────
 
 	_goBack()
 	{

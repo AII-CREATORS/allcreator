@@ -45,18 +45,15 @@ class AuthView extends AView
 			return
 		}
 
-		// 일반 재방문: 유효 세션이면 자동 로그인
 		var user = await this.sb.getUser()
 		if (user) this._goToMain()
 	}
 
-	// OAuth 콜백 후처리: public.users 보장 → 추가정보 확인 → 이동
 	async _handleOAuthCallback()
 	{
 		var user = await this.sb.getUser()
 		if (!user) return
 
-		// 1. public.users row 보장 (트리거 미발동 대비)
 		var result = await this.sb.ensureUserProfile(user)
 
 		if (result.error)
@@ -67,7 +64,6 @@ class AuthView extends AView
 
 		var profile = result.data
 
-		// 2. 필수 추가정보(성별, 생년월일) 미입력이면 완성 패널 표시
 		if (!profile.gender || !profile.birth_date)
 		{
 			this._showSocialCompletePanel(user, profile)
@@ -77,13 +73,11 @@ class AuthView extends AView
 		this._goToMain()
 	}
 
-	// 소셜 로그인 후 추가 정보 입력 패널
 	_showSocialCompletePanel(user, profile)
 	{
 		var el   = this.getElement()
 		var self = this
 
-		// 기존 컨텐츠를 추가정보 패널로 교체
 		el.innerHTML =
 			'<div class="auth-wrap">' +
 				'<div class="auth-logo">' +
@@ -126,11 +120,7 @@ class AuthView extends AView
 			var gender      = el.querySelector('#sc-gender').value
 			var birthDate   = el.querySelector('#sc-birthdate').value
 
-			if (!displayName)
-			{
-				ToastManager.error('닉네임을 입력해주세요')
-				return
-			}
+			if (!displayName) { ToastManager.error('닉네임을 입력해주세요'); return }
 
 			var btn = el.querySelector('#sc-btn-complete')
 			btn.disabled    = true
@@ -171,15 +161,11 @@ class AuthView extends AView
 					'<span class="auth-logo-accent">Creator</span>' +
 				'</div>' +
 				'<p class="auth-subtitle">AI 프롬프트 마켓플레이스</p>' +
-
 				'<div class="auth-box ac-card">' +
-
 					'<div class="auth-tabs">' +
 						'<button class="auth-tab active" data-tab="login">로그인</button>' +
 						'<button class="auth-tab" data-tab="signup">회원가입</button>' +
 					'</div>' +
-
-					// ── 로그인 패널 (이메일 → 체크박스 → 비밀번호 → 버튼)
 					'<div class="auth-panel" id="panel-login">' +
 						'<div class="ac-input-group">' +
 							'<label class="ac-label">이메일</label>' +
@@ -196,8 +182,6 @@ class AuthView extends AView
 						'</div>' +
 						'<button class="ac-btn ac-btn-primary ac-w-full" id="btn-login" style="margin-top:20px">로그인</button>' +
 					'</div>' +
-
-					// ── 회원가입 패널
 					'<div class="auth-panel" id="panel-signup" style="display:none">' +
 						'<div class="ac-input-group">' +
 							'<label class="ac-label">이메일</label>' +
@@ -232,9 +216,7 @@ class AuthView extends AView
 						'</div>' +
 						'<button class="ac-btn ac-btn-primary ac-w-full" id="btn-signup" style="margin-top:20px">회원가입</button>' +
 					'</div>' +
-
 					'<div class="ac-divider-text" style="margin-top:20px">또는</div>' +
-
 					'<div style="margin-top:16px;display:flex;flex-direction:column;gap:10px">' +
 						'<button class="auth-social-btn" id="btn-google">' +
 							'<img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="18" height="18" alt="Google">' +
@@ -245,7 +227,6 @@ class AuthView extends AView
 							'카카오로 계속하기' +
 						'</button>' +
 					'</div>' +
-
 				'</div>' +
 			'</div>'
 	}
@@ -253,7 +234,6 @@ class AuthView extends AView
 	_injectStyle()
 	{
 		if (document.getElementById('auth-view-style')) return
-
 		var style = document.createElement('style')
 		style.id = 'auth-view-style'
 		style.textContent =
@@ -288,7 +268,7 @@ class AuthView extends AView
 		if (!saved) return
 		var emailInput  = this.getElement().querySelector('#login-email')
 		var chkRemember = this.getElement().querySelector('#chk-remember')
-		if (emailInput)  emailInput.value   = saved
+		if (emailInput)  emailInput.value    = saved
 		if (chkRemember) chkRemember.checked = true
 	}
 
@@ -301,7 +281,6 @@ class AuthView extends AView
 		var el   = this.getElement()
 		var self = this
 
-		// 탭 전환
 		el.querySelectorAll('.auth-tab').forEach(function(tab)
 		{
 			tab.addEventListener('click', function()
@@ -310,17 +289,11 @@ class AuthView extends AView
 			})
 		})
 
-		// 로그인
-		el.querySelector('#btn-login').addEventListener('click', function() { self._onLogin() })
-
-		// 회원가입
+		el.querySelector('#btn-login').addEventListener('click',  function() { self._onLogin() })
 		el.querySelector('#btn-signup').addEventListener('click', function() { self._onSignup() })
+		el.querySelector('#btn-google').addEventListener('click', function() { self._onSocialLogin('google') })
+		el.querySelector('#btn-kakao').addEventListener('click',  function() { self._onSocialLogin('kakao') })
 
-		// 소셜
-		el.querySelector('#btn-google').addEventListener('click', function() { self._onGoogleLogin() })
-		el.querySelector('#btn-kakao').addEventListener('click', function() { self._onKakaoLogin() })
-
-		// Tab 키 명시적 처리 (SpiderGen 프레임워크가 Tab 이벤트를 가로채는 경우 대비)
 		this._bindTabKey()
 	}
 
@@ -328,27 +301,24 @@ class AuthView extends AView
 	{
 		var el = this.getElement()
 
-		// 로그인 패널 Tab 순서: 이메일 → 비밀번호 → 로그인버튼
 		var loginEmail = el.querySelector('#login-email')
 		var loginPw    = el.querySelector('#login-pw')
 		var btnLogin   = el.querySelector('#btn-login')
 
 		loginEmail.addEventListener('keydown', function(e)
 		{
-			if (e.key === 'Tab') { e.preventDefault(); loginPw.focus() }
+			if (e.key === 'Tab')   { e.preventDefault(); loginPw.focus() }
 			if (e.key === 'Enter') { loginPw.focus() }
 		})
 		loginPw.addEventListener('keydown', function(e)
 		{
 			if (e.key === 'Tab') { e.preventDefault(); btnLogin.focus() }
-			// Enter → 로그인은 btn-login click 이벤트로 처리
 		})
 		loginPw.addEventListener('keyup', function(e)
 		{
 			if (e.key === 'Enter') { btnLogin.click() }
 		})
 
-		// 회원가입 패널 Tab 순서: 이메일 → 비밀번호 → 비밀번호 확인 → 가입버튼
 		var signupEmail = el.querySelector('#signup-email')
 		var signupPw    = el.querySelector('#signup-pw')
 		var signupPw2   = el.querySelector('#signup-pw2')
@@ -374,7 +344,7 @@ class AuthView extends AView
 
 	_switchTab(tab)
 	{
-		var el   = this.getElement()
+		var el = this.getElement()
 		this.currentTab = tab
 
 		el.querySelectorAll('.auth-tab').forEach(function(t)
@@ -387,7 +357,7 @@ class AuthView extends AView
 	}
 
 	// ─────────────────────────────────────────
-	// 인증 로직
+	// 로그인 / 회원가입
 	// ─────────────────────────────────────────
 
 	async _onLogin()
@@ -395,44 +365,28 @@ class AuthView extends AView
 		var el    = this.getElement()
 		var email = el.querySelector('#login-email').value.trim()
 		var pw    = el.querySelector('#login-pw').value
-		var chk   = el.querySelector('#chk-remember')
+		var chk   = el.querySelector('#chk-remember').checked
 
-		if (!email || !pw)
-		{
-			ToastManager.error('이메일과 비밀번호를 입력해주세요')
-			return
-		}
+		if (!email || !pw) { ToastManager.error('이메일과 비밀번호를 입력해주세요'); return }
 
 		var btn = el.querySelector('#btn-login')
 		btn.disabled    = true
 		btn.textContent = '로그인 중...'
 
-		try
-		{
-			var result = await this.sb.signInWithEmail(email, pw)
+		var { data, error } = await this.sb.signInWithEmail(email, pw)
 
-			if (result.error)
-			{
-				btn.disabled    = false
-				btn.textContent = '로그인'
-				ToastManager.error(ErrorHandler.parseSupabaseError(result.error))
-			}
-			else
-			{
-				if (chk && chk.checked) localStorage.setItem('ac_saved_email', email)
-				else localStorage.removeItem('ac_saved_email')
-
-				ToastManager.success('로그인 성공!')
-				this._goToMain()
-			}
-		}
-		catch (e)
+		if (error)
 		{
+			ToastManager.error(ErrorHandler.parseSupabaseError(error))
 			btn.disabled    = false
 			btn.textContent = '로그인'
-			ToastManager.error('오류 발생: ' + e.message)
-			console.error('[AuthView] _onLogin error:', e)
+			return
 		}
+
+		if (chk) localStorage.setItem('ac_saved_email', email)
+		else     localStorage.removeItem('ac_saved_email')
+
+		this._goToMain()
 	}
 
 	async _onSignup()
@@ -445,86 +399,42 @@ class AuthView extends AView
 		var gender      = el.querySelector('#signup-gender').value
 		var birthDate   = el.querySelector('#signup-birthdate').value
 
-		if (!email || !displayName || !pw || !pw2)
-		{
-			ToastManager.error('이메일, 닉네임, 비밀번호는 필수 항목입니다')
-			return
-		}
-		if (pw.length < 8) { ToastManager.error('비밀번호는 8자 이상이어야 합니다'); return }
+		if (!email)        { ToastManager.error('이메일을 입력해주세요'); return }
+		if (!displayName)  { ToastManager.error('닉네임을 입력해주세요'); return }
+		if (!pw)           { ToastManager.error('비밀번호를 입력해주세요'); return }
 		if (pw !== pw2)    { ToastManager.error('비밀번호가 일치하지 않습니다'); return }
+		if (pw.length < 6) { ToastManager.error('비밀번호는 6자 이상이어야 합니다'); return }
 
 		var btn = el.querySelector('#btn-signup')
 		btn.disabled    = true
 		btn.textContent = '가입 중...'
 
-		try
+		var { data, error } = await this.sb.signUpWithEmail(email, pw, {
+			display_name: displayName,
+			gender:       gender || null,
+			birth_date:   birthDate || null
+		})
+
+		if (error)
 		{
-			// 1) auth 가입 — full_name을 metadata로 전달 → 트리거가 display_name에 반영
-			var result = await this.sb.signUpWithEmail(email, pw, { full_name: displayName })
-
-			if (result.error)
-			{
-				ToastManager.error(ErrorHandler.parseSupabaseError(result.error))
-				return
-			}
-
-			// 2) gender/birth_date 프로필 업데이트 (가입 즉시 세션이 생성되므로 바로 UPDATE 가능)
-			var userId = result.data && result.data.user ? result.data.user.id : null
-			if (userId)
-			{
-				var profile = {}
-				if (gender)    profile.gender     = gender
-				if (birthDate) profile.birth_date = birthDate
-				if (displayName) profile.display_name = displayName
-
-				if (Object.keys(profile).length > 0)
-					await this.sb.updateUserProfile(userId, profile)
-			}
-
-			ToastManager.success('가입 완료!')
-			this._switchTab('login')
-		}
-		catch (e)
-		{
-			ToastManager.error('오류 발생: ' + e.message)
-			console.error('[AuthView] _onSignup error:', e)
-		}
-		finally
-		{
+			ToastManager.error(ErrorHandler.parseSupabaseError(error))
 			btn.disabled    = false
 			btn.textContent = '회원가입'
+			return
 		}
+
+		ToastManager.success('가입이 완료되었습니다! 이메일을 확인해주세요.')
+		btn.disabled    = false
+		btn.textContent = '회원가입'
 	}
 
-	async _onGoogleLogin()
+	async _onSocialLogin(provider)
 	{
-		var btn = this.getElement().querySelector('#btn-google')
-		btn.disabled    = true
-		btn.textContent = '연결 중...'
+		var error = provider === 'google'
+			? await this.sb.signInWithGoogle()
+			: await this.sb.signInWithKakao()
 
-		var err = await this.sb.signInWithGoogle()
-
-		btn.disabled = false
-		btn.innerHTML =
-			'<img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="18" height="18" alt="Google"> Google로 계속하기'
-
-		if (err) ToastManager.error(ErrorHandler.parseSupabaseError(err))
-		// 성공 시: 브라우저가 Google 로그인 페이지로 리다이렉트되므로 별도 처리 불필요
-	}
-
-	async _onKakaoLogin()
-	{
-		var btn = this.getElement().querySelector('#btn-kakao')
-		btn.disabled    = true
-		btn.textContent = '연결 중...'
-
-		var err = await this.sb.signInWithKakao()
-
-		btn.disabled = false
-		btn.innerHTML =
-			'<svg width="18" height="18" viewBox="0 0 24 24" fill="#3C1E1E"><path d="M12 3C6.477 3 2 6.477 2 10.857c0 2.742 1.695 5.146 4.25 6.618L5.1 21l5.217-2.803c.554.076 1.12.117 1.683.117 5.523 0 10-3.477 10-7.857C22 6.477 17.523 3 12 3z"/></svg> 카카오로 계속하기'
-
-		if (err) ToastManager.error(ErrorHandler.parseSupabaseError(err))
+		if (error) ToastManager.error(ErrorHandler.parseSupabaseError(error))
 	}
 
 	// ─────────────────────────────────────────
@@ -533,14 +443,6 @@ class AuthView extends AView
 
 	_goToMain()
 	{
-		try
-		{
-			theApp.mainContainer.open('Source/MainView.lay')
-		}
-		catch (e)
-		{
-			console.error('[AuthView] _goToMain error:', e)
-			ToastManager.error('화면 전환 오류: ' + e.message)
-		}
+		theApp.mainContainer.open('Source/MainView.lay')
 	}
 }

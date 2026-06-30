@@ -15132,37 +15132,24 @@ SupabaseManager = class SupabaseManager
 
     _getRedirectUrl()
     {
-        // file:// 프로토콜에서는 OAuth 리다이렉트 불가 — HTTP 서버 필요
-        // 현재 페이지 URL에서 hash/query 제거하여 redirectTo로 사용
         var href = window.location.href
         return href.split('#')[0].split('?')[0]
     }
 
-    async signInWithGoogle()
+    async _signInWithOAuth(provider)
     {
         if (window.location.protocol === 'file:')
-        {
-            return { message: 'OAuth는 HTTP 서버 환경에서만 동작합니다. 로컬 서버를 실행하거나 배포 환경에서 테스트해주세요.' }
-        }
+            return { message: 'OAuth는 HTTP 서버 환경에서만 동작합니다.' }
+
         var { error } = await this.client.auth.signInWithOAuth({
-            provider: 'google',
-            options: { redirectTo: this._getRedirectUrl() }
+            provider: provider,
+            options:  { redirectTo: this._getRedirectUrl() }
         })
         return error
     }
 
-    async signInWithKakao()
-    {
-        if (window.location.protocol === 'file:')
-        {
-            return { message: 'OAuth는 HTTP 서버 환경에서만 동작합니다. 로컬 서버를 실행하거나 배포 환경에서 테스트해주세요.' }
-        }
-        var { error } = await this.client.auth.signInWithOAuth({
-            provider: 'kakao',
-            options: { redirectTo: this._getRedirectUrl() }
-        })
-        return error
-    }
+    async signInWithGoogle() { return this._signInWithOAuth('google') }
+    async signInWithKakao()  { return this._signInWithOAuth('kakao')  }
 
     // OAuth 로그인 후 public.users row 보장
     // 트리거가 미발동한 경우(identity link 등)를 코드에서 보완
@@ -15268,12 +15255,11 @@ ErrorHandler = class ErrorHandler
 		// 동기 런타임 에러
 		window.onerror = function(message, source, lineno, colno, error)
 		{
-			// SpiderGen 내부 에러는 무시
-			if (source && source.indexOf('afc') !== -1) return false
-			if (source && source.indexOf('lib.js') !== -1) return false
+			// SpiderGen 프레임워크 내부 에러만 무시
+			if (source && source.indexOf('/afc/') !== -1) return false
 
 			console.error('[GlobalError]', message, 'at', source, lineno + ':' + colno)
-			return false // 브라우저 기본 에러 표시 막지 않음
+			return false
 		}
 
 		// 비동기 Promise 에러
@@ -15299,7 +15285,7 @@ ErrorHandler = class ErrorHandler
 		window.addEventListener('offline', function()
 		{
 			ToastManager.warning('네트워크 연결이 끊겼습니다')
-			ErrorHandler._showNetworkBanner(false)
+			ErrorHandler._showNetworkBanner()
 		})
 
 		window.addEventListener('online', function()
@@ -15309,7 +15295,7 @@ ErrorHandler = class ErrorHandler
 		})
 	}
 
-	static _showNetworkBanner(isOnline)
+	static _showNetworkBanner()
 	{
 		ErrorHandler._hideNetworkBanner()
 
@@ -15416,27 +15402,24 @@ NavBar = class NavBar
 {
 	constructor(container, callbacks)
 	{
-		// callbacks: { onSearch, onLogin, onMyPage, onLogout, onRegister }
+		// callbacks: { onSearch, onLogin, onMyPage, onLogout, onRegister, onAdmin }
 		this.el           = container
 		this.callbacks    = callbacks || {}
 		this.searchTimer  = null
 		this.keyword      = ''
 	}
 
-	// ─────────────────────────────────────────
-	// 렌더
-	// ─────────────────────────────────────────
-
-	render(user)
+	// user: auth user, profile: public.users row (role 포함)
+	render(user, profile)
 	{
 		this._injectStyle()
-		this.el.innerHTML = this._html(user)
-		this._bindEvents(user)
+		this.el.innerHTML = this._html(user, profile)
+		this._bindEvents(user, profile)
 	}
 
-	_html(user)
+	_html(user, profile)
 	{
-		var userArea = user ? this._userHTML(user) : this._guestHTML()
+		var userArea = user ? this._userHTML(user, profile) : this._guestHTML()
 
 		return '<div class="nb-inner">' +
 			'<div class="nb-logo">' +
@@ -15444,7 +15427,7 @@ NavBar = class NavBar
 				'<span class="nb-logo-accent">Creator</span>' +
 			'</div>' +
 			'<div class="nb-search">' +
-				'<input class="ac-input nb-search-input" id="nb-search" type="text" placeholder="🔍  프롬프트 검색...">' +
+				'<input class="ac-input nb-search-input" id="nb-search" type="text" placeholder="  프롬프트 검색...">' +
 			'</div>' +
 			'<div class="nb-actions" id="nb-user-area">' + userArea + '</div>' +
 		'</div>'
@@ -15455,10 +15438,18 @@ NavBar = class NavBar
 		return '<button class="ac-btn ac-btn-outline ac-btn-sm" id="nb-btn-login">로그인</button>'
 	}
 
-	_userHTML(user)
+	_userHTML(user, profile)
 	{
 		var initial = (user.email || 'U')[0].toUpperCase()
-		return '<button class="ac-btn ac-btn-secondary ac-btn-sm" id="nb-btn-register">+ 프롬프트 등록</button>' +
+		var role    = profile && profile.role
+		var isAdmin = role === 'main_admin' || role === 'sub_admin'
+
+		var adminBtn = isAdmin
+			? '<button class="ac-btn ac-btn-outline ac-btn-sm nb-btn-admin" id="nb-btn-admin"> 관리자</button>'
+			: ''
+
+		return adminBtn +
+			'<button class="ac-btn ac-btn-secondary ac-btn-sm" id="nb-btn-register">+ 프롬프트 등록</button>' +
 			'<div class="ac-avatar nb-avatar" id="nb-avatar">' + initial + '</div>' +
 			'<div class="nb-dropdown" id="nb-dropdown" style="display:none">' +
 				'<div class="nb-dropdown-email">' + user.email + '</div>' +
@@ -15481,6 +15472,8 @@ NavBar = class NavBar
 			'.nb-search-input{padding:8px 14px;font-size:0.875rem;}' +
 			'.nb-actions{display:flex;align-items:center;gap:10px;margin-left:auto;position:relative;}' +
 			'.nb-avatar{cursor:pointer;width:34px;height:34px;font-size:0.8125rem;}' +
+			'.nb-btn-admin{border-color:var(--color-point)!important;color:var(--color-point)!important;}' +
+			'.nb-btn-admin:hover{background:var(--color-point)!important;color:#fff!important;}' +
 			'.nb-dropdown{position:absolute;top:calc(100% + 8px);right:0;background:var(--color-surface);border:1px solid var(--color-border-light);border-radius:var(--radius-md);padding:8px;min-width:200px;box-shadow:var(--shadow-md);z-index:200;}' +
 			'.nb-dropdown-email{font-size:0.75rem;color:var(--color-text-muted);padding:6px 10px 10px;border-bottom:1px solid var(--color-border);margin-bottom:6px;}' +
 			'.nb-dropdown-item{width:100%;padding:8px 10px;background:none;border:none;color:var(--color-text);font-size:0.875rem;font-family:var(--font-body);text-align:left;border-radius:var(--radius-sm);cursor:pointer;}' +
@@ -15488,16 +15481,11 @@ NavBar = class NavBar
 		document.head.appendChild(style)
 	}
 
-	// ─────────────────────────────────────────
-	// 이벤트
-	// ─────────────────────────────────────────
-
-	_bindEvents(user)
+	_bindEvents(user, profile)
 	{
 		var self = this
 		var el   = this.el
 
-		// 검색 — 300ms 디바운스
 		var searchInput = el.querySelector('#nb-search')
 		if (searchInput)
 		{
@@ -15522,7 +15510,12 @@ NavBar = class NavBar
 			return
 		}
 
-		// 아바타 드롭다운 토글
+		var btnAdmin = el.querySelector('#nb-btn-admin')
+		if (btnAdmin) btnAdmin.addEventListener('click', function()
+		{
+			if (self.callbacks.onAdmin) self.callbacks.onAdmin()
+		})
+
 		var avatar = el.querySelector('#nb-avatar')
 		if (avatar)
 		{
@@ -15533,7 +15526,6 @@ NavBar = class NavBar
 			})
 		}
 
-		// 외부 클릭 시 드롭다운 닫기
 		document.addEventListener('click', function(e)
 		{
 			var dd  = el.querySelector('#nb-dropdown')
@@ -15560,10 +15552,6 @@ NavBar = class NavBar
 			if (self.callbacks.onLogout) await self.callbacks.onLogout()
 		})
 	}
-
-	// ─────────────────────────────────────────
-	// 상태
-	// ─────────────────────────────────────────
 
 	getKeyword() { return this.keyword }
 }

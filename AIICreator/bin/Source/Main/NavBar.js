@@ -3,7 +3,7 @@ NavBar = class NavBar
 {
 	constructor(container, callbacks)
 	{
-		// callbacks: { onSearch, onLogin, onMyPage, onLogout, onRegister }
+		// callbacks: { onSearch, onLogin, onMyPage, onLogout, onRegister, onAdmin }
 		this.el           = container
 		this.callbacks    = callbacks || {}
 		this.searchTimer  = null
@@ -14,16 +14,17 @@ NavBar = class NavBar
 	// 렌더
 	// ─────────────────────────────────────────
 
-	render(user)
+	// user: auth user, profile: public.users row (role 포함)
+	render(user, profile)
 	{
 		this._injectStyle()
-		this.el.innerHTML = this._html(user)
-		this._bindEvents(user)
+		this.el.innerHTML = this._html(user, profile)
+		this._bindEvents(user, profile)
 	}
 
-	_html(user)
+	_html(user, profile)
 	{
-		var userArea = user ? this._userHTML(user) : this._guestHTML()
+		var userArea = user ? this._userHTML(user, profile) : this._guestHTML()
 
 		return '<div class="nb-inner">' +
 			'<div class="nb-logo">' +
@@ -42,10 +43,18 @@ NavBar = class NavBar
 		return '<button class="ac-btn ac-btn-outline ac-btn-sm" id="nb-btn-login">로그인</button>'
 	}
 
-	_userHTML(user)
+	_userHTML(user, profile)
 	{
 		var initial = (user.email || 'U')[0].toUpperCase()
-		return '<button class="ac-btn ac-btn-secondary ac-btn-sm" id="nb-btn-register">+ 프롬프트 등록</button>' +
+		var role    = profile && profile.role
+		var isAdmin = role === 'main_admin' || role === 'sub_admin'
+
+		var adminBtn = isAdmin
+			? '<button class="ac-btn ac-btn-outline ac-btn-sm nb-btn-admin" id="nb-btn-admin">⚙ 관리자</button>'
+			: ''
+
+		return adminBtn +
+			'<button class="ac-btn ac-btn-secondary ac-btn-sm" id="nb-btn-register">+ 프롬프트 등록</button>' +
 			'<div class="ac-avatar nb-avatar" id="nb-avatar">' + initial + '</div>' +
 			'<div class="nb-dropdown" id="nb-dropdown" style="display:none">' +
 				'<div class="nb-dropdown-email">' + user.email + '</div>' +
@@ -68,6 +77,8 @@ NavBar = class NavBar
 			'.nb-search-input{padding:8px 14px;font-size:0.875rem;}' +
 			'.nb-actions{display:flex;align-items:center;gap:10px;margin-left:auto;position:relative;}' +
 			'.nb-avatar{cursor:pointer;width:34px;height:34px;font-size:0.8125rem;}' +
+			'.nb-btn-admin{border-color:var(--color-point)!important;color:var(--color-point)!important;}' +
+			'.nb-btn-admin:hover{background:var(--color-point)!important;color:#fff!important;}' +
 			'.nb-dropdown{position:absolute;top:calc(100% + 8px);right:0;background:var(--color-surface);border:1px solid var(--color-border-light);border-radius:var(--radius-md);padding:8px;min-width:200px;box-shadow:var(--shadow-md);z-index:200;}' +
 			'.nb-dropdown-email{font-size:0.75rem;color:var(--color-text-muted);padding:6px 10px 10px;border-bottom:1px solid var(--color-border);margin-bottom:6px;}' +
 			'.nb-dropdown-item{width:100%;padding:8px 10px;background:none;border:none;color:var(--color-text);font-size:0.875rem;font-family:var(--font-body);text-align:left;border-radius:var(--radius-sm);cursor:pointer;}' +
@@ -79,7 +90,7 @@ NavBar = class NavBar
 	// 이벤트
 	// ─────────────────────────────────────────
 
-	_bindEvents(user)
+	_bindEvents(user, profile)
 	{
 		var self = this
 		var el   = this.el
@@ -109,6 +120,13 @@ NavBar = class NavBar
 			return
 		}
 
+		// 관리자 버튼 (role 조건은 _userHTML에서 이미 처리됨)
+		var btnAdmin = el.querySelector('#nb-btn-admin')
+		if (btnAdmin) btnAdmin.addEventListener('click', function()
+		{
+			if (self.callbacks.onAdmin) self.callbacks.onAdmin()
+		})
+
 		// 아바타 드롭다운 토글
 		var avatar = el.querySelector('#nb-avatar')
 		if (avatar)
@@ -130,27 +148,3 @@ NavBar = class NavBar
 		})
 
 		var btnRegister = el.querySelector('#nb-btn-register')
-		if (btnRegister) btnRegister.addEventListener('click', function()
-		{
-			if (self.callbacks.onRegister) self.callbacks.onRegister()
-		})
-
-		var btnMyPage = el.querySelector('#nb-btn-mypage')
-		if (btnMyPage) btnMyPage.addEventListener('click', function()
-		{
-			if (self.callbacks.onMyPage) self.callbacks.onMyPage()
-		})
-
-		var btnLogout = el.querySelector('#nb-btn-logout')
-		if (btnLogout) btnLogout.addEventListener('click', async function()
-		{
-			if (self.callbacks.onLogout) await self.callbacks.onLogout()
-		})
-	}
-
-	// ─────────────────────────────────────────
-	// 상태
-	// ─────────────────────────────────────────
-
-	getKeyword() { return this.keyword }
-}

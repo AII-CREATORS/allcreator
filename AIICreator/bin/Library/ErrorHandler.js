@@ -17,12 +17,11 @@ ErrorHandler = class ErrorHandler
 		// 동기 런타임 에러
 		window.onerror = function(message, source, lineno, colno, error)
 		{
-			// SpiderGen 내부 에러는 무시
-			if (source && source.indexOf('afc') !== -1) return false
-			if (source && source.indexOf('lib.js') !== -1) return false
+			// SpiderGen 프레임워크 내부 에러만 무시
+			if (source && source.indexOf('/afc/') !== -1) return false
 
 			console.error('[GlobalError]', message, 'at', source, lineno + ':' + colno)
-			return false // 브라우저 기본 에러 표시 막지 않음
+			return false
 		}
 
 		// 비동기 Promise 에러
@@ -48,7 +47,7 @@ ErrorHandler = class ErrorHandler
 		window.addEventListener('offline', function()
 		{
 			ToastManager.warning('네트워크 연결이 끊겼습니다')
-			ErrorHandler._showNetworkBanner(false)
+			ErrorHandler._showNetworkBanner()
 		})
 
 		window.addEventListener('online', function()
@@ -58,7 +57,7 @@ ErrorHandler = class ErrorHandler
 		})
 	}
 
-	static _showNetworkBanner(isOnline)
+	static _showNetworkBanner()
 	{
 		ErrorHandler._hideNetworkBanner()
 

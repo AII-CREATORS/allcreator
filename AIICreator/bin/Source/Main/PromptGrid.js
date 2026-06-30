@@ -105,8 +105,4 @@ PromptGrid = class PromptGrid
 			'.pg-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:80px 20px;color:var(--color-text-muted);gap:12px;}' +
 			'.pg-empty-icon{font-size:3rem;}' +
 			'.pg-empty-text{font-size:1rem;font-weight:500;}' +
-			'.pg-result-header{font-size:0.875rem;color:var(--color-text-muted);margin-bottom:16px;}' +
-			'.pg-result-header strong{color:var(--color-accent);}'
-		document.head.appendChild(style)
-	}
-}
+			'.pg-result-header{font-size:0.875rem;color:var(--color-text-muted);margin-bottom:1
