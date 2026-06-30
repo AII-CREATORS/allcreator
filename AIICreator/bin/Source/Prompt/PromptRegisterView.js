@@ -334,7 +334,6 @@ PromptRegisterView = class PromptRegisterView extends AView
 		catch (e)
 		{
 			ToastManager.error('등록 실패: ' + e.message)
-			console.error('[PromptRegisterView] _onSubmit error:', e)
 			btn.disabled    = false
 			btn.textContent = '등록하기'
 		}

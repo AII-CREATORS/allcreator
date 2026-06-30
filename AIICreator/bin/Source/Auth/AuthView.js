@@ -33,12 +33,16 @@ AuthView = class AuthView extends AView
 
 		if (hasOAuthHash)
 		{
-			// Supabase가 해시 토큰을 파싱할 때까지 대기 후 OAuth 후처리
-			var self = this
-			setTimeout(async function()
+			// onAuthStateChange로 세션 준비 즉시 감지 → setTimeout 불필요
+			var self     = this
+			var listener = this.sb.getClient().auth.onAuthStateChange(function(event, session)
 			{
-				await self._handleOAuthCallback()
-			}, 1000)
+				if (event === 'SIGNED_IN')
+				{
+					listener.data.subscription.unsubscribe()
+					self._handleOAuthCallback()
+				}
+			})
 			return
 		}
 
@@ -428,7 +432,6 @@ AuthView = class AuthView extends AView
 			btn.disabled    = false
 			btn.textContent = '로그인'
 			ToastManager.error('오류 발생: ' + e.message)
-			console.error('[AuthView] _onLogin error:', e)
 		}
 	}
 
@@ -484,7 +487,6 @@ AuthView = class AuthView extends AView
 		catch (e)
 		{
 			ToastManager.error('오류 발생: ' + e.message)
-			console.error('[AuthView] _onSignup error:', e)
 		}
 		finally
 		{
@@ -493,36 +495,29 @@ AuthView = class AuthView extends AView
 		}
 	}
 
-	async _onGoogleLogin()
+	async _onSocialLogin(provider)
 	{
-		var btn = this.getElement().querySelector('#btn-google')
+		var isGoogle   = provider === 'google'
+		var btnId      = isGoogle ? '#btn-google' : '#btn-kakao'
+		var originalHTML = isGoogle
+			? '<img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="18" height="18" alt="Google"> Google로 계속하기'
+			: '<svg width="18" height="18" viewBox="0 0 24 24" fill="#3C1E1E"><path d="M12 3C6.477 3 2 6.477 2 10.857c0 2.742 1.695 5.146 4.25 6.618L5.1 21l5.217-2.803c.554.076 1.12.117 1.683.117 5.523 0 10-3.477 10-7.857C22 6.477 17.523 3 12 3z"/></svg> 카카오로 계속하기'
+
+		var btn         = this.getElement().querySelector(btnId)
 		btn.disabled    = true
 		btn.textContent = '연결 중...'
 
-		var err = await this.sb.signInWithGoogle()
+		var err = isGoogle ? await this.sb.signInWithGoogle() : await this.sb.signInWithKakao()
 
-		btn.disabled = false
-		btn.innerHTML =
-			'<img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="18" height="18" alt="Google"> Google로 계속하기'
-
-		if (err) ToastManager.error(ErrorHandler.parseSupabaseError(err))
-		// 성공 시: 브라우저가 Google 로그인 페이지로 리다이렉트되므로 별도 처리 불필요
-	}
-
-	async _onKakaoLogin()
-	{
-		var btn = this.getElement().querySelector('#btn-kakao')
-		btn.disabled    = true
-		btn.textContent = '연결 중...'
-
-		var err = await this.sb.signInWithKakao()
-
-		btn.disabled = false
-		btn.innerHTML =
-			'<svg width="18" height="18" viewBox="0 0 24 24" fill="#3C1E1E"><path d="M12 3C6.477 3 2 6.477 2 10.857c0 2.742 1.695 5.146 4.25 6.618L5.1 21l5.217-2.803c.554.076 1.12.117 1.683.117 5.523 0 10-3.477 10-7.857C22 6.477 17.523 3 12 3z"/></svg> 카카오로 계속하기'
+		btn.disabled  = false
+		btn.innerHTML = originalHTML
 
 		if (err) ToastManager.error(ErrorHandler.parseSupabaseError(err))
+		// 성공 시: OAuth 페이지로 리다이렉트 → onAuthStateChange가 처리
 	}
+
+	_onGoogleLogin() { this._onSocialLogin('google') }
+	_onKakaoLogin()  { this._onSocialLogin('kakao')  }
 
 	// ─────────────────────────────────────────
 	// 화면 전환
@@ -536,7 +531,6 @@ AuthView = class AuthView extends AView
 		}
 		catch (e)
 		{
-			console.error('[AuthView] _goToMain error:', e)
 			ToastManager.error('화면 전환 오류: ' + e.message)
 		}
 	}

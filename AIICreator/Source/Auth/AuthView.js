@@ -33,12 +33,15 @@ class AuthView extends AView
 
 		if (hasOAuthHash)
 		{
-			// Supabase가 해시 토큰을 파싱할 때까지 대기 후 OAuth 후처리
-			var self = this
-			setTimeout(async function()
+			var self     = this
+			var listener = this.sb.getClient().auth.onAuthStateChange(function(event, session)
 			{
-				await self._handleOAuthCallback()
-			}, 1000)
+				if (event === 'SIGNED_IN')
+				{
+					listener.data.subscription.unsubscribe()
+					self._handleOAuthCallback()
+				}
+			})
 			return
 		}
 
