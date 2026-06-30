@@ -66,7 +66,7 @@ PromptDetailView = class PromptDetailView extends AView
 	{
 		var result = await this.sb.getClient()
 			.from('prompts')
-			.select('id, title, description, prompt_content, prompt_type, price, difficulty, like_count, save_count, view_count, created_at, users!user_id(id, username), ai_tools(name), categories(name)')
+			.select('id, title, description, prompt_content, prompt_type, price, difficulty, like_count, save_count, view_count, created_at, result_image, users!user_id(id, username), ai_tools(name), categories(name)')
 			.eq('id', this.promptId)
 			.single()
 
@@ -175,6 +175,13 @@ PromptDetailView = class PromptDetailView extends AView
 							(p.prompt_type === 'image' ? '🎨 이미지' : '✍️ 텍스트') +
 						'</span>' +
 					'</div>' +
+
+					// 결과물 이미지
+					(p.result_image
+						? '<div style="width:100%;border-radius:16px;overflow:hidden;margin-bottom:20px;background:#2E2E48;">'
+							+ '<img src="' + p.result_image + '" style="width:100%;max-height:360px;object-fit:cover;display:block;" alt="결과물 이미지">'
+							+ '</div>'
+						: '') +
 
 					// 제목
 					'<h1 class="detail-title">' + p.title + '</h1>' +

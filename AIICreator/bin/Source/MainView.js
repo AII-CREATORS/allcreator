@@ -105,7 +105,7 @@ MainView = class MainView extends AView
 
 		var query = this.sb.getClient()
 			.from('prompts')
-			.select('id, title, description, price, prompt_type, like_count, view_count, users!user_id(username), ai_tools(name)')
+			.select('id, title, description, price, prompt_type, like_count, view_count, result_image, users!user_id(username), ai_tools(name)')
 			.is('deleted_at', null)
 			.eq('status', 'published')
 

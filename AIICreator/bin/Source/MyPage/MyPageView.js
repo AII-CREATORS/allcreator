@@ -411,237 +411,12 @@ MyPageView = class MyPageView extends AView
 	{
 		var result = await this.sb.getClient()
 			.from('prompts')
-			.select('id, title, description, price, prompt_type, like_count, view_count, status, rejection_reason, prompt_content, created_at, ai_tool_id, ai_tools(id, name)')
+			.select('id, title, description, price, prompt_type, like_count, view_count, status')
 			.eq('user_id', this.currentUser.id)
 			.is('deleted_at', null)
 			.order('created_at', { ascending: false })
 
-		this._allMyPrompts = result.data || []
-		this._myFilter     = { sort: 'newest', toolId: 'all', price: 'all' }
-
-		var toolsMap = {}
-		this._allMyPrompts.forEach(function(p)
-		{
-			if (p.ai_tool_id && p.ai_tools) toolsMap[p.ai_tool_id] = p.ai_tools.name
-		})
-		this._myToolsMap = toolsMap
-
-		this._renderMyFilters(content)
-		this._applyMyFilters(content)
-	}
-
-	_renderMyFilters(content)
-	{
-		var toolsMap    = this._myToolsMap
-		var toolOptions = '<option value="all">전체 도구</option>'
-		Object.keys(toolsMap).forEach(function(id)
-		{
-			toolOptions += '<option value="' + id + '">' + toolsMap[id] + '</option>'
-		})
-
-		var sel = 'padding:6px 12px;background:#2E2E48;border:1px solid #3A3A58;border-radius:9999px;color:#fff;font-size:0.8125rem;font-family:inherit;cursor:pointer;outline:none;'
-
-		content.innerHTML =
-			'<div style="display:flex;gap:8px;padding:16px 0 12px;flex-wrap:wrap;">' +
-				'<select id="mp-filter-sort" style="' + sel + '">' +
-					'<option value="newest">최신순</option>' +
-					'<option value="oldest">오래된 순</option>' +
-					'<option value="likes">좋아요 많은 순</option>' +
-				'</select>' +
-				'<select id="mp-filter-tool" style="' + sel + '">' + toolOptions + '</select>' +
-				'<select id="mp-filter-price" style="' + sel + '">' +
-					'<option value="all">가격 전체</option>' +
-					'<option value="free">무료</option>' +
-					'<option value="high">가격 높은 순</option>' +
-					'<option value="low">가격 낮은 순</option>' +
-				'</select>' +
-			'</div>' +
-			'<div id="mp-my-list"></div>'
-
-		var self = this
-		content.querySelector('#mp-filter-sort').addEventListener('change', function()
-		{
-			self._myFilter.sort = this.value
-			self._applyMyFilters(content)
-		})
-		content.querySelector('#mp-filter-tool').addEventListener('change', function()
-		{
-			self._myFilter.toolId = this.value
-			self._applyMyFilters(content)
-		})
-		content.querySelector('#mp-filter-price').addEventListener('change', function()
-		{
-			self._myFilter.price = this.value
-			self._applyMyFilters(content)
-		})
-	}
-
-	_applyMyFilters(content)
-	{
-		var filter  = this._myFilter
-		var prompts = this._allMyPrompts.slice()
-
-		if (filter.toolId !== 'all')
-			prompts = prompts.filter(function(p) { return p.ai_tool_id === filter.toolId })
-
-		if (filter.price === 'free')
-		{
-			prompts = prompts.filter(function(p) { return Number(p.price) === 0 })
-			prompts = this._sortMyPrompts(prompts, filter.sort)
-		}
-		else if (filter.price === 'high')
-			prompts.sort(function(a, b) { return Number(b.price) - Number(a.price) })
-		else if (filter.price === 'low')
-			prompts.sort(function(a, b) { return Number(a.price) - Number(b.price) })
-		else
-			prompts = this._sortMyPrompts(prompts, filter.sort)
-
-		var listEl = content.querySelector('#mp-my-list')
-		if (listEl) this._renderMyPromptList(listEl, prompts)
-	}
-
-	_sortMyPrompts(prompts, sort)
-	{
-		if (sort === 'oldest')
-			return prompts.sort(function(a, b) { return new Date(a.created_at) - new Date(b.created_at) })
-		if (sort === 'likes')
-			return prompts.sort(function(a, b) { return (b.like_count || 0) - (a.like_count || 0) })
-		return prompts.sort(function(a, b) { return new Date(b.created_at) - new Date(a.created_at) })
-	}
-
-	_renderMyPromptList(container, prompts)
-	{
-		if (!prompts.length)
-		{
-			container.innerHTML =
-				'<div class="mp-empty">' +
-					'<div class="mp-empty-icon">✍️</div>' +
-					'<div class="mp-empty-text">등록한 프롬프트가 없습니다</div>' +
-				'</div>'
-			return
-		}
-
-		var html = '<div class="mp-list">'
-
-		prompts.forEach(function(p)
-		{
-			var isImage    = p.prompt_type === 'image'
-			var isRejected = p.status === 'rejected'
-			var isPending  = p.status === 'pending'
-			var icon       = isImage ? '🎨' : '✍️'
-			var isFree     = Number(p.price) === 0
-			var price      = isFree
-				? '<span class="mp-list-price free">무료</span>'
-				: '<span class="mp-list-price">' + Number(p.price).toLocaleString() + '원</span>'
-
-			var statusLabel = ''
-			if (isRejected)
-				statusLabel = '<span style="font-size:0.8125rem;font-weight:600;color:rgba(255,107,107,0.75);flex-shrink:0;margin-right:10px;">반려</span>'
-			else if (isPending)
-				statusLabel = '<span style="font-size:0.8125rem;font-weight:600;color:rgba(255,179,71,0.75);flex-shrink:0;margin-right:10px;">심사중</span>'
-
-			var cardStyle = isRejected ? ' style="border-left:3px solid rgba(255,107,107,0.5)"' : ''
-
-			html +=
-				'<div class="mp-list-card" data-id="' + p.id + '"' + cardStyle + '>' +
-					'<div class="mp-list-icon">' + icon + '</div>' +
-					'<div class="mp-list-info">' +
-						'<div class="mp-list-title">' + p.title + '</div>' +
-						'<div class="mp-list-desc">' + (p.description || '') + '</div>' +
-					'</div>' +
-					statusLabel +
-					price +
-				'</div>'
-		})
-
-		html += '</div>'
-		container.innerHTML = html
-
-		var self = this
-
-		container.querySelectorAll('.mp-list-card').forEach(function(card)
-		{
-			var id     = card.dataset.id
-			var prompt = prompts.find(function(p) { return p.id === id })
-			if (!prompt) return
-
-			card.addEventListener('click', function()
-			{
-				if (prompt.status === 'published')
-					theApp.openDetail(prompt.id)
-				else
-					self._showPromptPopup(prompt)
-			})
-		})
-	}
-
-	_showPromptPopup(prompt)
-	{
-		var el       = this.getElement()
-		var existing = el.querySelector('#mp-prompt-popup-overlay')
-		if (existing) existing.remove()
-
-		var statusMap   = { published: '승인됨', pending: '심사 중', rejected: '반려', draft: '임시저장' }
-		var statusColor = { published: '#4CAF82', pending: '#FFB347', rejected: '#FF6B6B' }
-		var typeLabel   = prompt.prompt_type === 'image' ? '🎨 이미지 프롬프트' : '✍️ 텍스트 프롬프트'
-		var priceLabel  = Number(prompt.price) === 0 ? '무료' : Number(prompt.price).toLocaleString() + '원'
-		var sLabel      = statusMap[prompt.status] || prompt.status
-		var sColor      = statusColor[prompt.status] || '#A0A0C0'
-
-		var rejectionHTML = ''
-		if (prompt.status === 'rejected' && prompt.rejection_reason)
-			rejectionHTML =
-				'<div style="background:rgba(255,107,107,0.1);border:1px solid #FF6B6B;border-radius:12px;padding:14px 16px;margin-bottom:20px;">' +
-					'<div style="font-size:0.875rem;font-weight:700;color:#FF6B6B;margin-bottom:6px;">⚠️ 반려 사유</div>' +
-					'<div style="font-size:0.9rem;color:#fff;line-height:1.6;">' + prompt.rejection_reason + '</div>' +
-				'</div>'
-
-		var contentHTML = ''
-		if (prompt.prompt_content)
-			contentHTML =
-				'<div>' +
-					'<div style="font-size:0.75rem;font-weight:700;color:#6B6B8A;text-transform:uppercase;letter-spacing:0.04em;margin-bottom:10px;">프롬프트 내용</div>' +
-					'<pre style="font-family:\'JetBrains Mono\',monospace;font-size:0.875rem;color:#fff;background:#2E2E48;border:1px solid #3A3A58;border-radius:12px;padding:14px;white-space:pre-wrap;word-break:break-word;margin:0;line-height:1.7;max-height:260px;overflow-y:auto;">' + prompt.prompt_content + '</pre>' +
-				'</div>'
-
-		var overlay = document.createElement('div')
-		overlay.id = 'mp-prompt-popup-overlay'
-		overlay.style.cssText =
-			'position:fixed;top:0;left:0;right:0;bottom:0;' +
-			'background:rgba(10,10,20,0.82);' +
-			'display:flex;align-items:center;justify-content:center;' +
-			'z-index:9999;padding:20px;box-sizing:border-box;'
-
-		var box = document.createElement('div')
-		box.style.cssText =
-			'background:#242438;border:1px solid #4A4A68;border-radius:24px;' +
-			'padding:28px;width:100%;max-width:580px;max-height:82vh;overflow-y:auto;' +
-			'box-shadow:0 8px 40px rgba(0,0,0,0.5);box-sizing:border-box;'
-		box.innerHTML =
-			'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">' +
-				'<div>' +
-					'<span style="font-size:0.8125rem;color:#A0A0C0;">' + typeLabel + '</span>' +
-					'<span style="font-size:0.75rem;font-weight:700;padding:3px 10px;border-radius:9999px;margin-left:10px;background:' + sColor + ';color:' + (prompt.status === 'pending' ? '#1a1a2e' : '#fff') + ';">' + sLabel + '</span>' +
-				'</div>' +
-				'<button id="mp-popup-close-btn" style="width:32px;height:32px;border:none;background:#2E2E48;border-radius:6px;color:#A0A0C0;cursor:pointer;font-size:1rem;display:flex;align-items:center;justify-content:center;flex-shrink:0;">✕</button>' +
-			'</div>' +
-			'<h2 style="font-size:1.375rem;font-weight:700;color:#fff;margin-bottom:8px;">' + prompt.title + '</h2>' +
-			'<div style="font-size:1rem;font-weight:700;color:#6C63FF;margin-bottom:12px;">' + priceLabel + '</div>' +
-			'<div style="font-size:0.9375rem;color:#A0A0C0;line-height:1.6;margin-bottom:20px;">' + (prompt.description || '') + '</div>' +
-			rejectionHTML +
-			contentHTML
-
-		overlay.appendChild(box)
-		el.appendChild(overlay)
-
-		box.querySelector('#mp-popup-close-btn').addEventListener('click', function()
-		{
-			overlay.remove()
-		})
-		overlay.addEventListener('click', function(e)
-		{
-			if (e.target === overlay) overlay.remove()
-		})
+		this._renderList(content, result.data || [], '등록한 프롬프트가 없습니다', '✍️')
 	}
 
 	async _loadSaved(content)
@@ -695,12 +470,12 @@ MyPageView = class MyPageView extends AView
 			html +=
 				'<div class="mp-list-card" data-id="' + p.id + '">' +
 					'<div class="mp-list-icon">' + icon + '</div>' +
-					'<div class="mp-list-info">' +
-						'<div class="mp-list-title">' + p.title + '</div>' +
-						'<div class="mp-list-desc">' + (p.description || '') + '</div>' +
-					'</div>' +
-					price +
-				'</div>'
+					'<div class="mp-list-info">'
+					+ '<div class="mp-list-title">' + p.title + '</div>'
+					+ '<div class="mp-list-desc">' + (p.description || '') + '</div>'
+				+ '</div>'
+				+ price
+			+ '</div>'
 		})
 
 		html += '</div>'
