@@ -20,7 +20,6 @@ MyPageView = class MyPageView extends AView
 	{
 		super.onInitDone()
 		this.sb = SupabaseManager.getInstance()
-		this._injectStyle()
 		this._renderSkeleton()
 		this._bootstrap()
 	}
@@ -206,79 +205,6 @@ MyPageView = class MyPageView extends AView
 			'</div>'
 	}
 
-	_injectStyle()
-	{
-		if (document.getElementById('mp-view-style')) return
-
-		var style = document.createElement('style')
-		style.id  = 'mp-view-style'
-		style.textContent =
-			'.mp-wrap{display:flex;flex-direction:column;height:100%;background:var(--color-primary);}' +
-
-			// 네비
-			'.mp-nav{display:flex;align-items:center;gap:16px;padding:0 24px;height:56px;background:var(--color-primary-dark);border-bottom:1px solid var(--color-border);flex-shrink:0;}' +
-			'.mp-back{background:none;border:none;color:var(--color-text-muted);font-size:0.9375rem;font-family:var(--font-body);cursor:pointer;padding:6px 10px;border-radius:var(--radius-sm);transition:color var(--transition),background var(--transition);flex-shrink:0;}' +
-			'.mp-back:hover{color:var(--color-text);background:var(--color-surface);}' +
-			'.mp-nav-title{font-family:var(--font-title);font-size:1.0625rem;font-weight:700;color:var(--color-text);flex:1;}' +
-
-			// 바디
-			'.mp-body{flex:1;overflow-y:auto;padding:28px 32px;display:flex;flex-direction:column;gap:20px;max-width:820px;width:100%;margin:0 auto;box-sizing:border-box;}' +
-
-			// 프로필 카드
-			'.mp-profile-card{display:flex;align-items:flex-start;gap:20px;background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-lg);padding:24px;}' +
-
-			// 아바타
-			'.mp-avatar-wrap{position:relative;flex-shrink:0;width:72px;height:72px;}' +
-			'.mp-avatar{width:72px;height:72px;border-radius:50%;flex-shrink:0;}' +
-			'.mp-avatar-initial{background:var(--color-accent);color:#fff;display:flex;align-items:center;justify-content:center;font-family:var(--font-title);font-size:1.625rem;font-weight:700;}' +
-			'.mp-avatar-img{object-fit:cover;border:2px solid var(--color-border);}' +
-			'.mp-avatar-overlay{position:absolute;bottom:0;right:0;width:24px;height:24px;border-radius:50%;background:var(--color-surface-2);border:1px solid var(--color-border);display:flex;align-items:center;justify-content:center;font-size:0.75rem;cursor:pointer;transition:background var(--transition);}' +
-			'.mp-avatar-overlay:hover{background:var(--color-accent);}' +
-
-			// 프로필 정보
-			'.mp-profile-info{flex:1;min-width:0;}' +
-			'.mp-display-name{font-family:var(--font-title);font-size:1.25rem;font-weight:700;color:var(--color-text);margin-bottom:2px;}' +
-			'.mp-username{font-size:0.875rem;color:var(--color-accent);margin-bottom:6px;}' +
-			'.mp-bio{font-size:0.9rem;color:var(--color-text-muted);line-height:1.5;margin-bottom:8px;}' +
-			'.mp-meta{font-size:0.8125rem;color:var(--color-text-dim);display:flex;flex-wrap:wrap;gap:4px;}' +
-			'.mp-meta-sep{color:var(--color-border);}' +
-			'.mp-profile-skeleton{height:120px;background:var(--color-surface-2);border-radius:var(--radius-lg);animation:skeleton-pulse 1.5s ease infinite;}' +
-
-			// 편집 폼
-			'.mp-edit-form{background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-lg);padding:20px;display:flex;flex-direction:column;gap:16px;}' +
-			'.mp-edit-row{display:flex;gap:12px;}' +
-			'.mp-edit-actions{display:flex;gap:8px;justify-content:flex-end;}' +
-			'.mp-bio-textarea{resize:vertical;min-height:72px;line-height:1.6;}' +
-			'.mp-char-count{text-align:right;font-size:0.75rem;color:var(--color-text-dim);margin-top:4px;}' +
-
-			// 탭
-			'.mp-tabs{display:flex;gap:0;border-bottom:1px solid var(--color-border);}' +
-			'.mp-tab{padding:10px 20px;border:none;border-bottom:2px solid transparent;background:transparent;color:var(--color-text-muted);font-size:0.9375rem;font-weight:500;font-family:var(--font-body);cursor:pointer;transition:color var(--transition),border-color var(--transition);margin-bottom:-1px;}' +
-			'.mp-tab:hover{color:var(--color-text);}' +
-			'.mp-tab.active{color:var(--color-accent);border-bottom-color:var(--color-accent);}' +
-
-			// 탭 콘텐츠
-			'.mp-tab-content{flex:1;}' +
-			'.mp-loading{display:flex;justify-content:center;padding:48px;}' +
-			'.mp-empty{display:flex;flex-direction:column;align-items:center;padding:60px 20px;gap:10px;}' +
-			'.mp-empty-icon{font-size:2.5rem;}' +
-			'.mp-empty-text{font-size:0.9375rem;color:var(--color-text-muted);}' +
-
-			// 미니 카드 목록
-			'.mp-list{display:flex;flex-direction:column;gap:10px;padding-top:16px;}' +
-			'.mp-list-card{display:flex;align-items:center;gap:14px;background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-md);padding:14px 16px;cursor:pointer;transition:border-color var(--transition),background var(--transition);}' +
-			'.mp-list-card:hover{border-color:var(--color-accent);background:var(--color-surface-2);}' +
-			'.mp-list-icon{font-size:1.5rem;flex-shrink:0;}' +
-			'.mp-list-info{flex:1;min-width:0;}' +
-			'.mp-list-title{font-size:0.9375rem;font-weight:700;color:var(--color-text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:3px;}' +
-			'.mp-list-desc{font-size:0.8125rem;color:var(--color-text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}' +
-			'.mp-list-price{font-size:0.9375rem;font-weight:700;color:var(--color-accent);flex-shrink:0;}' +
-			'.mp-list-price.free{color:var(--color-success);}' +
-
-			'@keyframes skeleton-pulse{0%,100%{opacity:1}50%{opacity:0.4}}'
-
-		document.head.appendChild(style)
-	}
 
 	// ─────────────────────────────────────────
 	// 이벤트 바인딩
@@ -403,7 +329,6 @@ MyPageView = class MyPageView extends AView
 		{
 			overlay.textContent = '📷'
 			ToastManager.error('업로드 실패: ' + e.message)
-			console.error('[MyPageView] _uploadAvatar error:', e)
 		}
 	}
 
@@ -479,7 +404,6 @@ MyPageView = class MyPageView extends AView
 		catch (e)
 		{
 			content.innerHTML = '<div class="mp-empty"><div class="mp-empty-icon">⚠️</div><div class="mp-empty-text">불러오기 실패</div></div>'
-			console.error('[MyPageView] _loadTabData error:', e)
 		}
 	}
 
@@ -487,12 +411,147 @@ MyPageView = class MyPageView extends AView
 	{
 		var result = await this.sb.getClient()
 			.from('prompts')
-			.select('id, title, description, price, prompt_type, like_count, view_count, status')
+			.select('id, title, description, price, prompt_type, like_count, view_count, status, rejection_reason, prompt_content')
 			.eq('user_id', this.currentUser.id)
 			.is('deleted_at', null)
 			.order('created_at', { ascending: false })
 
-		this._renderList(content, result.data || [], '등록한 프롬프트가 없습니다', '✍️')
+		this._renderMyPromptList(content, result.data || [])
+	}
+
+	_renderMyPromptList(content, prompts)
+	{
+		if (!prompts.length)
+		{
+			content.innerHTML =
+				'<div class="mp-empty">' +
+					'<div class="mp-empty-icon">✍️</div>' +
+					'<div class="mp-empty-text">등록한 프롬프트가 없습니다</div>' +
+				'</div>'
+			return
+		}
+
+		var html = '<div class="mp-list">'
+
+		prompts.forEach(function(p)
+		{
+			var isImage    = p.prompt_type === 'image'
+			var isRejected = p.status === 'rejected'
+			var isPending  = p.status === 'pending'
+			var icon       = isImage ? '🎨' : '✍️'
+			var isFree     = Number(p.price) === 0
+			var price      = isFree
+				? '<span class="mp-list-price free">무료</span>'
+				: '<span class="mp-list-price">' + Number(p.price).toLocaleString() + '원</span>'
+
+			var statusLabel = ''
+			if (isRejected)
+				statusLabel = '<span style="font-size:0.8125rem;font-weight:600;color:rgba(255,107,107,0.75);flex-shrink:0;margin-right:10px;">반려</span>'
+			else if (isPending)
+				statusLabel = '<span style="font-size:0.8125rem;font-weight:600;color:rgba(255,179,71,0.75);flex-shrink:0;margin-right:10px;">심사중</span>'
+
+			var cardStyle = isRejected ? ' style="border-left:3px solid rgba(255,107,107,0.5)"' : ''
+
+			html +=
+				'<div class="mp-list-card" data-id="' + p.id + '"' + cardStyle + '>' +
+					'<div class="mp-list-icon">' + icon + '</div>' +
+					'<div class="mp-list-info">' +
+						'<div class="mp-list-title">' + p.title + '</div>' +
+						'<div class="mp-list-desc">' + (p.description || '') + '</div>' +
+					'</div>' +
+					statusLabel +
+					price +
+				'</div>'
+		})
+
+		html += '</div>'
+		content.innerHTML = html
+
+		var self = this
+
+		content.querySelectorAll('.mp-list-card').forEach(function(card)
+		{
+			var id     = card.dataset.id
+			var prompt = prompts.find(function(p) { return p.id === id })
+			if (!prompt) return
+
+			card.addEventListener('click', function()
+			{
+				if (prompt.status === 'published')
+					theApp.openDetail(prompt.id)
+				else
+					self._showPromptPopup(prompt)
+			})
+		})
+	}
+
+	_showPromptPopup(prompt)
+	{
+		var el      = this.getElement()
+		var existing = el.querySelector('#mp-prompt-popup-overlay')
+		if (existing) existing.remove()
+
+		var statusMap  = { published: '승인됨', pending: '심사 중', rejected: '반려', draft: '임시저장' }
+		var statusColor= { published: '#4CAF82', pending: '#FFB347', rejected: '#FF6B6B' }
+		var typeLabel  = prompt.prompt_type === 'image' ? '🎨 이미지 프롬프트' : '✍️ 텍스트 프롬프트'
+		var priceLabel = Number(prompt.price) === 0 ? '무료' : Number(prompt.price).toLocaleString() + '원'
+		var sLabel     = statusMap[prompt.status] || prompt.status
+		var sColor     = statusColor[prompt.status] || '#A0A0C0'
+
+		var rejectionHTML = ''
+		if (prompt.status === 'rejected' && prompt.rejection_reason)
+			rejectionHTML =
+				'<div style="background:rgba(255,107,107,0.1);border:1px solid #FF6B6B;border-radius:12px;padding:14px 16px;margin-bottom:20px;">' +
+					'<div style="font-size:0.875rem;font-weight:700;color:#FF6B6B;margin-bottom:6px;">⚠️ 반려 사유</div>' +
+					'<div style="font-size:0.9rem;color:#fff;line-height:1.6;">' + prompt.rejection_reason + '</div>' +
+				'</div>'
+
+		var contentHTML = ''
+		if (prompt.prompt_content)
+			contentHTML =
+				'<div>' +
+					'<div style="font-size:0.75rem;font-weight:700;color:#6B6B8A;text-transform:uppercase;letter-spacing:0.04em;margin-bottom:10px;">프롬프트 내용</div>' +
+					'<pre style="font-family:\'JetBrains Mono\',monospace;font-size:0.875rem;color:#fff;background:#2E2E48;border:1px solid #3A3A58;border-radius:12px;padding:14px;white-space:pre-wrap;word-break:break-word;margin:0;line-height:1.7;max-height:260px;overflow-y:auto;">' + prompt.prompt_content + '</pre>' +
+				'</div>'
+
+		var overlay = document.createElement('div')
+		overlay.id = 'mp-prompt-popup-overlay'
+		overlay.style.cssText =
+			'position:fixed;top:0;left:0;right:0;bottom:0;' +
+			'background:rgba(10,10,20,0.82);' +
+			'display:flex;align-items:center;justify-content:center;' +
+			'z-index:9999;padding:20px;box-sizing:border-box;'
+
+		var box = document.createElement('div')
+		box.style.cssText =
+			'background:#242438;border:1px solid #4A4A68;border-radius:24px;' +
+			'padding:28px;width:100%;max-width:580px;max-height:82vh;overflow-y:auto;' +
+			'box-shadow:0 8px 40px rgba(0,0,0,0.5);box-sizing:border-box;'
+		box.innerHTML =
+			'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">' +
+				'<div>' +
+					'<span style="font-size:0.8125rem;color:#A0A0C0;">' + typeLabel + '</span>' +
+					'<span style="font-size:0.75rem;font-weight:700;padding:3px 10px;border-radius:9999px;margin-left:10px;background:' + sColor + ';color:' + (prompt.status === 'pending' ? '#1a1a2e' : '#fff') + ';">' + sLabel + '</span>' +
+				'</div>' +
+				'<button id="mp-popup-close-btn" style="width:32px;height:32px;border:none;background:#2E2E48;border-radius:6px;color:#A0A0C0;cursor:pointer;font-size:1rem;display:flex;align-items:center;justify-content:center;flex-shrink:0;">✕</button>' +
+			'</div>' +
+			'<h2 style="font-size:1.375rem;font-weight:700;color:#fff;margin-bottom:8px;">' + prompt.title + '</h2>' +
+			'<div style="font-size:1rem;font-weight:700;color:#6C63FF;margin-bottom:12px;">' + priceLabel + '</div>' +
+			'<div style="font-size:0.9375rem;color:#A0A0C0;line-height:1.6;margin-bottom:20px;">' + (prompt.description || '') + '</div>' +
+			rejectionHTML +
+			contentHTML
+
+		overlay.appendChild(box)
+		el.appendChild(overlay)
+
+		box.querySelector('#mp-popup-close-btn').addEventListener('click', function()
+		{
+			overlay.remove()
+		})
+		overlay.addEventListener('click', function(e)
+		{
+			if (e.target === overlay) overlay.remove()
+		})
 	}
 
 	async _loadSaved(content)
@@ -546,12 +605,12 @@ MyPageView = class MyPageView extends AView
 			html +=
 				'<div class="mp-list-card" data-id="' + p.id + '">' +
 					'<div class="mp-list-icon">' + icon + '</div>' +
-					'<div class="mp-list-info">' +
-						'<div class="mp-list-title">' + p.title + '</div>' +
-						'<div class="mp-list-desc">' + (p.description || '') + '</div>' +
-					'</div>' +
-					price +
-				'</div>'
+					'<div class="mp-list-info">'
+					+ '<div class="mp-list-title">' + p.title + '</div>'
+					+ '<div class="mp-list-desc">' + (p.description || '') + '</div>'
+				+ '</div>'
+				+ price
+			+ '</div>'
 		})
 
 		html += '</div>'
@@ -561,8 +620,7 @@ MyPageView = class MyPageView extends AView
 		{
 			card.addEventListener('click', function()
 			{
-				window._currentPromptId = card.dataset.id
-				theApp.mainContainer.open('Source/Prompt/PromptDetailView.lay')
+				theApp.openDetail(card.dataset.id)
 			})
 		})
 	}

@@ -15402,17 +15402,36 @@ NavBar = class NavBar
 {
 	constructor(container, callbacks)
 	{
-		// callbacks: { onSearch, onLogin, onMyPage, onLogout, onRegister, onAdmin }
-		this.el           = container
-		this.callbacks    = callbacks || {}
-		this.searchTimer  = null
-		this.keyword      = ''
+		this.el          = container
+		this.callbacks   = callbacks || {}
+		this.searchTimer      = null
+		this.keyword          = ''
+		this._docClickHandler = null
 	}
 
-	// user: auth user, profile: public.users row (role 포함)
-	render(user, profile)
+	// auth 검증을 내부에서 처리 — 호출자는 인자 불필요
+	async render()
 	{
-		this._injectStyle()
+		if (this._docClickHandler)
+		{
+			document.removeEventListener('click', this._docClickHandler)
+			this._docClickHandler = null
+		}
+
+		var sb      = SupabaseManager.getInstance()
+		var user    = await sb.getUser()
+		var profile = null
+
+		if (user)
+		{
+			var { data } = await sb.getClient()
+				.from('users')
+				.select('role')
+				.eq('id', user.id)
+				.single()
+			profile = data
+		}
+
 		this.el.innerHTML = this._html(user, profile)
 		this._bindEvents(user, profile)
 	}
@@ -15421,16 +15440,16 @@ NavBar = class NavBar
 	{
 		var userArea = user ? this._userHTML(user, profile) : this._guestHTML()
 
-		return '<div class="nb-inner">' +
-			'<div class="nb-logo">' +
-				'<span class="nb-logo-text">ALL</span>' +
-				'<span class="nb-logo-accent">Creator</span>' +
-			'</div>' +
-			'<div class="nb-search">' +
-				'<input class="ac-input nb-search-input" id="nb-search" type="text" placeholder="  프롬프트 검색...">' +
-			'</div>' +
-			'<div class="nb-actions" id="nb-user-area">' + userArea + '</div>' +
-		'</div>'
+		return '<div class="nb-inner">'
+			+ '<div class="nb-logo">'
+				+ '<span class="nb-logo-text">ALL</span>'
+				+ '<span class="nb-logo-accent">Creator</span>'
+			+ '</div>'
+			+ '<div class="nb-search">'
+				+ '<input class="ac-input nb-search-input" id="nb-search" type="text" placeholder="  프롬프트 검색...">'
+			+ '</div>'
+			+ '<div class="nb-actions" id="nb-user-area">' + userArea + '</div>'
+		+ '</div>'
 	}
 
 	_guestHTML()
@@ -15448,38 +15467,16 @@ NavBar = class NavBar
 			? '<button class="ac-btn ac-btn-outline ac-btn-sm nb-btn-admin" id="nb-btn-admin"> 관리자</button>'
 			: ''
 
-		return adminBtn +
-			'<button class="ac-btn ac-btn-secondary ac-btn-sm" id="nb-btn-register">+ 프롬프트 등록</button>' +
-			'<div class="ac-avatar nb-avatar" id="nb-avatar">' + initial + '</div>' +
-			'<div class="nb-dropdown" id="nb-dropdown" style="display:none">' +
-				'<div class="nb-dropdown-email">' + user.email + '</div>' +
-				'<button class="nb-dropdown-item" id="nb-btn-mypage">마이페이지</button>' +
-				'<button class="nb-dropdown-item" id="nb-btn-logout">로그아웃</button>' +
-			'</div>'
+		return adminBtn
+			+ '<button class="ac-btn ac-btn-secondary ac-btn-sm" id="nb-btn-register">+ 프롬프트 등록</button>'
+			+ '<div class="ac-avatar nb-avatar" id="nb-avatar">' + initial + '</div>'
+			+ '<div class="nb-dropdown" id="nb-dropdown" style="display:none">'
+				+ '<div class="nb-dropdown-email">' + user.email + '</div>'
+				+ '<button class="nb-dropdown-item" id="nb-btn-mypage">마이페이지</button>'
+				+ '<button class="nb-dropdown-item" id="nb-btn-logout">로그아웃</button>'
+			+ '</div>'
 	}
 
-	_injectStyle()
-	{
-		if (document.getElementById('navbar-style')) return
-		var style = document.createElement('style')
-		style.id  = 'navbar-style'
-		style.textContent =
-			'.nb-inner{display:flex;align-items:center;gap:16px;padding:0 24px;height:60px;background:var(--color-primary-dark);border-bottom:1px solid var(--color-border);}' +
-			'.nb-logo{font-family:var(--font-title);font-size:1.375rem;font-weight:700;white-space:nowrap;flex-shrink:0;}' +
-			'.nb-logo-text{color:var(--color-text);}' +
-			'.nb-logo-accent{color:var(--color-accent);margin-left:3px;}' +
-			'.nb-search{flex:1;max-width:480px;}' +
-			'.nb-search-input{padding:8px 14px;font-size:0.875rem;}' +
-			'.nb-actions{display:flex;align-items:center;gap:10px;margin-left:auto;position:relative;}' +
-			'.nb-avatar{cursor:pointer;width:34px;height:34px;font-size:0.8125rem;}' +
-			'.nb-btn-admin{border-color:var(--color-point)!important;color:var(--color-point)!important;}' +
-			'.nb-btn-admin:hover{background:var(--color-point)!important;color:#fff!important;}' +
-			'.nb-dropdown{position:absolute;top:calc(100% + 8px);right:0;background:var(--color-surface);border:1px solid var(--color-border-light);border-radius:var(--radius-md);padding:8px;min-width:200px;box-shadow:var(--shadow-md);z-index:200;}' +
-			'.nb-dropdown-email{font-size:0.75rem;color:var(--color-text-muted);padding:6px 10px 10px;border-bottom:1px solid var(--color-border);margin-bottom:6px;}' +
-			'.nb-dropdown-item{width:100%;padding:8px 10px;background:none;border:none;color:var(--color-text);font-size:0.875rem;font-family:var(--font-body);text-align:left;border-radius:var(--radius-sm);cursor:pointer;}' +
-			'.nb-dropdown-item:hover{background:var(--color-surface-2);}'
-		document.head.appendChild(style)
-	}
 
 	_bindEvents(user, profile)
 	{
@@ -15526,13 +15523,14 @@ NavBar = class NavBar
 			})
 		}
 
-		document.addEventListener('click', function(e)
+		this._docClickHandler = function(e)
 		{
-			var dd  = el.querySelector('#nb-dropdown')
-			var av  = el.querySelector('#nb-avatar')
+			var dd = el.querySelector('#nb-dropdown')
+			var av = el.querySelector('#nb-avatar')
 			if (dd && av && !av.contains(e.target) && !dd.contains(e.target))
 				dd.style.display = 'none'
-		})
+		}
+		document.addEventListener('click', this._docClickHandler)
 
 		var btnRegister = el.querySelector('#nb-btn-register')
 		if (btnRegister) btnRegister.addEventListener('click', function()
@@ -15580,7 +15578,6 @@ FilterBar = class FilterBar
 	render(aiTools)
 	{
 		this.aiTools = aiTools || []
-		this._injectStyle()
 		this.el.innerHTML = this._html()
 		this._bindEvents()
 	}
@@ -15625,34 +15622,6 @@ FilterBar = class FilterBar
 			'</div>'
 	}
 
-	_injectStyle()
-	{
-		if (document.getElementById('filterbar-style')) return
-		var style = document.createElement('style')
-		style.id  = 'filterbar-style'
-		style.textContent =
-			// AI 도구 탭 바
-			'.fb-tool-bar{display:flex;align-items:center;gap:12px;padding:0 24px;height:52px;background:var(--color-primary);border-bottom:1px solid var(--color-border);overflow-x:auto;}' +
-			'.fb-tool-bar::-webkit-scrollbar{height:0;}' +
-			'.fb-tool-tabs{display:flex;gap:6px;flex-shrink:0;}' +
-			'.fb-tool-tab{padding:5px 14px;border:1px solid var(--color-border);border-radius:var(--radius-full);background:transparent;color:var(--color-text-muted);font-size:0.8125rem;font-weight:500;font-family:var(--font-body);cursor:pointer;white-space:nowrap;transition:background var(--transition),color var(--transition),border-color var(--transition);}' +
-			'.fb-tool-tab:hover{border-color:var(--color-accent);color:var(--color-accent);}' +
-			'.fb-tool-tab.active{background:var(--color-accent);border-color:var(--color-accent);color:#fff;}' +
-			'.fb-sort{margin-left:auto;flex-shrink:0;}' +
-			'.fb-sort-select{padding:5px 10px;background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-md);color:var(--color-text);font-size:0.8125rem;font-family:var(--font-body);cursor:pointer;outline:none;}' +
-			// 칩 바
-			'.fb-chip-bar{display:flex;align-items:center;gap:20px;padding:0 24px;height:44px;background:var(--color-primary-dark);border-bottom:1px solid var(--color-border);overflow-x:auto;}' +
-			'.fb-chip-bar::-webkit-scrollbar{height:0;}' +
-			'.fb-chip-group{display:flex;align-items:center;gap:8px;flex-shrink:0;}' +
-			'.fb-chip-label{font-size:0.75rem;font-weight:700;color:var(--color-text-dim);text-transform:uppercase;letter-spacing:0.04em;white-space:nowrap;}' +
-			'.fb-chips{display:flex;gap:4px;}' +
-			'.fb-chip{padding:3px 10px;border:1px solid var(--color-border);border-radius:var(--radius-full);background:transparent;color:var(--color-text-muted);font-size:0.75rem;font-weight:500;font-family:var(--font-body);cursor:pointer;white-space:nowrap;transition:background var(--transition),color var(--transition),border-color var(--transition);}' +
-			'.fb-chip:hover{border-color:var(--color-accent);color:var(--color-accent);}' +
-			'.fb-chip.active{background:rgba(108,99,255,0.18);border-color:var(--color-accent);color:var(--color-accent);}' +
-			'.fb-reset{margin-left:auto;padding:3px 12px;border:1px solid var(--color-border);border-radius:var(--radius-full);background:transparent;color:var(--color-text-dim);font-size:0.75rem;font-family:var(--font-body);cursor:pointer;flex-shrink:0;transition:color var(--transition),border-color var(--transition);}' +
-			'.fb-reset:hover{color:var(--color-point);border-color:var(--color-point);}'
-		document.head.appendChild(style)
-	}
 
 	// ─────────────────────────────────────────
 	// 이벤트
@@ -15738,11 +15707,9 @@ FilterBar = class FilterBar
 		var typeAll = el.querySelector('[data-type="all"]')
 		if (typeAll) typeAll.classList.add('active')
 
-		var sortEl = el.querySelector('#fb-sort')
-		if (sortEl) sortEl.value = 'latest'
+		el.querySelector('#fb-sort').value = 'latest'
 
 		this._onChange()
-		ToastManager.info('필터가 초기화되었습니다')
 	}
 }
 
@@ -15754,7 +15721,6 @@ PromptGrid = class PromptGrid
 		// callbacks: { onCardClick }
 		this.el        = container
 		this.callbacks = callbacks || {}
-		this._injectStyle()
 	}
 
 	// ─────────────────────────────────────────
@@ -15837,25 +15803,6 @@ PromptGrid = class PromptGrid
 				'</div>' +
 			'</div>' +
 		'</div>'
-	}
-
-	_injectStyle()
-	{
-		if (document.getElementById('promptgrid-style')) return
-		var style = document.createElement('style')
-		style.id  = 'promptgrid-style'
-		style.textContent =
-			'.pg-grid{columns:3;column-gap:16px;}' +
-			'.pg-grid .ac-prompt-card{break-inside:avoid;margin-bottom:16px;display:inline-block;width:100%;}' +
-			'.pg-thumb-text{width:100%;height:140px;display:flex;align-items:center;justify-content:center;font-size:2rem;background:linear-gradient(135deg,#2E2E48,#3A3A5A);}' +
-			'.pg-thumb-image{width:100%;height:140px;display:flex;align-items:center;justify-content:center;font-size:2rem;background:linear-gradient(135deg,#2A2048,#3D1F5A);}' +
-			'.pg-loading{display:flex;justify-content:center;padding:60px;}' +
-			'.pg-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:80px 20px;color:var(--color-text-muted);gap:12px;}' +
-			'.pg-empty-icon{font-size:3rem;}' +
-			'.pg-empty-text{font-size:1rem;font-weight:500;}' +
-			'.pg-result-header{font-size:0.875rem;color:var(--color-text-muted);margin-bottom:16px;}' +
-			'.pg-result-header strong{color:var(--color-accent);}'
-		document.head.appendChild(style)
 	}
 }
 

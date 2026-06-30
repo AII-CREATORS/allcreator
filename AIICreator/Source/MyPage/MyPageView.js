@@ -20,7 +20,6 @@ class MyPageView extends AView
 	{
 		super.onInitDone()
 		this.sb = SupabaseManager.getInstance()
-		this._injectStyle()
 		this._renderSkeleton()
 		this._bootstrap()
 	}
@@ -206,79 +205,6 @@ class MyPageView extends AView
 			'</div>'
 	}
 
-	_injectStyle()
-	{
-		if (document.getElementById('mp-view-style')) return
-
-		var style = document.createElement('style')
-		style.id  = 'mp-view-style'
-		style.textContent =
-			'.mp-wrap{display:flex;flex-direction:column;height:100%;background:var(--color-primary);}' +
-
-			// 네비
-			'.mp-nav{display:flex;align-items:center;gap:16px;padding:0 24px;height:56px;background:var(--color-primary-dark);border-bottom:1px solid var(--color-border);flex-shrink:0;}' +
-			'.mp-back{background:none;border:none;color:var(--color-text-muted);font-size:0.9375rem;font-family:var(--font-body);cursor:pointer;padding:6px 10px;border-radius:var(--radius-sm);transition:color var(--transition),background var(--transition);flex-shrink:0;}' +
-			'.mp-back:hover{color:var(--color-text);background:var(--color-surface);}' +
-			'.mp-nav-title{font-family:var(--font-title);font-size:1.0625rem;font-weight:700;color:var(--color-text);flex:1;}' +
-
-			// 바디
-			'.mp-body{flex:1;overflow-y:auto;padding:28px 32px;display:flex;flex-direction:column;gap:20px;max-width:820px;width:100%;margin:0 auto;box-sizing:border-box;}' +
-
-			// 프로필 카드
-			'.mp-profile-card{display:flex;align-items:flex-start;gap:20px;background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-lg);padding:24px;}' +
-
-			// 아바타
-			'.mp-avatar-wrap{position:relative;flex-shrink:0;width:72px;height:72px;}' +
-			'.mp-avatar{width:72px;height:72px;border-radius:50%;flex-shrink:0;}' +
-			'.mp-avatar-initial{background:var(--color-accent);color:#fff;display:flex;align-items:center;justify-content:center;font-family:var(--font-title);font-size:1.625rem;font-weight:700;}' +
-			'.mp-avatar-img{object-fit:cover;border:2px solid var(--color-border);}' +
-			'.mp-avatar-overlay{position:absolute;bottom:0;right:0;width:24px;height:24px;border-radius:50%;background:var(--color-surface-2);border:1px solid var(--color-border);display:flex;align-items:center;justify-content:center;font-size:0.75rem;cursor:pointer;transition:background var(--transition);}' +
-			'.mp-avatar-overlay:hover{background:var(--color-accent);}' +
-
-			// 프로필 정보
-			'.mp-profile-info{flex:1;min-width:0;}' +
-			'.mp-display-name{font-family:var(--font-title);font-size:1.25rem;font-weight:700;color:var(--color-text);margin-bottom:2px;}' +
-			'.mp-username{font-size:0.875rem;color:var(--color-accent);margin-bottom:6px;}' +
-			'.mp-bio{font-size:0.9rem;color:var(--color-text-muted);line-height:1.5;margin-bottom:8px;}' +
-			'.mp-meta{font-size:0.8125rem;color:var(--color-text-dim);display:flex;flex-wrap:wrap;gap:4px;}' +
-			'.mp-meta-sep{color:var(--color-border);}' +
-			'.mp-profile-skeleton{height:120px;background:var(--color-surface-2);border-radius:var(--radius-lg);animation:skeleton-pulse 1.5s ease infinite;}' +
-
-			// 편집 폼
-			'.mp-edit-form{background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-lg);padding:20px;display:flex;flex-direction:column;gap:16px;}' +
-			'.mp-edit-row{display:flex;gap:12px;}' +
-			'.mp-edit-actions{display:flex;gap:8px;justify-content:flex-end;}' +
-			'.mp-bio-textarea{resize:vertical;min-height:72px;line-height:1.6;}' +
-			'.mp-char-count{text-align:right;font-size:0.75rem;color:var(--color-text-dim);margin-top:4px;}' +
-
-			// 탭
-			'.mp-tabs{display:flex;gap:0;border-bottom:1px solid var(--color-border);}' +
-			'.mp-tab{padding:10px 20px;border:none;border-bottom:2px solid transparent;background:transparent;color:var(--color-text-muted);font-size:0.9375rem;font-weight:500;font-family:var(--font-body);cursor:pointer;transition:color var(--transition),border-color var(--transition);margin-bottom:-1px;}' +
-			'.mp-tab:hover{color:var(--color-text);}' +
-			'.mp-tab.active{color:var(--color-accent);border-bottom-color:var(--color-accent);}' +
-
-			// 탭 콘텐츠
-			'.mp-tab-content{flex:1;}' +
-			'.mp-loading{display:flex;justify-content:center;padding:48px;}' +
-			'.mp-empty{display:flex;flex-direction:column;align-items:center;padding:60px 20px;gap:10px;}' +
-			'.mp-empty-icon{font-size:2.5rem;}' +
-			'.mp-empty-text{font-size:0.9375rem;color:var(--color-text-muted);}' +
-
-			// 미니 카드 목록
-			'.mp-list{display:flex;flex-direction:column;gap:10px;padding-top:16px;}' +
-			'.mp-list-card{display:flex;align-items:center;gap:14px;background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-md);padding:14px 16px;cursor:pointer;transition:border-color var(--transition),background var(--transition);}' +
-			'.mp-list-card:hover{border-color:var(--color-accent);background:var(--color-surface-2);}' +
-			'.mp-list-icon{font-size:1.5rem;flex-shrink:0;}' +
-			'.mp-list-info{flex:1;min-width:0;}' +
-			'.mp-list-title{font-size:0.9375rem;font-weight:700;color:var(--color-text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:3px;}' +
-			'.mp-list-desc{font-size:0.8125rem;color:var(--color-text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}' +
-			'.mp-list-price{font-size:0.9375rem;font-weight:700;color:var(--color-accent);flex-shrink:0;}' +
-			'.mp-list-price.free{color:var(--color-success);}' +
-
-			'@keyframes skeleton-pulse{0%,100%{opacity:1}50%{opacity:0.4}}'
-
-		document.head.appendChild(style)
-	}
 
 	// ─────────────────────────────────────────
 	// 이벤트 바인딩
@@ -403,7 +329,6 @@ class MyPageView extends AView
 		{
 			overlay.textContent = '📷'
 			ToastManager.error('업로드 실패: ' + e.message)
-			console.error('[MyPageView] _uploadAvatar error:', e)
 		}
 	}
 
@@ -479,7 +404,6 @@ class MyPageView extends AView
 		catch (e)
 		{
 			content.innerHTML = '<div class="mp-empty"><div class="mp-empty-icon">⚠️</div><div class="mp-empty-text">불러오기 실패</div></div>'
-			console.error('[MyPageView] _loadTabData error:', e)
 		}
 	}
 
@@ -546,12 +470,12 @@ class MyPageView extends AView
 			html +=
 				'<div class="mp-list-card" data-id="' + p.id + '">' +
 					'<div class="mp-list-icon">' + icon + '</div>' +
-					'<div class="mp-list-info">' +
-						'<div class="mp-list-title">' + p.title + '</div>' +
-						'<div class="mp-list-desc">' + (p.description || '') + '</div>' +
-					'</div>' +
-					price +
-				'</div>'
+					'<div class="mp-list-info">'
+					+ '<div class="mp-list-title">' + p.title + '</div>'
+					+ '<div class="mp-list-desc">' + (p.description || '') + '</div>'
+				+ '</div>'
+				+ price
+			+ '</div>'
 		})
 
 		html += '</div>'
@@ -561,8 +485,7 @@ class MyPageView extends AView
 		{
 			card.addEventListener('click', function()
 			{
-				window._currentPromptId = card.dataset.id
-				theApp.mainContainer.open('Source/Prompt/PromptDetailView.lay')
+				theApp.openDetail(card.dataset.id)
 			})
 		})
 	}

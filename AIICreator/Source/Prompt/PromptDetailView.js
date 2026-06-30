@@ -22,8 +22,7 @@ class PromptDetailView extends AView
 	{
 		super.onInitDone()
 		this.sb       = SupabaseManager.getInstance()
-		this.promptId = window._currentPromptId || null
-		this._injectStyle()
+		this.promptId = theApp.getDetailId() || null
 		this._renderSkeleton()
 		this._bootstrap()
 	}
@@ -225,61 +224,6 @@ class PromptDetailView extends AView
 		return '<button class="ac-btn ac-btn-secondary" id="btn-purchase">구매하기 ' + Number(this.prompt.price).toLocaleString() + '원</button>'
 	}
 
-	_injectStyle()
-	{
-		if (document.getElementById('detail-view-style')) return
-
-		var style = document.createElement('style')
-		style.id  = 'detail-view-style'
-		style.textContent =
-			'.detail-wrap{display:flex;flex-direction:column;height:100%;background:var(--color-primary);}' +
-
-			// 네비
-			'.detail-nav{display:flex;align-items:center;justify-content:space-between;padding:0 24px;height:56px;background:var(--color-primary-dark);border-bottom:1px solid var(--color-border);flex-shrink:0;}' +
-			'.detail-back{background:none;border:none;color:var(--color-text-muted);font-size:0.9375rem;font-family:var(--font-body);cursor:pointer;padding:6px 10px;border-radius:var(--radius-sm);transition:color var(--transition),background var(--transition);}' +
-			'.detail-back:hover{color:var(--color-text);background:var(--color-surface);}' +
-			'.detail-nav-actions{display:flex;gap:8px;}' +
-			'.detail-action-btn{background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-md);padding:6px 14px;color:var(--color-text-muted);font-size:0.875rem;font-family:var(--font-body);cursor:pointer;transition:background var(--transition),border-color var(--transition),color var(--transition);}' +
-			'.detail-action-btn:hover{background:var(--color-surface-2);color:var(--color-text);}' +
-			'.detail-action-btn.active{border-color:var(--color-accent);color:var(--color-accent);}' +
-
-			// 컨텐츠
-			'.detail-content{flex:1;overflow-y:auto;padding:32px;max-width:760px;width:100%;margin:0 auto;box-sizing:border-box;}' +
-			'.detail-badges{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;}' +
-			'.detail-title{font-family:var(--font-title);font-size:1.75rem;font-weight:700;color:var(--color-text);line-height:1.3;margin-bottom:16px;}' +
-			'.detail-meta{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;}' +
-			'.detail-author{display:flex;align-items:center;gap:10px;}' +
-			'.detail-author-name{font-size:0.9375rem;color:var(--color-text-muted);}' +
-			'.detail-stats{display:flex;gap:16px;}' +
-			'.detail-stat{font-size:0.875rem;color:var(--color-text-dim);}' +
-			'.detail-description{font-size:1rem;line-height:1.7;color:var(--color-text-muted);margin-bottom:28px;}' +
-
-			// 구매 박스
-			'.detail-purchase-box{display:flex;align-items:center;justify-content:space-between;background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-lg);padding:20px 24px;margin-bottom:24px;}' +
-			'.detail-price{font-family:var(--font-title);font-size:1.75rem;font-weight:700;color:var(--color-accent);}' +
-			'.detail-price.free{color:var(--color-success);}' +
-			'.detail-purchased-badge{font-size:0.9375rem;font-weight:700;color:var(--color-success);}' +
-
-			// 프롬프트 내용
-			'.prompt-content-box{background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-lg);padding:20px;position:relative;}' +
-			'.prompt-content-label{font-size:0.75rem;font-weight:700;color:var(--color-text-dim);text-transform:uppercase;letter-spacing:0.04em;margin-bottom:12px;}' +
-			'.prompt-content-text{font-family:var(--font-mono);font-size:0.875rem;color:var(--color-text);line-height:1.7;white-space:pre-wrap;word-break:break-word;margin:0;}' +
-			'.prompt-content-copy{margin-top:16px;padding:7px 16px;background:var(--color-surface-2);border:1px solid var(--color-border);border-radius:var(--radius-md);color:var(--color-text-muted);font-size:0.8125rem;font-family:var(--font-body);cursor:pointer;transition:background var(--transition),color var(--transition);}' +
-			'.prompt-content-copy:hover{background:var(--color-border);color:var(--color-text);}' +
-
-			// 잠금 상태
-			'.prompt-locked{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:48px;background:var(--color-surface);border:1px dashed var(--color-border);border-radius:var(--radius-lg);gap:12px;}' +
-			'.prompt-locked-icon{font-size:2.5rem;}' +
-			'.prompt-locked-text{font-size:0.9375rem;color:var(--color-text-muted);text-align:center;}' +
-
-			// 스켈레톤
-			'.skeleton-title{height:32px;background:var(--color-surface-2);border-radius:var(--radius-md);margin-bottom:16px;animation:skeleton-pulse 1.5s ease infinite;}' +
-			'.skeleton-line{height:16px;background:var(--color-surface-2);border-radius:var(--radius-sm);margin-bottom:10px;animation:skeleton-pulse 1.5s ease infinite;}' +
-			'.skeleton-line.short{width:60%;}' +
-			'@keyframes skeleton-pulse{0%,100%{opacity:1}50%{opacity:0.4}}'
-
-		document.head.appendChild(style)
-	}
 
 	// ─────────────────────────────────────────
 	// 이벤트 바인딩
@@ -416,13 +360,12 @@ class PromptDetailView extends AView
 			ToastManager.success('프롬프트가 클립보드에 복사되었습니다')
 		}).catch(function()
 		{
-			ToastManager.error('복사 실패 — 직접 선택 후 복사해주세요')
-		})
+			ToastManager.
+error('구매 처리 실패: ' + e.message)
+			btn.disabled    = false
+			btn.textContent = '구매하기'
+		}
 	}
-
-	// ─────────────────────────────────────────
-	// 화면 전환
-	// ─────────────────────────────────────────
 
 	_goBack()
 	{

@@ -16,7 +16,6 @@ class AuthView extends AView
 	onInitDone()
 	{
 		super.onInitDone()
-		this._injectStyle()
 		this._renderHTML()
 		this._bindEvents()
 		this._loadSavedEmail()
@@ -231,32 +230,6 @@ class AuthView extends AView
 			'</div>'
 	}
 
-	_injectStyle()
-	{
-		if (document.getElementById('auth-view-style')) return
-		var style = document.createElement('style')
-		style.id = 'auth-view-style'
-		style.textContent =
-			'.auth-wrap{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100%;padding:40px 20px;}' +
-			'.auth-logo{font-family:var(--font-title);font-size:2rem;font-weight:700;letter-spacing:-0.02em;}' +
-			'.auth-logo-text{color:var(--color-text);}' +
-			'.auth-logo-accent{color:var(--color-accent);margin-left:4px;}' +
-			'.auth-subtitle{color:var(--color-text-muted);font-size:0.875rem;margin-top:6px;margin-bottom:28px;}' +
-			'.auth-box{width:100%;max-width:420px;padding:28px;}' +
-			'.auth-tabs{display:flex;margin-bottom:24px;background:var(--color-surface-2);border-radius:var(--radius-md);padding:4px;}' +
-			'.auth-tab{flex:1;padding:9px;border:none;background:transparent;color:var(--color-text-muted);font-size:0.9375rem;font-weight:700;font-family:var(--font-body);border-radius:calc(var(--radius-md) - 2px);cursor:pointer;transition:background var(--transition),color var(--transition);}' +
-			'.auth-tab.active{background:var(--color-accent);color:#fff;}' +
-			'.auth-remember{margin-top:8px;}' +
-			'.auth-remember-label{display:flex;align-items:center;gap:8px;font-size:0.875rem;color:var(--color-text-muted);cursor:pointer;user-select:none;-webkit-user-select:none;}' +
-			'.auth-remember-label input[type=checkbox]{width:15px;height:15px;accent-color:var(--color-accent);cursor:pointer;flex-shrink:0;}' +
-			'.auth-social-btn{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:11px;border:2px solid var(--color-border);border-radius:var(--radius-md);background:transparent;color:var(--color-text);font-size:0.9375rem;font-weight:500;font-family:var(--font-body);cursor:pointer;transition:border-color var(--transition),background var(--transition);}' +
-			'.auth-social-btn:hover{border-color:var(--color-border-light);background:var(--color-surface-2);}' +
-			'.auth-social-kakao{background:#FEE500;border-color:#FEE500;color:#3C1E1E;}' +
-			'.auth-social-kakao:hover{background:#F0D800;border-color:#F0D800;}' +
-			'.auth-required{color:var(--color-point);font-size:0.75rem;}' +
-			'.ac-input option{background:var(--color-surface);color:var(--color-text);}'
-		document.head.appendChild(style)
-	}
 
 	// ─────────────────────────────────────────
 	// 이메일 저장 (localStorage)
@@ -373,7 +346,7 @@ class AuthView extends AView
 		btn.disabled    = true
 		btn.textContent = '로그인 중...'
 
-		var { data, error } = await this.sb.signInWithEmail(email, pw)
+		var { error } = await this.sb.signInWithEmail(email, pw)
 
 		if (error)
 		{
@@ -409,7 +382,7 @@ class AuthView extends AView
 		btn.disabled    = true
 		btn.textContent = '가입 중...'
 
-		var { data, error } = await this.sb.signUpWithEmail(email, pw, {
+		var { error } = await this.sb.signUpWithEmail(email, pw, {
 			display_name: displayName,
 			gender:       gender || null,
 			birth_date:   birthDate || null
@@ -434,12 +407,9 @@ class AuthView extends AView
 			? await this.sb.signInWithGoogle()
 			: await this.sb.signInWithKakao()
 
-		if (error) ToastManager.error(ErrorHandler.parseSupabaseError(error))
+		if (error && error.message)
+			ToastManager.error(error.message)
 	}
-
-	// ─────────────────────────────────────────
-	// 화면 전환
-	// ─────────────────────────────────────────
 
 	_goToMain()
 	{

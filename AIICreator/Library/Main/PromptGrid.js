@@ -6,7 +6,6 @@ PromptGrid = class PromptGrid
 		// callbacks: { onCardClick }
 		this.el        = container
 		this.callbacks = callbacks || {}
-		this._injectStyle()
 	}
 
 	// ─────────────────────────────────────────
@@ -89,24 +88,5 @@ PromptGrid = class PromptGrid
 				'</div>' +
 			'</div>' +
 		'</div>'
-	}
-
-	_injectStyle()
-	{
-		if (document.getElementById('promptgrid-style')) return
-		var style = document.createElement('style')
-		style.id  = 'promptgrid-style'
-		style.textContent =
-			'.pg-grid{columns:3;column-gap:16px;}' +
-			'.pg-grid .ac-prompt-card{break-inside:avoid;margin-bottom:16px;display:inline-block;width:100%;}' +
-			'.pg-thumb-text{width:100%;height:140px;display:flex;align-items:center;justify-content:center;font-size:2rem;background:linear-gradient(135deg,#2E2E48,#3A3A5A);}' +
-			'.pg-thumb-image{width:100%;height:140px;display:flex;align-items:center;justify-content:center;font-size:2rem;background:linear-gradient(135deg,#2A2048,#3D1F5A);}' +
-			'.pg-loading{display:flex;justify-content:center;padding:60px;}' +
-			'.pg-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:80px 20px;color:var(--color-text-muted);gap:12px;}' +
-			'.pg-empty-icon{font-size:3rem;}' +
-			'.pg-empty-text{font-size:1rem;font-weight:500;}' +
-			'.pg-result-header{font-size:0.875rem;color:var(--color-text-muted);margin-bottom:16px;}' +
-			'.pg-result-header strong{color:var(--color-accent);}'
-		document.head.appendChild(style)
 	}
 }

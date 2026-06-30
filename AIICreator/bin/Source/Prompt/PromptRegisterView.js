@@ -19,7 +19,6 @@ PromptRegisterView = class PromptRegisterView extends AView
 	{
 		super.onInitDone()
 		this.sb = SupabaseManager.getInstance()
-		this._injectStyle()
 		this._renderSkeleton()
 		this._bootstrap()
 	}
@@ -179,53 +178,6 @@ PromptRegisterView = class PromptRegisterView extends AView
 			'</div>'
 	}
 
-	_injectStyle()
-	{
-		if (document.getElementById('reg-view-style')) return
-
-		var style = document.createElement('style')
-		style.id  = 'reg-view-style'
-		style.textContent =
-			'.reg-wrap{display:flex;flex-direction:column;height:100%;background:var(--color-primary);}' +
-
-			// 네비
-			'.reg-nav{display:flex;align-items:center;gap:16px;padding:0 24px;height:56px;background:var(--color-primary-dark);border-bottom:1px solid var(--color-border);flex-shrink:0;}' +
-			'.reg-back{background:none;border:none;color:var(--color-text-muted);font-size:0.9375rem;font-family:var(--font-body);cursor:pointer;padding:6px 10px;border-radius:var(--radius-sm);transition:color var(--transition),background var(--transition);flex-shrink:0;}' +
-			'.reg-back:hover{color:var(--color-text);background:var(--color-surface);}' +
-			'.reg-nav-title{font-family:var(--font-title);font-size:1.0625rem;font-weight:700;color:var(--color-text);flex:1;}' +
-
-			// 콘텐츠
-			'.reg-content{flex:1;overflow-y:auto;padding:32px;}' +
-			'.reg-form{max-width:680px;margin:0 auto;display:flex;flex-direction:column;gap:20px;}' +
-
-			// 가로 배치
-			'.reg-row{display:flex;gap:16px;}' +
-
-			// textarea
-			'.reg-textarea{resize:vertical;min-height:80px;line-height:1.6;}' +
-			'.reg-textarea-lg{min-height:180px;font-family:var(--font-mono);font-size:0.875rem;}' +
-
-			// 글자 수
-			'.reg-char-count{text-align:right;font-size:0.75rem;color:var(--color-text-dim);margin-top:4px;}' +
-
-			// 가격
-			'.reg-price-wrap{display:flex;align-items:center;gap:12px;}' +
-			'.reg-price-input{width:180px;flex-shrink:0;}' +
-			'.reg-price-hint{font-size:0.9375rem;font-weight:700;color:var(--color-success);}' +
-			'.reg-price-hint.paid{color:var(--color-accent);}' +
-
-			// 레이블
-			'.reg-required{color:var(--color-point);font-size:0.75rem;}' +
-			'.reg-label-sub{font-size:0.75rem;color:var(--color-text-dim);font-weight:400;margin-left:6px;}' +
-
-			// 스켈레톤
-			'.skeleton-title{background:var(--color-surface-2);border-radius:var(--radius-md);animation:skeleton-pulse 1.5s ease infinite;}' +
-			'.skeleton-line{height:16px;background:var(--color-surface-2);border-radius:var(--radius-sm);margin-bottom:10px;animation:skeleton-pulse 1.5s ease infinite;}' +
-			'.skeleton-line.short{width:60%;}' +
-			'@keyframes skeleton-pulse{0%,100%{opacity:1}50%{opacity:0.4}}'
-
-		document.head.appendChild(style)
-	}
 
 	// ─────────────────────────────────────────
 	// 이벤트 바인딩
@@ -338,10 +290,7 @@ PromptRegisterView = class PromptRegisterView extends AView
 		}
 	}
 
-	// ─────────────────────────────────────────
-	// 화면 전환
-	// ─────────────────────────────────────────
-
+	// �
 	_goBack()
 	{
 		theApp.mainContainer.open('Source/MainView.lay')

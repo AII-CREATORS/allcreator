@@ -22,7 +22,6 @@ FilterBar = class FilterBar
 	render(aiTools)
 	{
 		this.aiTools = aiTools || []
-		this._injectStyle()
 		this.el.innerHTML = this._html()
 		this._bindEvents()
 	}
@@ -67,34 +66,6 @@ FilterBar = class FilterBar
 			'</div>'
 	}
 
-	_injectStyle()
-	{
-		if (document.getElementById('filterbar-style')) return
-		var style = document.createElement('style')
-		style.id  = 'filterbar-style'
-		style.textContent =
-			// AI 도구 탭 바
-			'.fb-tool-bar{display:flex;align-items:center;gap:12px;padding:0 24px;height:52px;background:var(--color-primary);border-bottom:1px solid var(--color-border);overflow-x:auto;}' +
-			'.fb-tool-bar::-webkit-scrollbar{height:0;}' +
-			'.fb-tool-tabs{display:flex;gap:6px;flex-shrink:0;}' +
-			'.fb-tool-tab{padding:5px 14px;border:1px solid var(--color-border);border-radius:var(--radius-full);background:transparent;color:var(--color-text-muted);font-size:0.8125rem;font-weight:500;font-family:var(--font-body);cursor:pointer;white-space:nowrap;transition:background var(--transition),color var(--transition),border-color var(--transition);}' +
-			'.fb-tool-tab:hover{border-color:var(--color-accent);color:var(--color-accent);}' +
-			'.fb-tool-tab.active{background:var(--color-accent);border-color:var(--color-accent);color:#fff;}' +
-			'.fb-sort{margin-left:auto;flex-shrink:0;}' +
-			'.fb-sort-select{padding:5px 10px;background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-md);color:var(--color-text);font-size:0.8125rem;font-family:var(--font-body);cursor:pointer;outline:none;}' +
-			// 칩 바
-			'.fb-chip-bar{display:flex;align-items:center;gap:20px;padding:0 24px;height:44px;background:var(--color-primary-dark);border-bottom:1px solid var(--color-border);overflow-x:auto;}' +
-			'.fb-chip-bar::-webkit-scrollbar{height:0;}' +
-			'.fb-chip-group{display:flex;align-items:center;gap:8px;flex-shrink:0;}' +
-			'.fb-chip-label{font-size:0.75rem;font-weight:700;color:var(--color-text-dim);text-transform:uppercase;letter-spacing:0.04em;white-space:nowrap;}' +
-			'.fb-chips{display:flex;gap:4px;}' +
-			'.fb-chip{padding:3px 10px;border:1px solid var(--color-border);border-radius:var(--radius-full);background:transparent;color:var(--color-text-muted);font-size:0.75rem;font-weight:500;font-family:var(--font-body);cursor:pointer;white-space:nowrap;transition:background var(--transition),color var(--transition),border-color var(--transition);}' +
-			'.fb-chip:hover{border-color:var(--color-accent);color:var(--color-accent);}' +
-			'.fb-chip.active{background:rgba(108,99,255,0.18);border-color:var(--color-accent);color:var(--color-accent);}' +
-			'.fb-reset{margin-left:auto;padding:3px 12px;border:1px solid var(--color-border);border-radius:var(--radius-full);background:transparent;color:var(--color-text-dim);font-size:0.75rem;font-family:var(--font-body);cursor:pointer;flex-shrink:0;transition:color var(--transition),border-color var(--transition);}' +
-			'.fb-reset:hover{color:var(--color-point);border-color:var(--color-point);}'
-		document.head.appendChild(style)
-	}
 
 	// ─────────────────────────────────────────
 	// 이벤트
@@ -180,10 +151,8 @@ FilterBar = class FilterBar
 		var typeAll = el.querySelector('[data-type="all"]')
 		if (typeAll) typeAll.classList.add('active')
 
-		var sortEl = el.querySelector('#fb-sort')
-		if (sortEl) sortEl.value = 'latest'
+		el.querySelector('#fb-sort').value = 'latest'
 
 		this._onChange()
-		ToastManager.info('필터가 초기화되었습니다')
 	}
 }

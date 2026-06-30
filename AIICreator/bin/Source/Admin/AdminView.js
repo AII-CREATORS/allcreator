@@ -22,7 +22,6 @@ AdminView = class AdminView extends AView
 	{
 		super.onInitDone()
 		this.sb = SupabaseManager.getInstance()
-		this._injectStyle()
 		this._renderShell()
 		this._bootstrap()
 	}
@@ -542,84 +541,4 @@ AdminView = class AdminView extends AView
 	// 스타일
 	// ─────────────────────────────────────────
 
-	_injectStyle()
-	{
-		if (document.getElementById('admin-view-style')) return
-		var style = document.createElement('style')
-		style.id  = 'admin-view-style'
-		style.textContent =
-			'.adm-wrap{display:flex;flex-direction:column;height:100%;background:var(--color-primary);}' +
-
-			// 헤더
-			'.adm-header{display:flex;align-items:center;gap:16px;padding:0 24px;height:56px;background:var(--color-primary-dark);border-bottom:1px solid var(--color-border);flex-shrink:0;}' +
-			'.adm-back{background:none;border:none;color:var(--color-text-muted);font-size:0.9375rem;font-family:var(--font-body);cursor:pointer;padding:6px 10px;border-radius:var(--radius-sm);}' +
-			'.adm-back:hover{color:var(--color-text);background:var(--color-surface);}' +
-			'.adm-title{font-family:var(--font-title);font-size:1.0625rem;font-weight:700;color:var(--color-text);flex:1;}' +
-			'.adm-role-badge{font-size:0.75rem;padding:3px 10px;border-radius:20px;background:var(--color-point);color:#fff;font-weight:600;}' +
-
-			// 탭
-			'.adm-tabs{display:flex;gap:4px;padding:12px 24px;background:var(--color-primary-dark);border-bottom:1px solid var(--color-border);flex-shrink:0;}' +
-			'.adm-tab{background:none;border:none;padding:7px 16px;border-radius:var(--radius-sm);color:var(--color-text-muted);font-family:var(--font-body);font-size:0.875rem;cursor:pointer;transition:background var(--transition),color var(--transition);}' +
-			'.adm-tab:hover{background:var(--color-surface);color:var(--color-text);}' +
-			'.adm-tab-active{background:var(--color-surface-2)!important;color:var(--color-accent)!important;font-weight:600;}' +
-			'.adm-tab-manage{margin-left:auto;color:var(--color-point)!important;}' +
-
-			// 콘텐츠
-			'.adm-content{flex:1;overflow-y:auto;padding:24px;}' +
-			'.adm-loading,.adm-empty{text-align:center;padding:60px;color:var(--color-text-muted);}' +
-
-			// 카드
-			'.adm-list{display:flex;flex-direction:column;gap:12px;max-width:900px;margin:0 auto;}' +
-			'.adm-card{background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-md);padding:20px;}' +
-			'.adm-card-meta{display:flex;align-items:center;gap:12px;margin-bottom:10px;font-size:0.8125rem;color:var(--color-text-muted);}' +
-			'.adm-card-type{font-size:1.125rem;}' +
-			'.adm-card-seller{color:var(--color-text);}' +
-			'.adm-card-date{margin-left:auto;}' +
-			'.adm-card-price{font-weight:600;color:var(--color-accent);}' +
-			'.adm-card-title{font-size:1rem;font-weight:700;color:var(--color-text);margin-bottom:6px;}' +
-			'.adm-card-desc{font-size:0.875rem;color:var(--color-text-muted);margin-bottom:14px;line-height:1.5;}' +
-			'.adm-card-actions{display:flex;align-items:center;gap:10px;}' +
-			'.adm-reject-reason{font-size:0.8125rem;color:var(--color-error);padding:6px 10px;background:rgba(255,80,80,.08);border-radius:var(--radius-sm);flex:1;}' +
-
-			'.adm-btn-approve{padding:7px 20px;border-radius:var(--radius-sm);border:1px solid var(--color-success);background:none;color:var(--color-success);font-family:var(--font-body);font-size:0.875rem;cursor:pointer;transition:background var(--transition);}' +
-			'.adm-btn-approve:hover{background:var(--color-success);color:#fff;}' +
-			'.adm-btn-reject{padding:7px 20px;border-radius:var(--radius-sm);border:1px solid var(--color-error);background:none;color:var(--color-error);font-family:var(--font-body);font-size:0.875rem;cursor:pointer;transition:background var(--transition);}' +
-			'.adm-btn-reject:hover{background:var(--color-error);color:#fff;}' +
-
-			// 페이지네이션
-			'.adm-pagination{display:flex;align-items:center;justify-content:center;gap:16px;padding:24px 0;}' +
-			'.adm-page-btn{padding:8px 20px;border-radius:var(--radius-sm);border:1px solid var(--color-border);background:var(--color-surface);color:var(--color-text);font-family:var(--font-body);cursor:pointer;}' +
-			'.adm-page-btn:disabled{opacity:0.4;cursor:default;}' +
-			'.adm-page-info{font-size:0.875rem;color:var(--color-text-muted);}' +
-
-			// 반려 모달
-			'.adm-modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;z-index:1000;}' +
-			'.adm-modal{background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-lg);padding:28px;width:480px;max-width:90vw;}' +
-			'.adm-modal-title{font-size:1.0625rem;font-weight:700;color:var(--color-text);margin-bottom:16px;}' +
-			'.adm-modal-textarea{width:100%;resize:vertical;line-height:1.6;margin-bottom:16px;}' +
-			'.adm-modal-actions{display:flex;justify-content:flex-end;gap:10px;}' +
-
-			// 관리자 설정
-			'.adm-manage{max-width:680px;margin:0 auto;}' +
-			'.adm-manage-title{font-size:1.125rem;font-weight:700;color:var(--color-text);margin-bottom:16px;}' +
-			'.adm-manage-subtitle{font-size:0.9375rem;font-weight:700;color:var(--color-text);margin-bottom:6px;}' +
-			'.adm-manage-desc{font-size:0.8125rem;color:var(--color-text-muted);margin-bottom:12px;}' +
-			'.adm-manage-list{display:flex;flex-direction:column;gap:8px;margin-bottom:32px;}' +
-			'.adm-manage-row{display:flex;align-items:center;gap:12px;padding:14px 16px;background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-md);}' +
-			'.adm-manage-info{flex:1;}' +
-			'.adm-manage-name{display:block;font-weight:600;color:var(--color-text);font-size:0.9375rem;}' +
-			'.adm-manage-email{display:block;font-size:0.8125rem;color:var(--color-text-muted);}' +
-			'.adm-manage-self{font-size:0.75rem;color:var(--color-text-dim);}' +
-			'.adm-role-tag{font-size:0.75rem;padding:3px 10px;border-radius:20px;font-weight:600;}' +
-			'.adm-role-main_admin{background:var(--color-point);color:#fff;}' +
-			'.adm-role-sub_admin{background:var(--color-accent);color:#fff;}' +
-			'.adm-btn-remove-admin{padding:5px 14px;border-radius:var(--radius-sm);border:1px solid var(--color-error);background:none;color:var(--color-error);font-family:var(--font-body);font-size:0.8125rem;cursor:pointer;}' +
-			'.adm-btn-remove-admin:hover{background:var(--color-error);color:#fff;}' +
-			'.adm-manage-add{padding-top:24px;border-top:1px solid var(--color-border);}' +
-			'.adm-manage-search-wrap{display:flex;gap:10px;margin-bottom:12px;}' +
-			'.adm-manage-email-input{flex:1;}' +
-			'.adm-search-none{font-size:0.875rem;color:var(--color-text-muted);padding:10px 0;}'
-
-		document.head.appendChild(style)
-	}
 }
