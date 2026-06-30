@@ -5,6 +5,8 @@ AdminView = class AdminView extends AView
 	{
 		super()
 		this.sb          = null
+		this.ps          = null
+		this.us          = null
 		this.currentUser = null
 		this.profile     = null
 		this.prompts     = []
@@ -22,6 +24,8 @@ AdminView = class AdminView extends AView
 	{
 		super.onInitDone()
 		this.sb = SupabaseManager.getInstance()
+		this.ps = new PromptService(this.sb)
+		this.us = new UserService(this.sb)
 		this._renderShell()
 		this._bootstrap()
 	}
@@ -46,12 +50,7 @@ AdminView = class AdminView extends AView
 			return
 		}
 
-		var res = await this.sb.getClient()
-			.from('users')
-			.select('role, display_name')
-			.eq('id', this.currentUser.id)
-			.single()
-
+		var res = await this.us.getAdminRole(this.currentUser.id)
 		this.profile = res.data
 
 		if (!this.profile || (this.profile.role !== 'main_admin' && this.profile.role !== 'sub_admin'))
@@ -153,21 +152,7 @@ AdminView = class AdminView extends AView
 		var content = this.getElement().querySelector('#adm-content')
 		content.innerHTML = '<div class="adm-loading">불러오는 중...</div>'
 
-		var from = this.page * this.pageSize
-		var to   = from + this.pageSize - 1
-
-		var result = await this.sb.getClient()
-			.from('prompts')
-			.select(
-				'id, title, description, prompt_content, price, prompt_type, status, ' +
-				'rejection_reason, created_at, result_image, ' +
-				'users!user_id(id, display_name, email, username), ai_tools(name)',
-				{ count: 'exact' }
-			)
-			.eq('status', this.tab)
-			.is('deleted_at', null)
-			.order('created_at', { ascending: false })
-			.range(from, to)
+		var result = await this.ps.adminList(this.tab, this.page, this.pageSize)
 
 		if (result.error)
 		{
@@ -394,15 +379,7 @@ AdminView = class AdminView extends AView
 
 	async _approvePrompt(promptId)
 	{
-		var result = await this.sb.getClient()
-			.from('prompts')
-			.update({
-				status:           'published',
-				rejection_reason: null,
-				reviewed_at:      new Date().toISOString(),
-				reviewed_by:      this.currentUser.id
-			})
-			.eq('id', promptId)
+		var result = await this.ps.approve(promptId, this.currentUser.id)
 
 		if (result.error)
 		{
@@ -410,7 +387,7 @@ AdminView = class AdminView extends AView
 			return
 		}
 
-		await this._sendNotification(promptId, 'prompt_approved')
+		await this.ps.sendNotification(promptId, 'prompt_approved')
 		ToastManager.success('프롬프트가 승인되었습니다')
 		await this._loadPrompts()
 	}
@@ -458,15 +435,7 @@ AdminView = class AdminView extends AView
 
 	async _rejectPrompt(promptId, reason)
 	{
-		var result = await this.sb.getClient()
-			.from('prompts')
-			.update({
-				status:           'rejected',
-				rejection_reason: reason,
-				reviewed_at:      new Date().toISOString(),
-				reviewed_by:      this.currentUser.id
-			})
-			.eq('id', promptId)
+		var result = await this.ps.reject(promptId, this.currentUser.id, reason)
 
 		if (result.error)
 		{
@@ -474,41 +443,9 @@ AdminView = class AdminView extends AView
 			return
 		}
 
-		await this._sendNotification(promptId, 'prompt_rejected', reason)
+		await this.ps.sendNotification(promptId, 'prompt_rejected', reason)
 		ToastManager.success('프롬프트가 반려 처리되었습니다')
 		await this._loadPrompts()
-	}
-
-	// -----------------------------------------
-	// 알림 전송
-	// -----------------------------------------
-
-	async _sendNotification(promptId, type, reason)
-	{
-		var ref = await this.sb.getClient()
-			.from('prompts')
-			.select('user_id, title')
-			.eq('id', promptId)
-			.single()
-
-		var prompt = ref.data
-		if (!prompt) return
-
-		var isApproved = type === 'prompt_approved'
-		var title = isApproved ? '프롬프트가 승인되었습니다' : '프롬프트가 반려되었습니다'
-		var body  = isApproved
-			? '등록하신 "' + prompt.title + '" 프롬프트가 검수를 통과하여 게시되었습니다.'
-			: '등록하신 "' + prompt.title + '" 프롬프트가 반려되었습니다.\n사유: ' + (reason || '')
-
-		await this.sb.getClient()
-			.from('notifications')
-			.insert({
-				user_id:   prompt.user_id,
-				type:      type,
-				title:     title,
-				body:      body,
-				prompt_id: promptId
-			})
 	}
 
 	// -----------------------------------------
@@ -520,13 +457,8 @@ AdminView = class AdminView extends AView
 		var content = this.getElement().querySelector('#adm-content')
 		content.innerHTML = '<div class="adm-loading">불러오는 중...</div>'
 
-		var ref = await this.sb.getClient()
-			.from('users')
-			.select('id, display_name, email, role, created_at')
-			.in('role', ['main_admin', 'sub_admin'])
-			.order('role')
-
-		var self  = this
+		var ref    = await this.us.getAdmins()
+		var self   = this
 		var admins = ref.data || []
 
 		var html =
@@ -581,16 +513,11 @@ AdminView = class AdminView extends AView
 
 	async _addSubAdmin()
 	{
-		var email      = document.getElementById('adm-sub-email').value.trim()
-		var resultEl   = document.getElementById('adm-search-result')
+		var email    = document.getElementById('adm-sub-email').value.trim()
+		var resultEl = document.getElementById('adm-search-result')
 		if (!email) { ToastManager.error('이메일을 입력해주세요'); return }
 
-		var ref = await this.sb.getClient()
-			.from('users')
-			.select('id, display_name, email, role')
-			.eq('email', email)
-			.single()
-
+		var ref  = await this.us.findByEmail(email)
 		var user = ref.data
 
 		if (!user)
@@ -605,29 +532,21 @@ AdminView = class AdminView extends AView
 			return
 		}
 
-		var upd = await this.sb.getClient()
-			.from('users')
-			.update({ role: 'sub_admin' })
-			.eq('id', user.id)
+		var upd = await this.us.addSubAdmin(user.id)
 
 		if (upd.error) { ToastManager.error('지정 실패: ' + upd.error.message); return }
 
-		ToastManager.success((user.display_name || user.email) + ' 님을 서브 관리자로 지정했습니다')
-		document.getElementById('adm-sub-email').value = ''
-		resultEl.innerHTML = ''
-		this._renderManagePanel()
+		ToastManager.success(user.email + '을 서브 관리자로 지정했습니다')
+		await this._renderManagePanel()
 	}
 
 	async _removeSubAdmin(userId)
 	{
-		var upd = await this.sb.getClient()
-			.from('users')
-			.update({ role: 'user' })
-			.eq('id', userId)
+		var upd = await this.us.removeSubAdmin(userId)
 
 		if (upd.error) { ToastManager.error('해제 실패: ' + upd.error.message); return }
 
 		ToastManager.success('관리자 권한이 해제되었습니다')
-		this._renderManagePanel()
+		await this._renderManagePanel()
 	}
 }

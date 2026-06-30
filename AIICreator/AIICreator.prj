@@ -72,6 +72,26 @@
                 "path": "Library\\Main\\"
               }
             ]
+          },
+          {
+            "type": 1,
+            "name": "Services",
+            "children": [
+              {
+                "type": 5,
+                "name": "PromptService.js",
+                "action": 9,
+                "relType": 1,
+                "path": "Library\\Services\\"
+              },
+              {
+                "type": 5,
+                "name": "UserService.js",
+                "action": 9,
+                "relType": 1,
+                "path": "Library\\Services\\"
+              }
+            ]
           }
         ]
       },

@@ -5,6 +5,7 @@ PromptRegisterView = class PromptRegisterView extends AView
 	{
 		super()
 		this.sb              = null
+		this.ps              = null
 		this.currentUser     = null
 		this.aiTools         = []
 		this.categories      = []
@@ -20,6 +21,7 @@ PromptRegisterView = class PromptRegisterView extends AView
 	{
 		super.onInitDone()
 		this.sb = SupabaseManager.getInstance()
+		this.ps = new PromptService(this.sb)
 		this._renderSkeleton()
 		this._bootstrap()
 	}
@@ -47,16 +49,10 @@ PromptRegisterView = class PromptRegisterView extends AView
 
 	async _loadMeta()
 	{
-		var toolResult = await this.sb.getClient()
-			.from('ai_tools')
-			.select('id, name')
-			.order('name')
+		var toolResult = await this.ps.getAITools()
 		this.aiTools = toolResult.data || []
 
-		var catResult = await this.sb.getClient()
-			.from('categories')
-			.select('id, name')
-			.order('name')
+		var catResult = await this.ps.getCategories()
 		this.categories = catResult.data || []
 	}
 
@@ -291,11 +287,11 @@ PromptRegisterView = class PromptRegisterView extends AView
 		var difficulty = el.querySelector('#reg-difficulty').value
 		var price      = parseInt(el.querySelector('#reg-price').value, 10) || 0
 
-		if (!title)   { ToastManager.error('제목을 입력해주세요'); return }
-		if (!desc)    { ToastManager.error('설명을 입력해주세요'); return }
-		if (!content) { ToastManager.error('프롬프트 내용을 입력해주세요'); return }
-		if (!toolId)  { ToastManager.error('AI 도구를 선택해주세요'); return }
-		if (price < 0){ ToastManager.error('가격은 0원 이상이어야 합니다'); return }
+		if (!title)    { ToastManager.error('제목을 입력해주세요'); return }
+		if (!desc)     { ToastManager.error('설명을 입력해주세요'); return }
+		if (!content)  { ToastManager.error('프롬프트 내용을 입력해주세요'); return }
+		if (!toolId)   { ToastManager.error('AI 도구를 선택해주세요'); return }
+		if (price < 0) { ToastManager.error('가격은 0원 이상이어야 합니다'); return }
 
 		var btn = el.querySelector('#btn-submit')
 		btn.disabled    = true
@@ -316,12 +312,7 @@ PromptRegisterView = class PromptRegisterView extends AView
 			}
 			if (categoryId) row.category_id = categoryId
 
-			var result = await this.sb.getClient()
-				.from('prompts')
-				.insert(row)
-				.select('id')
-				.single()
-
+			var result = await this.ps.create(row)
 			if (result.error) throw new Error(result.error.message)
 
 			var promptId = result.data.id
@@ -329,13 +320,14 @@ PromptRegisterView = class PromptRegisterView extends AView
 			if (this.resultImageFile)
 			{
 				btn.textContent = '이미지 업로드 중...'
-				var imageUrl = await this._uploadResultImage(promptId, this.resultImageFile)
-				if (imageUrl)
+				var imgResult   = await this.ps.uploadResultImage(promptId, this.resultImageFile)
+				if (imgResult.error)
 				{
-					await this.sb.getClient()
-						.from('prompts')
-						.update({ result_image: imageUrl })
-						.eq('id', promptId)
+					ToastManager.error('이미지 업로드 실패: ' + imgResult.error.message)
+				}
+				else if (imgResult.url)
+				{
+					await this.ps.updateResultImage(promptId, imgResult.url)
 				}
 			}
 
@@ -348,28 +340,6 @@ PromptRegisterView = class PromptRegisterView extends AView
 			btn.disabled    = false
 			btn.textContent = '등록하기'
 		}
-	}
-
-	async _uploadResultImage(promptId, file)
-	{
-		var ext    = file.name.split('.').pop().toLowerCase() || 'jpg'
-		var path   = promptId + '/' + Date.now() + '.' + ext
-
-		var upload = await this.sb.getClient()
-			.storage
-			.from('prompt-results')
-			.upload(path, file, { upsert: true })
-
-		if (upload.error)
-		{
-			ToastManager.error('이미지 업로드 실패: ' + upload.error.message)
-			return null
-		}
-
-		return this.sb.getClient()
-			.storage
-			.from('prompt-results')
-			.getPublicUrl(path).data.publicUrl
 	}
 
 	_goBack()

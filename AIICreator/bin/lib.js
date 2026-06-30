@@ -15811,6 +15811,384 @@ PromptGrid = class PromptGrid
 	}
 }
 
+;
+PromptService = class PromptService
+{
+	constructor(sb)
+	{
+		this.sb = sb
+	}
+
+	// -----------------------------------------
+	// 프롬프트 목록 조회 (MainView용)
+	// -----------------------------------------
+
+	async list(filters)
+	{
+		var { toolId, price, type, sort, keyword, limit } = filters || {}
+
+		var query = this.sb.getClient()
+			.from('prompts')
+			.select('id, title, description, price, prompt_type, like_count, view_count, result_image, users!user_id(username), ai_tools(name)')
+			.is('deleted_at', null)
+			.eq('status', 'published')
+
+		if (toolId)           query = query.eq('ai_tool_id', toolId)
+		if (price === 'free') query = query.eq('price', '0')
+		else if (price === 'paid') query = query.neq('price', '0')
+		if (type && type !== 'all') query = query.eq('prompt_type', type)
+		if (keyword) query = query.or('title.ilike.%' + keyword + '%,description.ilike.%' + keyword + '%')
+
+		if (sort === 'popular')        query = query.order('like_count',  { ascending: false })
+		else if (sort === 'price_asc') query = query.order('price',      { ascending: true  })
+		else if (sort === 'price_desc') query = query.order('price',     { ascending: false })
+		else                           query = query.order('created_at', { ascending: false })
+
+		return query.limit(limit || 30)
+	}
+
+	// -----------------------------------------
+	// AI 도구 목록
+	// -----------------------------------------
+
+	async getAITools()
+	{
+		return this.sb.getClient().from('ai_tools').select('id, name').order('name')
+	}
+
+	// -----------------------------------------
+	// 프롬프트 상세
+	// -----------------------------------------
+
+	async getDetail(promptId)
+	{
+		return this.sb.getClient()
+			.from('prompts')
+			.select('id, title, description, prompt_content, prompt_type, price, difficulty, like_count, save_count, view_count, created_at, result_image, users!user_id(id, username), ai_tools(name), categories(name)')
+			.eq('id', promptId)
+			.single()
+	}
+
+	// -----------------------------------------
+	// 사용자 상태 (좋아요, 저장, 구매 여부)
+	// -----------------------------------------
+
+	async getUserStatus(promptId, userId, price)
+	{
+		var sb    = this.sb.getClient()
+		var isFree = Number(price) === 0
+
+		var queries = [
+			sb.from('prompt_likes').select('id').eq('prompt_id', promptId).eq('user_id', userId).maybeSingle(),
+			sb.from('prompt_saves').select('id').eq('prompt_id', promptId).eq('user_id', userId).maybeSingle()
+		]
+
+		if (!isFree)
+			queries.push(sb.from('orders').select('id').eq('prompt_id', promptId).eq('buyer_id', userId).eq('status', 'completed').maybeSingle())
+
+		var results = await Promise.all(queries)
+
+		return {
+			isLiked:     !!(results[0].data),
+			isSaved:     !!(results[1].data),
+			isPurchased: isFree ? true : !!(results[2] && results[2].data)
+		}
+	}
+
+	// -----------------------------------------
+	// 좋아요 / 저장 토글
+	// -----------------------------------------
+
+	async toggleLike(promptId)
+	{
+		return this.sb.getClient().rpc('toggle_like', { p_prompt_id: promptId })
+	}
+
+	async toggleSave(promptId)
+	{
+		return this.sb.getClient().rpc('toggle_save', { p_prompt_id: promptId })
+	}
+
+	// -----------------------------------------
+	// 조회수 증가
+	// -----------------------------------------
+
+	incrementView(promptId)
+	{
+		this.sb.getClient().rpc('increment_view', { p_prompt_id: promptId })
+	}
+
+	// -----------------------------------------
+	// 구매
+	// -----------------------------------------
+
+	async purchase(promptId, buyerId, amount)
+	{
+		return this.sb.getClient()
+			.from('orders')
+			.insert({
+				buyer_id:  buyerId,
+				prompt_id: promptId,
+				amount:    String(amount),
+				status:    'completed'
+			})
+	}
+
+	// -----------------------------------------
+	// 프롬프트 등록
+	// -----------------------------------------
+
+	async create(data)
+	{
+		return this.sb.getClient().from('prompts').insert(data).select('id').single()
+	}
+
+	async updateResultImage(promptId, imageUrl)
+	{
+		return this.sb.getClient()
+			.from('prompts')
+			.update({ result_image: imageUrl })
+			.eq('id', promptId)
+	}
+
+	async uploadResultImage(promptId, file)
+	{
+		var ext  = file.name.split('.').pop().toLowerCase() || 'jpg'
+		var path = promptId + '/' + Date.now() + '.' + ext
+		var upload = await this.sb.getClient().storage.from('prompt-results').upload(path, file, { upsert: true })
+		if (upload.error) return { error: upload.error, url: null }
+		var url = this.sb.getClient().storage.from('prompt-results').getPublicUrl(path).data.publicUrl
+		return { error: null, url }
+	}
+
+	// -----------------------------------------
+	// 관리자: 프롬프트 목록
+	// -----------------------------------------
+
+	async adminList(status, page, pageSize)
+	{
+		var from = page * pageSize
+		var to   = from + pageSize - 1
+
+		return this.sb.getClient()
+			.from('prompts')
+			.select(
+				'id, title, description, prompt_content, price, prompt_type, status, ' +
+				'rejection_reason, created_at, result_image, ' +
+				'users!user_id(id, display_name, email, username), ai_tools(name)',
+				{ count: 'exact' }
+			)
+			.eq('status', status)
+			.is('deleted_at', null)
+			.order('created_at', { ascending: false })
+			.range(from, to)
+	}
+
+	// -----------------------------------------
+	// 관리자: 승인 / 반려
+	// -----------------------------------------
+
+	async approve(promptId, reviewerId)
+	{
+		return this.sb.getClient()
+			.from('prompts')
+			.update({
+				status:           'published',
+				rejection_reason: null,
+				reviewed_at:      new Date().toISOString(),
+				reviewed_by:      reviewerId
+			})
+			.eq('id', promptId)
+	}
+
+	async reject(promptId, reviewerId, reason)
+	{
+		return this.sb.getClient()
+			.from('prompts')
+			.update({
+				status:           'rejected',
+				rejection_reason: reason,
+				reviewed_at:      new Date().toISOString(),
+				reviewed_by:      reviewerId
+			})
+			.eq('id', promptId)
+	}
+
+	// -----------------------------------------
+	// 알림 전송
+	// -----------------------------------------
+
+	async sendNotification(promptId, type, reason)
+	{
+		var ref = await this.sb.getClient()
+			.from('prompts')
+			.select('user_id, title')
+			.eq('id', promptId)
+			.single()
+
+		var prompt = ref.data
+		if (!prompt) return
+
+		var isApproved = type === 'prompt_approved'
+		var title      = isApproved ? '프롬프트가 승인되었습니다' : '프롬프트가 반려되었습니다'
+		var body       = isApproved
+			? '등록하신 "' + prompt.title + '" 프롬프트가 검수를 통과하여 게시되었습니다.'
+			: '등록하신 "' + prompt.title + '" 프롬프트가 반려되었습니다.\n사유: ' + (reason || '')
+
+		return this.sb.getClient()
+			.from('notifications')
+			.insert({
+				user_id:   prompt.user_id,
+				type:      type,
+				title:     title,
+				body:      body,
+				prompt_id: promptId
+			})
+	}
+
+	// -----------------------------------------
+	// 카테고리 목록
+	// -----------------------------------------
+
+	async getCategories()
+	{
+		return this.sb.getClient().from('categories').select('id, name').order('name')
+	}
+}
+
+;
+UserService = class UserService
+{
+	constructor(sb)
+	{
+		this.sb = sb
+	}
+
+	// -----------------------------------------
+	// 프로필 조회
+	// -----------------------------------------
+
+	async getProfile(userId)
+	{
+		return this.sb.getClient()
+			.from('users')
+			.select('id, display_name, username, email, role, gender, birth_date, created_at, bio, avatar_url')
+			.eq('id', userId)
+			.single()
+	}
+
+	// -----------------------------------------
+	// 프로필 수정
+	// -----------------------------------------
+
+	async updateProfile(userId, data)
+	{
+		return this.sb.getClient()
+			.from('users')
+			.update(data)
+			.eq('id', userId)
+	}
+
+	// -----------------------------------------
+	// 관리자 권한 확인
+	// -----------------------------------------
+
+	async getAdminRole(userId)
+	{
+		return this.sb.getClient()
+			.from('users')
+			.select('role, display_name')
+			.eq('id', userId)
+			.single()
+	}
+
+	// -----------------------------------------
+	// 관리자 목록
+	// -----------------------------------------
+
+	async getAdmins()
+	{
+		return this.sb.getClient()
+			.from('users')
+			.select('id, display_name, email, role, created_at')
+			.in('role', ['main_admin', 'sub_admin'])
+			.order('role')
+	}
+
+	// -----------------------------------------
+	// 이메일로 유저 검색
+	// -----------------------------------------
+
+	async findByEmail(email)
+	{
+		return this.sb.getClient()
+			.from('users')
+			.select('id, display_name, email, role')
+			.eq('email', email)
+			.single()
+	}
+
+	// -----------------------------------------
+	// 서브 관리자 지정 / 해제
+	// -----------------------------------------
+
+	async addSubAdmin(userId)
+	{
+		return this.sb.getClient()
+			.from('users')
+			.update({ role: 'sub_admin' })
+			.eq('id', userId)
+	}
+
+	async removeSubAdmin(userId)
+	{
+		return this.sb.getClient()
+			.from('users')
+			.update({ role: 'user' })
+			.eq('id', userId)
+	}
+
+	// -----------------------------------------
+	// 내 프롬프트 (마이페이지)
+	// -----------------------------------------
+
+	async getUserPrompts(userId)
+	{
+		return this.sb.getClient()
+			.from('prompts')
+			.select('id, title, price, prompt_type, status, like_count, view_count, created_at, result_image, ai_tools(name)')
+			.eq('user_id', userId)
+			.is('deleted_at', null)
+			.order('created_at', { ascending: false })
+	}
+
+	// -----------------------------------------
+	// 내 구매 내역 (마이페이지)
+	// -----------------------------------------
+
+	async getUserOrders(userId)
+	{
+		return this.sb.getClient()
+			.from('orders')
+			.select('id, amount, status, created_at, prompts(id, title, prompt_type, result_image, ai_tools(name))')
+			.eq('buyer_id', userId)
+			.order('created_at', { ascending: false })
+	}
+
+	// -----------------------------------------
+	// 저장된 프롬프트 (북마크)
+	// -----------------------------------------
+
+	async getSavedPrompts(userId)
+	{
+		return this.sb.getClient()
+			.from('prompt_saves')
+			.select('id, created_at, prompts(id, title, price, prompt_type, like_count, result_image, ai_tools(name), users!user_id(username))')
+			.eq('user_id', userId)
+			.order('created_at', { ascending: false })
+	}
+}
+
 afc.scriptMap["Framework/afc/library/ARect.js"] = true;
 afc.scriptMap["Framework/afc/library/AUtil.js"] = true;
 afc.scriptMap["Framework/afc/library/afc.js"] = true;
@@ -15836,3 +16214,5 @@ afc.scriptMap["Library/ErrorHandler.js"] = true;
 afc.scriptMap["Library/Main/NavBar.js"] = true;
 afc.scriptMap["Library/Main/FilterBar.js"] = true;
 afc.scriptMap["Library/Main/PromptGrid.js"] = true;
+afc.scriptMap["Library/Services/PromptService.js"] = true;
+afc.scriptMap["Library/Services/UserService.js"] = true;
