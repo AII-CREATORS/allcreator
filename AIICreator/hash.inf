@@ -1,7 +1,8 @@
 {
 	"changed": [
-		"C:\\Users\\dicki\\AII CREATOR\\allcreator\\AIICreator\\bin\\Library\\SupabaseManager.js",
-		"C:\\Users\\dicki\\AII CREATOR\\allcreator\\AIICreator\\bin\\Source\\MyPage\\MyPageView.js"
+		"C:\\Users\\dicki\\AII CREATOR\\allcreator\\AIICreator\\bin\\Library\\Main\\NavBar.js",
+		"C:\\Users\\dicki\\AII CREATOR\\allcreator\\AIICreator\\bin\\Library\\Main\\FilterBar.js",
+		"C:\\Users\\dicki\\AII CREATOR\\allcreator\\AIICreator\\bin\\Library\\Main\\PromptGrid.js"
 	],
 	"version": "5.1.1",
 	"C:\\Users\\dicki\\AII CREATOR\\allcreator\\AIICreator\\Template\\AIICreatorApp_global.css": 1782701649436.6206,
@@ -153,9 +154,9 @@
 	"C:\\Users\\dicki\\AII CREATOR\\allcreator\\AIICreator\\Framework\\afc\\style\\afc.css": 1782693623491.5627,
 	"C:\\Users\\dicki\\AII CREATOR\\allcreator\\AIICreator\\Framework\\afc\\style\\comp.css": 1782693623492.567,
 	"C:\\Users\\dicki\\AII CREATOR\\allcreator\\AIICreator\\Framework\\afc\\style\\basicStyle.css": 1782693623491.5627,
-	"C:\\Users\\dicki\\AII CREATOR\\allcreator\\AIICreator\\Library\\SupabaseManager.js": 1782709881577.783,
+	"C:\\Users\\dicki\\AII CREATOR\\allcreator\\AIICreator\\Library\\SupabaseManager.js": 1782710150427.146,
 	"C:\\Users\\dicki\\AII CREATOR\\allcreator\\AIICreator\\Source\\AIICreatorApp.js": 1782704634978.7297,
-	"C:\\Users\\dicki\\AII CREATOR\\allcreator\\AIICreator\\Source\\MainView.js": 1782709512771.0586,
+	"C:\\Users\\dicki\\AII CREATOR\\allcreator\\AIICreator\\Source\\MainView.js": 1782779053443.8762,
 	"C:\\Users\\dicki\\AII CREATOR\\allcreator\\AIICreator\\Template\\styler.stl": 1782693623495.5627,
 	"C:\\Users\\dicki\\AII CREATOR\\allcreator\\AIICreator\\Source\\MainView.lay": 1782693623494.563,
 	"concat": true,
@@ -166,6 +167,12 @@
 	"C:\\Users\\dicki\\AII CREATOR\\allcreator\\AIICreator\\Source\\Prompt\\PromptDetailView.lay": 1782707626095.2542,
 	"C:\\Users\\dicki\\AII CREATOR\\allcreator\\AIICreator\\Source\\Prompt\\PromptRegisterView.js": 1782709364364.8657,
 	"C:\\Users\\dicki\\AII CREATOR\\allcreator\\AIICreator\\Source\\Prompt\\PromptRegisterView.lay": 1782709364365.8667,
-	"C:\\Users\\dicki\\AII CREATOR\\allcreator\\AIICreator\\Source\\MyPage\\MyPageView.js": 1782709966383.9048,
-	"C:\\Users\\dicki\\AII CREATOR\\allcreator\\AIICreator\\Source\\MyPage\\MyPageView.lay": 1782709484386.116
+	"C:\\Users\\dicki\\AII CREATOR\\allcreator\\AIICreator\\Source\\MyPage\\MyPageView.js": 1782710150428.649,
+	"C:\\Users\\dicki\\AII CREATOR\\allcreator\\AIICreator\\Source\\MyPage\\MyPageView.lay": 1782710150429.6526,
+	"C:\\Users\\dicki\\AII CREATOR\\allcreator\\AIICreator\\Source\\Main\\NavBar.js": 1782778983568.0017,
+	"C:\\Users\\dicki\\AII CREATOR\\allcreator\\AIICreator\\Source\\Main\\FilterBar.js": 1782779012483.751,
+	"C:\\Users\\dicki\\AII CREATOR\\allcreator\\AIICreator\\Source\\Main\\PromptGrid.js": 1782779031803.1653,
+	"C:\\Users\\dicki\\AII CREATOR\\allcreator\\AIICreator\\Library\\Main\\NavBar.js": 1782779172637.0107,
+	"C:\\Users\\dicki\\AII CREATOR\\allcreator\\AIICreator\\Library\\Main\\FilterBar.js": 1782779172644.5188,
+	"C:\\Users\\dicki\\AII CREATOR\\allcreator\\AIICreator\\Library\\Main\\PromptGrid.js": 1782779172651.0266
 }

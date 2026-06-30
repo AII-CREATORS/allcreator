@@ -38,6 +38,33 @@
             "action": 9,
             "relType": 1,
             "path": "Library\\"
+          },
+          {
+            "type": 1,
+            "name": "Main",
+            "children": [
+              {
+                "type": 5,
+                "name": "NavBar.js",
+                "action": 9,
+                "relType": 1,
+                "path": "Library\\Main\\"
+              },
+              {
+                "type": 5,
+                "name": "FilterBar.js",
+                "action": 9,
+                "relType": 1,
+                "path": "Library\\Main\\"
+              },
+              {
+                "type": 5,
+                "name": "PromptGrid.js",
+                "action": 9,
+                "relType": 1,
+                "path": "Library\\Main\\"
+              }
+            ]
           }
         ]
       },

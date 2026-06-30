@@ -15201,6 +15201,466 @@ ToastManager = class ToastManager
     static warning(msg) { ToastManager.show(msg, 'warning'); }
 }
 
+;
+NavBar = class NavBar
+{
+	constructor(container, callbacks)
+	{
+		// callbacks: { onSearch, onLogin, onMyPage, onLogout, onRegister }
+		this.el           = container
+		this.callbacks    = callbacks || {}
+		this.searchTimer  = null
+		this.keyword      = ''
+	}
+
+	// ─────────────────────────────────────────
+	// 렌더
+	// ─────────────────────────────────────────
+
+	render(user)
+	{
+		this._injectStyle()
+		this.el.innerHTML = this._html(user)
+		this._bindEvents(user)
+	}
+
+	_html(user)
+	{
+		var userArea = user ? this._userHTML(user) : this._guestHTML()
+
+		return '<div class="nb-inner">' +
+			'<div class="nb-logo">' +
+				'<span class="nb-logo-text">ALL</span>' +
+				'<span class="nb-logo-accent">Creator</span>' +
+			'</div>' +
+			'<div class="nb-search">' +
+				'<input class="ac-input nb-search-input" id="nb-search" type="text" placeholder="🔍  프롬프트 검색...">' +
+			'</div>' +
+			'<div class="nb-actions" id="nb-user-area">' + userArea + '</div>' +
+		'</div>'
+	}
+
+	_guestHTML()
+	{
+		return '<button class="ac-btn ac-btn-outline ac-btn-sm" id="nb-btn-login">로그인</button>'
+	}
+
+	_userHTML(user)
+	{
+		var initial = (user.email || 'U')[0].toUpperCase()
+		return '<button class="ac-btn ac-btn-secondary ac-btn-sm" id="nb-btn-register">+ 프롬프트 등록</button>' +
+			'<div class="ac-avatar nb-avatar" id="nb-avatar">' + initial + '</div>' +
+			'<div class="nb-dropdown" id="nb-dropdown" style="display:none">' +
+				'<div class="nb-dropdown-email">' + user.email + '</div>' +
+				'<button class="nb-dropdown-item" id="nb-btn-mypage">마이페이지</button>' +
+				'<button class="nb-dropdown-item" id="nb-btn-logout">로그아웃</button>' +
+			'</div>'
+	}
+
+	_injectStyle()
+	{
+		if (document.getElementById('navbar-style')) return
+		var style = document.createElement('style')
+		style.id  = 'navbar-style'
+		style.textContent =
+			'.nb-inner{display:flex;align-items:center;gap:16px;padding:0 24px;height:60px;background:var(--color-primary-dark);border-bottom:1px solid var(--color-border);}' +
+			'.nb-logo{font-family:var(--font-title);font-size:1.375rem;font-weight:700;white-space:nowrap;flex-shrink:0;}' +
+			'.nb-logo-text{color:var(--color-text);}' +
+			'.nb-logo-accent{color:var(--color-accent);margin-left:3px;}' +
+			'.nb-search{flex:1;max-width:480px;}' +
+			'.nb-search-input{padding:8px 14px;font-size:0.875rem;}' +
+			'.nb-actions{display:flex;align-items:center;gap:10px;margin-left:auto;position:relative;}' +
+			'.nb-avatar{cursor:pointer;width:34px;height:34px;font-size:0.8125rem;}' +
+			'.nb-dropdown{position:absolute;top:calc(100% + 8px);right:0;background:var(--color-surface);border:1px solid var(--color-border-light);border-radius:var(--radius-md);padding:8px;min-width:200px;box-shadow:var(--shadow-md);z-index:200;}' +
+			'.nb-dropdown-email{font-size:0.75rem;color:var(--color-text-muted);padding:6px 10px 10px;border-bottom:1px solid var(--color-border);margin-bottom:6px;}' +
+			'.nb-dropdown-item{width:100%;padding:8px 10px;background:none;border:none;color:var(--color-text);font-size:0.875rem;font-family:var(--font-body);text-align:left;border-radius:var(--radius-sm);cursor:pointer;}' +
+			'.nb-dropdown-item:hover{background:var(--color-surface-2);}'
+		document.head.appendChild(style)
+	}
+
+	// ─────────────────────────────────────────
+	// 이벤트
+	// ─────────────────────────────────────────
+
+	_bindEvents(user)
+	{
+		var self = this
+		var el   = this.el
+
+		// 검색 — 300ms 디바운스
+		var searchInput = el.querySelector('#nb-search')
+		if (searchInput)
+		{
+			searchInput.addEventListener('input', function()
+			{
+				self.keyword = this.value.trim()
+				clearTimeout(self.searchTimer)
+				self.searchTimer = setTimeout(function()
+				{
+					if (self.callbacks.onSearch) self.callbacks.onSearch(self.keyword)
+				}, 300)
+			})
+		}
+
+		if (!user)
+		{
+			var btnLogin = el.querySelector('#nb-btn-login')
+			if (btnLogin) btnLogin.addEventListener('click', function()
+			{
+				if (self.callbacks.onLogin) self.callbacks.onLogin()
+			})
+			return
+		}
+
+		// 아바타 드롭다운 토글
+		var avatar = el.querySelector('#nb-avatar')
+		if (avatar)
+		{
+			avatar.addEventListener('click', function()
+			{
+				var dd = el.querySelector('#nb-dropdown')
+				if (dd) dd.style.display = dd.style.display === 'none' ? '' : 'none'
+			})
+		}
+
+		// 외부 클릭 시 드롭다운 닫기
+		document.addEventListener('click', function(e)
+		{
+			var dd  = el.querySelector('#nb-dropdown')
+			var av  = el.querySelector('#nb-avatar')
+			if (dd && av && !av.contains(e.target) && !dd.contains(e.target))
+				dd.style.display = 'none'
+		})
+
+		var btnRegister = el.querySelector('#nb-btn-register')
+		if (btnRegister) btnRegister.addEventListener('click', function()
+		{
+			if (self.callbacks.onRegister) self.callbacks.onRegister()
+		})
+
+		var btnMyPage = el.querySelector('#nb-btn-mypage')
+		if (btnMyPage) btnMyPage.addEventListener('click', function()
+		{
+			if (self.callbacks.onMyPage) self.callbacks.onMyPage()
+		})
+
+		var btnLogout = el.querySelector('#nb-btn-logout')
+		if (btnLogout) btnLogout.addEventListener('click', async function()
+		{
+			if (self.callbacks.onLogout) await self.callbacks.onLogout()
+		})
+	}
+
+	// ─────────────────────────────────────────
+	// 상태
+	// ─────────────────────────────────────────
+
+	getKeyword() { return this.keyword }
+}
+
+;
+FilterBar = class FilterBar
+{
+	constructor(container, callbacks)
+	{
+		// callbacks: { onChange }
+		this.el       = container
+		this.callbacks = callbacks || {}
+		this.aiTools  = []
+		this.state    = {
+			toolId: null,
+			sort:   'latest',
+			price:  'all',
+			type:   'all'
+		}
+	}
+
+	// ─────────────────────────────────────────
+	// 렌더
+	// ─────────────────────────────────────────
+
+	render(aiTools)
+	{
+		this.aiTools = aiTools || []
+		this._injectStyle()
+		this.el.innerHTML = this._html()
+		this._bindEvents()
+	}
+
+	_html()
+	{
+		var tabsHTML = '<button class="fb-tool-tab active" data-tool="">전체</button>'
+		this.aiTools.forEach(function(t)
+		{
+			tabsHTML += '<button class="fb-tool-tab" data-tool="' + t.id + '">' + t.name + '</button>'
+		})
+
+		return '<div class="fb-tool-bar">' +
+				'<div class="fb-tool-tabs" id="fb-tool-tabs">' + tabsHTML + '</div>' +
+				'<div class="fb-sort">' +
+					'<select class="fb-sort-select" id="fb-sort">' +
+						'<option value="latest">최신순</option>' +
+						'<option value="popular">인기순</option>' +
+						'<option value="price_asc">낮은 가격순</option>' +
+						'<option value="price_desc">높은 가격순</option>' +
+					'</select>' +
+				'</div>' +
+			'</div>' +
+			'<div class="fb-chip-bar">' +
+				'<div class="fb-chip-group">' +
+					'<span class="fb-chip-label">가격</span>' +
+					'<div class="fb-chips" id="fb-price-chips">' +
+						'<button class="fb-chip active" data-price="all">전체</button>' +
+						'<button class="fb-chip" data-price="free">무료</button>' +
+						'<button class="fb-chip" data-price="paid">유료</button>' +
+					'</div>' +
+				'</div>' +
+				'<div class="fb-chip-group">' +
+					'<span class="fb-chip-label">타입</span>' +
+					'<div class="fb-chips" id="fb-type-chips">' +
+						'<button class="fb-chip active" data-type="all">전체</button>' +
+						'<button class="fb-chip" data-type="text">텍스트</button>' +
+						'<button class="fb-chip" data-type="image">이미지</button>' +
+					'</div>' +
+				'</div>' +
+				'<button class="fb-reset" id="fb-reset">필터 초기화</button>' +
+			'</div>'
+	}
+
+	_injectStyle()
+	{
+		if (document.getElementById('filterbar-style')) return
+		var style = document.createElement('style')
+		style.id  = 'filterbar-style'
+		style.textContent =
+			// AI 도구 탭 바
+			'.fb-tool-bar{display:flex;align-items:center;gap:12px;padding:0 24px;height:52px;background:var(--color-primary);border-bottom:1px solid var(--color-border);overflow-x:auto;}' +
+			'.fb-tool-bar::-webkit-scrollbar{height:0;}' +
+			'.fb-tool-tabs{display:flex;gap:6px;flex-shrink:0;}' +
+			'.fb-tool-tab{padding:5px 14px;border:1px solid var(--color-border);border-radius:var(--radius-full);background:transparent;color:var(--color-text-muted);font-size:0.8125rem;font-weight:500;font-family:var(--font-body);cursor:pointer;white-space:nowrap;transition:background var(--transition),color var(--transition),border-color var(--transition);}' +
+			'.fb-tool-tab:hover{border-color:var(--color-accent);color:var(--color-accent);}' +
+			'.fb-tool-tab.active{background:var(--color-accent);border-color:var(--color-accent);color:#fff;}' +
+			'.fb-sort{margin-left:auto;flex-shrink:0;}' +
+			'.fb-sort-select{padding:5px 10px;background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-md);color:var(--color-text);font-size:0.8125rem;font-family:var(--font-body);cursor:pointer;outline:none;}' +
+			// 칩 바
+			'.fb-chip-bar{display:flex;align-items:center;gap:20px;padding:0 24px;height:44px;background:var(--color-primary-dark);border-bottom:1px solid var(--color-border);overflow-x:auto;}' +
+			'.fb-chip-bar::-webkit-scrollbar{height:0;}' +
+			'.fb-chip-group{display:flex;align-items:center;gap:8px;flex-shrink:0;}' +
+			'.fb-chip-label{font-size:0.75rem;font-weight:700;color:var(--color-text-dim);text-transform:uppercase;letter-spacing:0.04em;white-space:nowrap;}' +
+			'.fb-chips{display:flex;gap:4px;}' +
+			'.fb-chip{padding:3px 10px;border:1px solid var(--color-border);border-radius:var(--radius-full);background:transparent;color:var(--color-text-muted);font-size:0.75rem;font-weight:500;font-family:var(--font-body);cursor:pointer;white-space:nowrap;transition:background var(--transition),color var(--transition),border-color var(--transition);}' +
+			'.fb-chip:hover{border-color:var(--color-accent);color:var(--color-accent);}' +
+			'.fb-chip.active{background:rgba(108,99,255,0.18);border-color:var(--color-accent);color:var(--color-accent);}' +
+			'.fb-reset{margin-left:auto;padding:3px 12px;border:1px solid var(--color-border);border-radius:var(--radius-full);background:transparent;color:var(--color-text-dim);font-size:0.75rem;font-family:var(--font-body);cursor:pointer;flex-shrink:0;transition:color var(--transition),border-color var(--transition);}' +
+			'.fb-reset:hover{color:var(--color-point);border-color:var(--color-point);}'
+		document.head.appendChild(style)
+	}
+
+	// ─────────────────────────────────────────
+	// 이벤트
+	// ─────────────────────────────────────────
+
+	_bindEvents()
+	{
+		var self = this
+		var el   = this.el
+
+		// AI 도구 탭
+		el.querySelector('#fb-tool-tabs').addEventListener('click', function(e)
+		{
+			var tab = e.target.closest('.fb-tool-tab')
+			if (!tab) return
+			el.querySelectorAll('.fb-tool-tab').forEach(function(t) { t.classList.remove('active') })
+			tab.classList.add('active')
+			self.state.toolId = tab.getAttribute('data-tool') || null
+			self._onChange()
+		})
+
+		// 정렬
+		el.querySelector('#fb-sort').addEventListener('change', function()
+		{
+			self.state.sort = this.value
+			self._onChange()
+		})
+
+		// 가격 칩
+		el.querySelector('#fb-price-chips').addEventListener('click', function(e)
+		{
+			var chip = e.target.closest('.fb-chip')
+			if (!chip) return
+			el.querySelectorAll('#fb-price-chips .fb-chip').forEach(function(c) { c.classList.remove('active') })
+			chip.classList.add('active')
+			self.state.price = chip.getAttribute('data-price')
+			self._onChange()
+		})
+
+		// 타입 칩
+		el.querySelector('#fb-type-chips').addEventListener('click', function(e)
+		{
+			var chip = e.target.closest('.fb-chip')
+			if (!chip) return
+			el.querySelectorAll('#fb-type-chips .fb-chip').forEach(function(c) { c.classList.remove('active') })
+			chip.classList.add('active')
+			self.state.type = chip.getAttribute('data-type')
+			self._onChange()
+		})
+
+		// 초기화
+		el.querySelector('#fb-reset').addEventListener('click', function()
+		{
+			self.reset()
+		})
+	}
+
+	_onChange()
+	{
+		if (this.callbacks.onChange) this.callbacks.onChange()
+	}
+
+	// ─────────────────────────────────────────
+	// 상태
+	// ─────────────────────────────────────────
+
+	getState() { return { toolId: this.state.toolId, sort: this.state.sort, price: this.state.price, type: this.state.type } }
+
+	reset()
+	{
+		var el = this.el
+		this.state = { toolId: null, sort: 'latest', price: 'all', type: 'all' }
+
+		el.querySelectorAll('.fb-tool-tab').forEach(function(t) { t.classList.remove('active') })
+		var allTab = el.querySelector('.fb-tool-tab[data-tool=""]')
+		if (allTab) allTab.classList.add('active')
+
+		el.querySelectorAll('#fb-price-chips .fb-chip').forEach(function(c) { c.classList.remove('active') })
+		var priceAll = el.querySelector('[data-price="all"]')
+		if (priceAll) priceAll.classList.add('active')
+
+		el.querySelectorAll('#fb-type-chips .fb-chip').forEach(function(c) { c.classList.remove('active') })
+		var typeAll = el.querySelector('[data-type="all"]')
+		if (typeAll) typeAll.classList.add('active')
+
+		var sortEl = el.querySelector('#fb-sort')
+		if (sortEl) sortEl.value = 'latest'
+
+		this._onChange()
+		ToastManager.info('필터가 초기화되었습니다')
+	}
+}
+
+;
+PromptGrid = class PromptGrid
+{
+	constructor(container, callbacks)
+	{
+		// callbacks: { onCardClick }
+		this.el        = container
+		this.callbacks = callbacks || {}
+		this._injectStyle()
+	}
+
+	// ─────────────────────────────────────────
+	// 렌더
+	// ─────────────────────────────────────────
+
+	renderLoading()
+	{
+		this.el.innerHTML = '<div class="pg-loading"><div class="ac-spinner"></div></div>'
+	}
+
+	renderError()
+	{
+		this.el.innerHTML =
+			'<div class="pg-empty">' +
+				'<div class="pg-empty-icon">⚠️</div>' +
+				'<div class="pg-empty-text">데이터를 불러오지 못했습니다</div>' +
+			'</div>'
+	}
+
+	renderCards(prompts, keyword)
+	{
+		if (!prompts.length)
+		{
+			var msg = keyword
+				? '"' + keyword + '" 검색 결과가 없습니다'
+				: '등록된 프롬프트가 없습니다'
+			this.el.innerHTML =
+				'<div class="pg-empty">' +
+					'<div class="pg-empty-icon">🔍</div>' +
+					'<div class="pg-empty-text">' + msg + '</div>' +
+				'</div>'
+			return
+		}
+
+		var self   = this
+		var header = ''
+		if (keyword)
+			header = '<div class="pg-result-header"><strong>"' + keyword + '"</strong> 검색 결과 ' + prompts.length + '개</div>'
+
+		this.el.innerHTML = header + '<div class="pg-grid">' +
+			prompts.map(function(p) { return self._cardHTML(p) }).join('') +
+		'</div>'
+
+		this.el.querySelectorAll('.ac-prompt-card').forEach(function(card)
+		{
+			card.addEventListener('click', function()
+			{
+				if (self.callbacks.onCardClick) self.callbacks.onCardClick(card.getAttribute('data-id'))
+			})
+		})
+	}
+
+	_cardHTML(p)
+	{
+		var isImage    = p.prompt_type === 'image'
+		var thumbClass = isImage ? 'pg-thumb-image' : 'pg-thumb-text'
+		var thumbIcon  = isImage ? '🎨' : '✍️'
+		var toolName   = p.ai_tools ? p.ai_tools.name : ''
+		var toolBadge  = toolName ? '<span class="ac-badge ac-badge-accent">' + toolName + '</span>' : ''
+		var typeBadge  = '<span class="ac-badge ac-badge-dim">' + (isImage ? '이미지' : '텍스트') + '</span>'
+		var isFree     = Number(p.price) === 0
+		var price      = isFree
+			? '<span class="ac-prompt-card-price free">무료</span>'
+			: '<span class="ac-prompt-card-price">' + Number(p.price).toLocaleString() + '원</span>'
+		var author     = p.users ? '@' + p.users.username : ''
+
+		return '<div class="ac-prompt-card" data-id="' + p.id + '">' +
+			'<div class="' + thumbClass + '">' + thumbIcon + '</div>' +
+			'<div class="ac-prompt-card-body">' +
+				'<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px">' + toolBadge + typeBadge + '</div>' +
+				'<div class="ac-prompt-card-title">' + p.title + '</div>' +
+				'<div class="ac-prompt-card-desc">' + (p.description || '') + '</div>' +
+				'<div class="ac-prompt-card-footer">' +
+					price +
+					'<span class="ac-caption" style="display:flex;align-items:center;gap:6px">' +
+						'<span>♥ ' + (p.like_count || 0) + '</span>' +
+						'<span>' + author + '</span>' +
+					'</span>' +
+				'</div>' +
+			'</div>' +
+		'</div>'
+	}
+
+	_injectStyle()
+	{
+		if (document.getElementById('promptgrid-style')) return
+		var style = document.createElement('style')
+		style.id  = 'promptgrid-style'
+		style.textContent =
+			'.pg-grid{columns:3;column-gap:16px;}' +
+			'.pg-grid .ac-prompt-card{break-inside:avoid;margin-bottom:16px;display:inline-block;width:100%;}' +
+			'.pg-thumb-text{width:100%;height:140px;display:flex;align-items:center;justify-content:center;font-size:2rem;background:linear-gradient(135deg,#2E2E48,#3A3A5A);}' +
+			'.pg-thumb-image{width:100%;height:140px;display:flex;align-items:center;justify-content:center;font-size:2rem;background:linear-gradient(135deg,#2A2048,#3D1F5A);}' +
+			'.pg-loading{display:flex;justify-content:center;padding:60px;}' +
+			'.pg-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:80px 20px;color:var(--color-text-muted);gap:12px;}' +
+			'.pg-empty-icon{font-size:3rem;}' +
+			'.pg-empty-text{font-size:1rem;font-weight:500;}' +
+			'.pg-result-header{font-size:0.875rem;color:var(--color-text-muted);margin-bottom:16px;}' +
+			'.pg-result-header strong{color:var(--color-accent);}'
+		document.head.appendChild(style)
+	}
+}
+
 afc.scriptMap["Framework/afc/library/ARect.js"] = true;
 afc.scriptMap["Framework/afc/library/AUtil.js"] = true;
 afc.scriptMap["Framework/afc/library/afc.js"] = true;
@@ -15222,3 +15682,6 @@ afc.scriptMap["Framework/afc/event/AEvent.js"] = true;
 afc.scriptMap["Framework/afc/event/AViewEvent.js"] = true;
 afc.scriptMap["Library/SupabaseManager.js"] = true;
 afc.scriptMap["Library/ToastManager.js"] = true;
+afc.scriptMap["Library/Main/NavBar.js"] = true;
+afc.scriptMap["Library/Main/FilterBar.js"] = true;
+afc.scriptMap["Library/Main/PromptGrid.js"] = true;
