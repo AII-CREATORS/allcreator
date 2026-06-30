@@ -411,19 +411,109 @@ MyPageView = class MyPageView extends AView
 	{
 		var result = await this.sb.getClient()
 			.from('prompts')
-			.select('id, title, description, price, prompt_type, like_count, view_count, status, rejection_reason, prompt_content')
+			.select('id, title, description, price, prompt_type, like_count, view_count, status, rejection_reason, prompt_content, created_at, ai_tool_id, ai_tools(id, name)')
 			.eq('user_id', this.currentUser.id)
 			.is('deleted_at', null)
 			.order('created_at', { ascending: false })
 
-		this._renderMyPromptList(content, result.data || [])
+		this._allMyPrompts = result.data || []
+		this._myFilter     = { sort: 'newest', toolId: 'all', price: 'all' }
+
+		var toolsMap = {}
+		this._allMyPrompts.forEach(function(p)
+		{
+			if (p.ai_tool_id && p.ai_tools) toolsMap[p.ai_tool_id] = p.ai_tools.name
+		})
+		this._myToolsMap = toolsMap
+
+		this._renderMyFilters(content)
+		this._applyMyFilters(content)
 	}
 
-	_renderMyPromptList(content, prompts)
+	_renderMyFilters(content)
+	{
+		var toolsMap    = this._myToolsMap
+		var toolOptions = '<option value="all">전체 도구</option>'
+		Object.keys(toolsMap).forEach(function(id)
+		{
+			toolOptions += '<option value="' + id + '">' + toolsMap[id] + '</option>'
+		})
+
+		var sel = 'padding:6px 12px;background:#2E2E48;border:1px solid #3A3A58;border-radius:9999px;color:#fff;font-size:0.8125rem;font-family:inherit;cursor:pointer;outline:none;'
+
+		content.innerHTML =
+			'<div style="display:flex;gap:8px;padding:16px 0 12px;flex-wrap:wrap;">' +
+				'<select id="mp-filter-sort" style="' + sel + '">' +
+					'<option value="newest">최신순</option>' +
+					'<option value="oldest">오래된 순</option>' +
+					'<option value="likes">좋아요 많은 순</option>' +
+				'</select>' +
+				'<select id="mp-filter-tool" style="' + sel + '">' + toolOptions + '</select>' +
+				'<select id="mp-filter-price" style="' + sel + '">' +
+					'<option value="all">가격 전체</option>' +
+					'<option value="free">무료</option>' +
+					'<option value="high">가격 높은 순</option>' +
+					'<option value="low">가격 낮은 순</option>' +
+				'</select>' +
+			'</div>' +
+			'<div id="mp-my-list"></div>'
+
+		var self = this
+		content.querySelector('#mp-filter-sort').addEventListener('change', function()
+		{
+			self._myFilter.sort = this.value
+			self._applyMyFilters(content)
+		})
+		content.querySelector('#mp-filter-tool').addEventListener('change', function()
+		{
+			self._myFilter.toolId = this.value
+			self._applyMyFilters(content)
+		})
+		content.querySelector('#mp-filter-price').addEventListener('change', function()
+		{
+			self._myFilter.price = this.value
+			self._applyMyFilters(content)
+		})
+	}
+
+	_applyMyFilters(content)
+	{
+		var filter  = this._myFilter
+		var prompts = this._allMyPrompts.slice()
+
+		if (filter.toolId !== 'all')
+			prompts = prompts.filter(function(p) { return p.ai_tool_id === filter.toolId })
+
+		if (filter.price === 'free')
+		{
+			prompts = prompts.filter(function(p) { return Number(p.price) === 0 })
+			prompts = this._sortMyPrompts(prompts, filter.sort)
+		}
+		else if (filter.price === 'high')
+			prompts.sort(function(a, b) { return Number(b.price) - Number(a.price) })
+		else if (filter.price === 'low')
+			prompts.sort(function(a, b) { return Number(a.price) - Number(b.price) })
+		else
+			prompts = this._sortMyPrompts(prompts, filter.sort)
+
+		var listEl = content.querySelector('#mp-my-list')
+		if (listEl) this._renderMyPromptList(listEl, prompts)
+	}
+
+	_sortMyPrompts(prompts, sort)
+	{
+		if (sort === 'oldest')
+			return prompts.sort(function(a, b) { return new Date(a.created_at) - new Date(b.created_at) })
+		if (sort === 'likes')
+			return prompts.sort(function(a, b) { return (b.like_count || 0) - (a.like_count || 0) })
+		return prompts.sort(function(a, b) { return new Date(b.created_at) - new Date(a.created_at) })
+	}
+
+	_renderMyPromptList(container, prompts)
 	{
 		if (!prompts.length)
 		{
-			content.innerHTML =
+			container.innerHTML =
 				'<div class="mp-empty">' +
 					'<div class="mp-empty-icon">✍️</div>' +
 					'<div class="mp-empty-text">등록한 프롬프트가 없습니다</div>' +
@@ -465,11 +555,11 @@ MyPageView = class MyPageView extends AView
 		})
 
 		html += '</div>'
-		content.innerHTML = html
+		container.innerHTML = html
 
 		var self = this
 
-		content.querySelectorAll('.mp-list-card').forEach(function(card)
+		container.querySelectorAll('.mp-list-card').forEach(function(card)
 		{
 			var id     = card.dataset.id
 			var prompt = prompts.find(function(p) { return p.id === id })
@@ -487,16 +577,16 @@ MyPageView = class MyPageView extends AView
 
 	_showPromptPopup(prompt)
 	{
-		var el      = this.getElement()
+		var el       = this.getElement()
 		var existing = el.querySelector('#mp-prompt-popup-overlay')
 		if (existing) existing.remove()
 
-		var statusMap  = { published: '승인됨', pending: '심사 중', rejected: '반려', draft: '임시저장' }
-		var statusColor= { published: '#4CAF82', pending: '#FFB347', rejected: '#FF6B6B' }
-		var typeLabel  = prompt.prompt_type === 'image' ? '🎨 이미지 프롬프트' : '✍️ 텍스트 프롬프트'
-		var priceLabel = Number(prompt.price) === 0 ? '무료' : Number(prompt.price).toLocaleString() + '원'
-		var sLabel     = statusMap[prompt.status] || prompt.status
-		var sColor     = statusColor[prompt.status] || '#A0A0C0'
+		var statusMap   = { published: '승인됨', pending: '심사 중', rejected: '반려', draft: '임시저장' }
+		var statusColor = { published: '#4CAF82', pending: '#FFB347', rejected: '#FF6B6B' }
+		var typeLabel   = prompt.prompt_type === 'image' ? '🎨 이미지 프롬프트' : '✍️ 텍스트 프롬프트'
+		var priceLabel  = Number(prompt.price) === 0 ? '무료' : Number(prompt.price).toLocaleString() + '원'
+		var sLabel      = statusMap[prompt.status] || prompt.status
+		var sColor      = statusColor[prompt.status] || '#A0A0C0'
 
 		var rejectionHTML = ''
 		if (prompt.status === 'rejected' && prompt.rejection_reason)
@@ -605,12 +695,12 @@ MyPageView = class MyPageView extends AView
 			html +=
 				'<div class="mp-list-card" data-id="' + p.id + '">' +
 					'<div class="mp-list-icon">' + icon + '</div>' +
-					'<div class="mp-list-info">'
-					+ '<div class="mp-list-title">' + p.title + '</div>'
-					+ '<div class="mp-list-desc">' + (p.description || '') + '</div>'
-				+ '</div>'
-				+ price
-			+ '</div>'
+					'<div class="mp-list-info">' +
+						'<div class="mp-list-title">' + p.title + '</div>' +
+						'<div class="mp-list-desc">' + (p.description || '') + '</div>' +
+					'</div>' +
+					price +
+				'</div>'
 		})
 
 		html += '</div>'
