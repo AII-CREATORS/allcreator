@@ -40,6 +40,13 @@
             "path": "Library\\"
           },
           {
+            "type": 5,
+            "name": "ErrorHandler.js",
+            "action": 9,
+            "relType": 1,
+            "path": "Library\\"
+          },
+          {
             "type": 1,
             "name": "Main",
             "children": [

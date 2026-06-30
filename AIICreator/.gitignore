@@ -1,0 +1,10 @@
+# SpiderGen 빌드 캐시
+hash.inf
+bin/lib.js
+
+# 환경 설정 (Supabase 키 포함)
+env.inf
+
+# OS
+.DS_Store
+Thumbs.db

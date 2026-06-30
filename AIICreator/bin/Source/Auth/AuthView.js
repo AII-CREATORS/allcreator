@@ -23,9 +23,136 @@ AuthView = class AuthView extends AView
 		this.sb = SupabaseManager.getInstance()
 	}
 
-	onActiveDone(isFirst)
+	async onActiveDone(isFirst)
 	{
 		super.onActiveDone(isFirst)
+
+		if (!isFirst) return
+
+		var hasOAuthHash = window.location.hash.indexOf('access_token') !== -1
+
+		if (hasOAuthHash)
+		{
+			// Supabase가 해시 토큰을 파싱할 때까지 대기 후 OAuth 후처리
+			var self = this
+			setTimeout(async function()
+			{
+				await self._handleOAuthCallback()
+			}, 1000)
+			return
+		}
+
+		// 일반 재방문: 유효 세션이면 자동 로그인
+		var user = await this.sb.getUser()
+		if (user) this._goToMain()
+	}
+
+	// OAuth 콜백 후처리: public.users 보장 → 추가정보 확인 → 이동
+	async _handleOAuthCallback()
+	{
+		var user = await this.sb.getUser()
+		if (!user) return
+
+		// 1. public.users row 보장 (트리거 미발동 대비)
+		var result = await this.sb.ensureUserProfile(user)
+
+		if (result.error)
+		{
+			ToastManager.error('프로필 초기화 실패: ' + result.error.message)
+			return
+		}
+
+		var profile = result.data
+
+		// 2. 필수 추가정보(성별, 생년월일) 미입력이면 완성 패널 표시
+		if (!profile.gender || !profile.birth_date)
+		{
+			this._showSocialCompletePanel(user, profile)
+			return
+		}
+
+		this._goToMain()
+	}
+
+	// 소셜 로그인 후 추가 정보 입력 패널
+	_showSocialCompletePanel(user, profile)
+	{
+		var el   = this.getElement()
+		var self = this
+
+		// 기존 컨텐츠를 추가정보 패널로 교체
+		el.innerHTML =
+			'<div class="auth-wrap">' +
+				'<div class="auth-logo">' +
+					'<span class="auth-logo-text">ALL</span>' +
+					'<span class="auth-logo-accent">Creator</span>' +
+				'</div>' +
+				'<p class="auth-subtitle">조금 더 알려주세요 👋</p>' +
+				'<div class="auth-box ac-card">' +
+					'<p style="color:var(--color-text-muted);font-size:0.875rem;margin-bottom:20px;line-height:1.5">' +
+						'<strong style="color:var(--color-text)">' + (profile.display_name || '') + '</strong>님, 환영합니다!<br>' +
+						'서비스 이용을 위해 추가 정보를 입력해주세요.' +
+					'</p>' +
+					'<div class="ac-input-group">' +
+						'<label class="ac-label">닉네임</label>' +
+						'<input class="ac-input" type="text" id="sc-displayname" value="' + (profile.display_name || '') + '" placeholder="다른 사람들에게 보일 이름">' +
+					'</div>' +
+					'<div style="display:flex;gap:12px;margin-top:14px">' +
+						'<div class="ac-input-group" style="flex:1">' +
+							'<label class="ac-label">성별</label>' +
+							'<select class="ac-input" id="sc-gender">' +
+								'<option value="">선택 안함</option>' +
+								'<option value="male">남성</option>' +
+								'<option value="female">여성</option>' +
+								'<option value="other">기타</option>' +
+							'</select>' +
+						'</div>' +
+						'<div class="ac-input-group" style="flex:1.5">' +
+							'<label class="ac-label">생년월일</label>' +
+							'<input class="ac-input" type="date" id="sc-birthdate">' +
+						'</div>' +
+					'</div>' +
+					'<button class="ac-btn ac-btn-primary ac-w-full" id="sc-btn-complete" style="margin-top:20px">시작하기</button>' +
+					'<button class="ac-btn ac-w-full" id="sc-btn-skip" style="margin-top:8px;opacity:0.6;font-size:0.8125rem">나중에 입력하기</button>' +
+				'</div>' +
+			'</div>'
+
+		el.querySelector('#sc-btn-complete').addEventListener('click', async function()
+		{
+			var displayName = el.querySelector('#sc-displayname').value.trim()
+			var gender      = el.querySelector('#sc-gender').value
+			var birthDate   = el.querySelector('#sc-birthdate').value
+
+			if (!displayName)
+			{
+				ToastManager.error('닉네임을 입력해주세요')
+				return
+			}
+
+			var btn = el.querySelector('#sc-btn-complete')
+			btn.disabled    = true
+			btn.textContent = '저장 중...'
+
+			var { error } = await self.sb.getClient()
+				.from('users')
+				.update({ display_name: displayName, gender: gender || null, birth_date: birthDate || null })
+				.eq('id', user.id)
+
+			if (error)
+			{
+				ToastManager.error(ErrorHandler.parseSupabaseError(error))
+				btn.disabled    = false
+				btn.textContent = '시작하기'
+				return
+			}
+
+			self._goToMain()
+		})
+
+		el.querySelector('#sc-btn-skip').addEventListener('click', function()
+		{
+			self._goToMain()
+		})
 	}
 
 	// ─────────────────────────────────────────
@@ -285,7 +412,7 @@ AuthView = class AuthView extends AView
 			{
 				btn.disabled    = false
 				btn.textContent = '로그인'
-				ToastManager.error('로그인 실패: ' + result.error.message)
+				ToastManager.error(ErrorHandler.parseSupabaseError(result.error))
 			}
 			else
 			{
@@ -334,7 +461,7 @@ AuthView = class AuthView extends AView
 
 			if (result.error)
 			{
-				ToastManager.error('가입 실패: ' + result.error.message)
+				ToastManager.error(ErrorHandler.parseSupabaseError(result.error))
 				return
 			}
 
@@ -368,14 +495,33 @@ AuthView = class AuthView extends AView
 
 	async _onGoogleLogin()
 	{
+		var btn = this.getElement().querySelector('#btn-google')
+		btn.disabled    = true
+		btn.textContent = '연결 중...'
+
 		var err = await this.sb.signInWithGoogle()
-		if (err) ToastManager.error('구글 로그인 실패: ' + err.message)
+
+		btn.disabled = false
+		btn.innerHTML =
+			'<img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="18" height="18" alt="Google"> Google로 계속하기'
+
+		if (err) ToastManager.error(ErrorHandler.parseSupabaseError(err))
+		// 성공 시: 브라우저가 Google 로그인 페이지로 리다이렉트되므로 별도 처리 불필요
 	}
 
 	async _onKakaoLogin()
 	{
+		var btn = this.getElement().querySelector('#btn-kakao')
+		btn.disabled    = true
+		btn.textContent = '연결 중...'
+
 		var err = await this.sb.signInWithKakao()
-		if (err) ToastManager.error('카카오 로그인 실패: ' + err.message)
+
+		btn.disabled = false
+		btn.innerHTML =
+			'<svg width="18" height="18" viewBox="0 0 24 24" fill="#3C1E1E"><path d="M12 3C6.477 3 2 6.477 2 10.857c0 2.742 1.695 5.146 4.25 6.618L5.1 21l5.217-2.803c.554.076 1.12.117 1.683.117 5.523 0 10-3.477 10-7.857C22 6.477 17.523 3 12 3z"/></svg> 카카오로 계속하기'
+
+		if (err) ToastManager.error(ErrorHandler.parseSupabaseError(err))
 	}
 
 	// ─────────────────────────────────────────

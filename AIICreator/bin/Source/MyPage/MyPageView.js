@@ -45,7 +45,29 @@ MyPageView = class MyPageView extends AView
 			return
 		}
 
-		await this._loadProfile()
+		try
+		{
+			await this._loadProfile()
+
+			// public.users row가 없는 경우(소셜 로그인 트리거 미발동) → 자동 생성
+			if (!this.profile)
+			{
+				var result = await this.sb.ensureUserProfile(this.currentUser)
+				if (result.data) this.profile = result.data
+			}
+		}
+		catch (e)
+		{
+			// row 없음 → ensureUserProfile로 생성 시도
+			var result = await this.sb.ensureUserProfile(this.currentUser)
+			if (result.error)
+			{
+				ToastManager.error('프로필을 불러올 수 없습니다')
+				return
+			}
+			this.profile = result.data
+		}
+
 		this._renderLayout()
 		this._bindEvents()
 		this._loadTabData()

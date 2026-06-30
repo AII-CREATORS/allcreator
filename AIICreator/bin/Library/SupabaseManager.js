@@ -27,14 +27,7 @@ SupabaseManager = class SupabaseManager
     _init()
     {
         this.client = supabase.createClient(this.SUPABASE_URL, this.SUPABASE_KEY);
-
-        // ※ onAuthStateChange 안에서 DB 쿼리 금지 — Supabase v2 데드락 발생
-        this.client.auth.onAuthStateChange((event, session) =>
-        {
-            console.log('[Auth Event]', event);
-        });
-
-        console.log('[SupabaseManager] 초기화 완료');
+        // ※ onAuthStateChange는 ErrorHandler에서 등록 — 여기서 중복 등록 금지
     }
 
     getClient()
@@ -89,22 +82,77 @@ SupabaseManager = class SupabaseManager
         return { data, error };
     }
 
+    _getRedirectUrl()
+    {
+        // file:// 프로토콜에서는 OAuth 리다이렉트 불가 — HTTP 서버 필요
+        // 현재 페이지 URL에서 hash/query 제거하여 redirectTo로 사용
+        var href = window.location.href
+        return href.split('#')[0].split('?')[0]
+    }
+
     async signInWithGoogle()
     {
-        const { error } = await this.client.auth.signInWithOAuth({
+        if (window.location.protocol === 'file:')
+        {
+            return { message: 'OAuth는 HTTP 서버 환경에서만 동작합니다. 로컬 서버를 실행하거나 배포 환경에서 테스트해주세요.' }
+        }
+        var { error } = await this.client.auth.signInWithOAuth({
             provider: 'google',
-            options: { redirectTo: window.location.origin }
-        });
-        return error;
+            options: { redirectTo: this._getRedirectUrl() }
+        })
+        return error
     }
 
     async signInWithKakao()
     {
-        const { error } = await this.client.auth.signInWithOAuth({
+        if (window.location.protocol === 'file:')
+        {
+            return { message: 'OAuth는 HTTP 서버 환경에서만 동작합니다. 로컬 서버를 실행하거나 배포 환경에서 테스트해주세요.' }
+        }
+        var { error } = await this.client.auth.signInWithOAuth({
             provider: 'kakao',
-            options: { redirectTo: window.location.origin }
-        });
-        return error;
+            options: { redirectTo: this._getRedirectUrl() }
+        })
+        return error
+    }
+
+    // OAuth 로그인 후 public.users row 보장
+    // 트리거가 미발동한 경우(identity link 등)를 코드에서 보완
+    async ensureUserProfile(authUser)
+    {
+        if (!authUser) return { error: { message: '유저 정보 없음' } }
+
+        // 이미 존재하는지 확인
+        var { data: existing } = await this.client
+            .from('users')
+            .select('id, gender, birth_date, display_name')
+            .eq('id', authUser.id)
+            .single()
+
+        if (existing) return { data: existing, created: false }
+
+        // 없으면 메타데이터에서 추출하여 INSERT
+        var meta        = authUser.user_metadata || {}
+        var displayName = meta.full_name || meta.name || meta.preferred_username || authUser.email?.split('@')[0] || 'user'
+        var avatarUrl   = meta.avatar_url || meta.picture || null
+        var provider    = authUser.app_metadata?.provider || 'email'
+        var email       = authUser.email || ''
+        var username    = 'user_' + authUser.id.substr(0, 8)
+
+        var { data, error } = await this.client
+            .from('users')
+            .insert({
+                id:            authUser.id,
+                email:         email,
+                username:      username,
+                display_name:  displayName,
+                avatar_url:    avatarUrl,
+                auth_provider: provider
+            })
+            .select('id, gender, birth_date, display_name')
+            .single()
+
+        return { data, error, created: true }
     }
 
     async signOut()
