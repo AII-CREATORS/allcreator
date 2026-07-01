@@ -17,7 +17,6 @@ PromptService = class PromptService
 		var query = this.sb.getClient()
 			.from('prompts')
 			.select('id, title, description, price, prompt_type, like_count, view_count, result_image, users!user_id(username), ai_tools(name)')
-			.is('deleted_at', null)
 			.eq('status', 'published')
 
 		if (toolId)           query = query.eq('ai_tool_id', toolId)
@@ -166,7 +165,6 @@ PromptService = class PromptService
 				{ count: 'exact' }
 			)
 			.eq('status', status)
-			.is('deleted_at', null)
 			.order('created_at', { ascending: false })
 			.range(from, to)
 	}

@@ -8,11 +8,6 @@ class AuthView extends AView
 		this.currentTab = 'login'
 	}
 
-	init(context, evtListener)
-	{
-		super.init(context, evtListener)
-	}
-
 	onInitDone()
 	{
 		super.onInitDone()

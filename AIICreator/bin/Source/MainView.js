@@ -4,16 +4,11 @@ MainView = class MainView extends AView
 	constructor()
 	{
 		super()
-		this.sb          = null
-		this.ps          = null
-		this.navBar      = null
-		this.filterBar   = null
-		this.grid        = null
-	}
-
-	init(context, evtListener)
-	{
-		super.init(context, evtListener)
+		this.sb        = null
+		this.ps        = null
+		this.navBar    = null
+		this.filterBar = null
+		this.grid      = null
 	}
 
 	onInitDone()
@@ -26,14 +21,9 @@ MainView = class MainView extends AView
 		this._bootstrap()
 	}
 
-	onActiveDone(isFirst)
-	{
-		super.onActiveDone(isFirst)
-	}
-
-	// -----------------------------------------
+	// ─────────────────────────────────────────
 	// 셸 렌더 & 컴포넌트 초기화
-	// -----------------------------------------
+	// ─────────────────────────────────────────
 
 	_renderShell()
 	{
@@ -57,8 +47,6 @@ MainView = class MainView extends AView
 			onLogout:   async function()
 			{
 				await self.sb.signOut()
-				localStorage.removeItem('ac_persist_login')
-				sessionStorage.removeItem('ac_session_active')
 				theApp.mainContainer.open('Source/Auth/AuthView.lay')
 			}
 		})
@@ -68,30 +56,27 @@ MainView = class MainView extends AView
 		})
 
 		this.grid = new PromptGrid(el.querySelector('#main-grid-wrap'), {
-			onCardClick: function(id)
-			{
-				theApp.openDetail(id)
-			}
+			onCardClick: function(id) { theApp.openDetail(id) }
 		})
 	}
 
-	// -----------------------------------------
+	// ─────────────────────────────────────────
 	// 부트스트랩
-	// -----------------------------------------
+	// ─────────────────────────────────────────
 
 	async _bootstrap()
 	{
 		await this.navBar.render()
 
-		var aiToolsResult = await this.ps.getAITools()
-		this.filterBar.render(aiToolsResult.data || [])
+		var toolResult = await this.ps.getAITools()
+		this.filterBar.render(toolResult.data || [])
 
 		await this._loadPrompts()
 	}
 
-	// -----------------------------------------
+	// ─────────────────────────────────────────
 	// 데이터 로드
-	// -----------------------------------------
+	// ─────────────────────────────────────────
 
 	async _loadPrompts()
 	{
@@ -105,8 +90,7 @@ MainView = class MainView extends AView
 			price:   fs.price,
 			type:    fs.type,
 			sort:    fs.sort,
-			keyword: kw,
-			limit:   30
+			keyword: kw
 		})
 
 		if (result.error)

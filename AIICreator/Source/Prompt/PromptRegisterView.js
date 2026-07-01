@@ -5,27 +5,19 @@ class PromptRegisterView extends AView
 	{
 		super()
 		this.sb          = null
+		this.ps          = null
 		this.currentUser = null
 		this.aiTools     = []
 		this.categories  = []
-	}
-
-	init(context, evtListener)
-	{
-		super.init(context, evtListener)
 	}
 
 	onInitDone()
 	{
 		super.onInitDone()
 		this.sb = SupabaseManager.getInstance()
+		this.ps = new PromptService(this.sb)
 		this._renderSkeleton()
 		this._bootstrap()
-	}
-
-	onActiveDone(isFirst)
-	{
-		super.onActiveDone(isFirst)
 	}
 
 	// ─────────────────────────────────────────
@@ -50,16 +42,10 @@ class PromptRegisterView extends AView
 
 	async _loadMeta()
 	{
-		var toolResult = await this.sb.getClient()
-			.from('ai_tools')
-			.select('id, name')
-			.order('name')
-		this.aiTools = toolResult.data || []
+		var toolResult  = await this.ps.getAITools()
+		this.aiTools    = toolResult.data || []
 
-		var catResult = await this.sb.getClient()
-			.from('categories')
-			.select('id, name')
-			.order('name')
+		var catResult   = await this.ps.getCategories()
 		this.categories = catResult.data || []
 	}
 
@@ -178,7 +164,6 @@ class PromptRegisterView extends AView
 			'</div>'
 	}
 
-
 	// ─────────────────────────────────────────
 	// 이벤트 바인딩
 	// ─────────────────────────────────────────
@@ -188,13 +173,9 @@ class PromptRegisterView extends AView
 		var el   = this.getElement()
 		var self = this
 
-		// 뒤로가기
 		el.querySelector('#btn-back').addEventListener('click', function() { self._goBack() })
-
-		// 등록
 		el.querySelector('#btn-submit').addEventListener('click', function() { self._onSubmit() })
 
-		// 글자 수 카운터
 		el.querySelector('#reg-title').addEventListener('input', function()
 		{
 			el.querySelector('#count-title').textContent = this.value.length + ' / 100'
@@ -208,7 +189,6 @@ class PromptRegisterView extends AView
 			el.querySelector('#count-content').textContent = this.value.length + ' 자'
 		})
 
-		// 가격 힌트
 		el.querySelector('#reg-price').addEventListener('input', function()
 		{
 			var hint = el.querySelector('#price-hint')
@@ -242,7 +222,6 @@ class PromptRegisterView extends AView
 		var difficulty = el.querySelector('#reg-difficulty').value
 		var price      = parseInt(el.querySelector('#reg-price').value, 10) || 0
 
-		// 유효성 검사
 		if (!title)   { ToastManager.error('제목을 입력해주세요'); return }
 		if (!desc)    { ToastManager.error('설명을 입력해주세요'); return }
 		if (!content) { ToastManager.error('프롬프트 내용을 입력해주세요'); return }
@@ -269,17 +248,10 @@ class PromptRegisterView extends AView
 
 			if (categoryId) row.category_id = categoryId
 
-			var result = await this.sb.getClient()
-				.from('prompts')
-				.insert(row)
-				.select('id')
-				.single()
-
+			var result = await this.ps.create(row)
 			if (result.error) throw new Error(result.error.message)
 
 			ToastManager.success('프롬프트가 등록되었습니다! 관리자 검수 후 게시됩니다.')
-
-			// 메인으로 이동 (pending 상태라 상세 진입 불필요)
 			theApp.mainContainer.open('Source/MainView.lay')
 		}
 		catch (e)
@@ -290,7 +262,6 @@ class PromptRegisterView extends AView
 		}
 	}
 
-	// �
 	_goBack()
 	{
 		theApp.mainContainer.open('Source/MainView.lay')

@@ -8,11 +8,6 @@ AuthView = class AuthView extends AView
 		this.currentTab = 'login'
 	}
 
-	init(context, evtListener)
-	{
-		super.init(context, evtListener)
-	}
-
 	onInitDone()
 	{
 		super.onInitDone()
@@ -44,18 +39,7 @@ AuthView = class AuthView extends AView
 			return
 		}
 
-		// 로그인 유지 미체크 상태에서 탭을 닫고 재방문한 경우 세션 삭제
-		var persist  = localStorage.getItem('ac_persist_login')
-		var inSess   = sessionStorage.getItem('ac_session_active')
-		var user     = await this.sb.getUser()
-
-		if (user && !persist && !inSess)
-		{
-			// 로그인 유지 없이 세션이 남아있는 경우 → 강제 로그아웃
-			await this.sb.signOut()
-			return
-		}
-
+		var user = await this.sb.getUser()
 		if (user) this._goToMain()
 	}
 
@@ -80,9 +64,6 @@ AuthView = class AuthView extends AView
 			return
 		}
 
-		// 소셜 로그인은 기본적으로 유지 처리
-		localStorage.setItem('ac_persist_login', '1')
-		sessionStorage.setItem('ac_session_active', '1')
 		this._goToMain()
 	}
 
@@ -161,9 +142,9 @@ AuthView = class AuthView extends AView
 		})
 	}
 
-	// -----------------------------------------
+	// ─────────────────────────────────────────
 	// HTML 렌더링
-	// -----------------------------------------
+	// ─────────────────────────────────────────
 
 	_renderHTML()
 	{
@@ -184,12 +165,9 @@ AuthView = class AuthView extends AView
 							'<label class="ac-label">이메일</label>' +
 							'<input class="ac-input" type="email" id="login-email" placeholder="email@example.com">' +
 						'</div>' +
-						'<div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px;">' +
+						'<div class="auth-remember">' +
 							'<label class="auth-remember-label">' +
 								'<input type="checkbox" id="chk-remember"> 이메일 저장' +
-							'</label>' +
-							'<label class="auth-remember-label">' +
-								'<input type="checkbox" id="chk-persist"> 로그인 유지' +
 							'</label>' +
 						'</div>' +
 						'<div class="ac-input-group" style="margin-top:12px">' +
@@ -247,9 +225,10 @@ AuthView = class AuthView extends AView
 			'</div>'
 	}
 
-	// -----------------------------------------
+
+	// ─────────────────────────────────────────
 	// 이메일 저장 (localStorage)
-	// -----------------------------------------
+	// ─────────────────────────────────────────
 
 	_loadSavedEmail()
 	{
@@ -259,15 +238,11 @@ AuthView = class AuthView extends AView
 		var chkRemember = this.getElement().querySelector('#chk-remember')
 		if (emailInput)  emailInput.value    = saved
 		if (chkRemember) chkRemember.checked = true
-
-		// 로그인 유지 상태 복원
-		var chkPersist = this.getElement().querySelector('#chk-persist')
-		if (chkPersist) chkPersist.checked = !!localStorage.getItem('ac_persist_login')
 	}
 
-	// -----------------------------------------
+	// ─────────────────────────────────────────
 	// 이벤트 바인딩
-	// -----------------------------------------
+	// ─────────────────────────────────────────
 
 	_bindEvents()
 	{
@@ -349,17 +324,16 @@ AuthView = class AuthView extends AView
 		el.querySelector('#panel-signup').style.display = (tab === 'signup') ? '' : 'none'
 	}
 
-	// -----------------------------------------
+	// ─────────────────────────────────────────
 	// 로그인 / 회원가입
-	// -----------------------------------------
+	// ─────────────────────────────────────────
 
 	async _onLogin()
 	{
-		var el      = this.getElement()
-		var email   = el.querySelector('#login-email').value.trim()
-		var pw      = el.querySelector('#login-pw').value
-		var chk     = el.querySelector('#chk-remember').checked
-		var persist = el.querySelector('#chk-persist').checked
+		var el    = this.getElement()
+		var email = el.querySelector('#login-email').value.trim()
+		var pw    = el.querySelector('#login-pw').value
+		var chk   = el.querySelector('#chk-remember').checked
 
 		if (!email || !pw) { ToastManager.error('이메일과 비밀번호를 입력해주세요'); return }
 
@@ -377,21 +351,8 @@ AuthView = class AuthView extends AView
 			return
 		}
 
-		// 이메일 저장
 		if (chk) localStorage.setItem('ac_saved_email', email)
 		else     localStorage.removeItem('ac_saved_email')
-
-		// 로그인 유지 처리
-		if (persist)
-		{
-			localStorage.setItem('ac_persist_login', '1')
-		}
-		else
-		{
-			localStorage.removeItem('ac_persist_login')
-		}
-		// 현재 탭 세션 활성 마킹 (항상)
-		sessionStorage.setItem('ac_session_active', '1')
 
 		this._goToMain()
 	}
@@ -430,23 +391,19 @@ AuthView = class AuthView extends AView
 			return
 		}
 
-		ToastManager.success('가입이 완료되었습니다! 로그인해주세요.')
-		this._switchTab('login')
+		ToastManager.success('가입이 완료되었습니다! 이메일을 확인해주세요.')
 		btn.disabled    = false
 		btn.textContent = '회원가입'
 	}
 
 	async _onSocialLogin(provider)
 	{
-		// 소셜 로그인은 기본 유지 처리
-		localStorage.setItem('ac_persist_login', '1')
-		sessionStorage.setItem('ac_session_active', '1')
-
-		var result = provider === 'google'
+		var error = provider === 'google'
 			? await this.sb.signInWithGoogle()
 			: await this.sb.signInWithKakao()
 
-		if (result && result.error) ToastManager.error(ErrorHandler.parseSupabaseError(result.error))
+		if (error && error.message)
+			ToastManager.error(error.message)
 	}
 
 	_goToMain()

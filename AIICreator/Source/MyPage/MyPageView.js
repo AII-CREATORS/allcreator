@@ -5,6 +5,7 @@ class MyPageView extends AView
 	{
 		super()
 		this.sb          = null
+		this.us          = null
 		this.currentUser = null
 		this.profile     = null
 		this.currentTab  = 'mine'
@@ -15,6 +16,7 @@ class MyPageView extends AView
 	{
 		super.onInitDone()
 		this.sb = SupabaseManager.getInstance()
+		this.us = new UserService(this.sb)
 		this._renderSkeleton()
 		this._bootstrap()
 	}
@@ -38,7 +40,6 @@ class MyPageView extends AView
 		{
 			await this._loadProfile()
 
-			// public.users row가 없는 경우(소셜 로그인 트리거 미발동) → 자동 생성
 			if (!this.profile)
 			{
 				var result = await this.sb.ensureUserProfile(this.currentUser)
@@ -47,7 +48,6 @@ class MyPageView extends AView
 		}
 		catch (e)
 		{
-			// row 없음 → ensureUserProfile로 생성 시도
 			var result = await this.sb.ensureUserProfile(this.currentUser)
 			if (result.error)
 			{
@@ -64,12 +64,7 @@ class MyPageView extends AView
 
 	async _loadProfile()
 	{
-		var result = await this.sb.getClient()
-			.from('users')
-			.select('id, email, username, display_name, bio, gender, birth_date, avatar_url, created_at')
-			.eq('id', this.currentUser.id)
-			.single()
-
+		var result = await this.us.getProfile(this.currentUser.id)
 		if (result.error) throw new Error(result.error.message)
 		this.profile = result.data
 	}
@@ -123,11 +118,9 @@ class MyPageView extends AView
 
 				'<div class="mp-body">' +
 
-					// 프로필 카드
 					'<div class="mp-profile-card">' +
 						'<div class="mp-avatar-wrap">' +
 							this._avatarHTML() +
-							// 숨김 file input
 							'<input type="file" id="avatar-file-input" accept="image/jpeg,image/png,image/webp,image/gif" style="display:none">' +
 						'</div>' +
 						'<div class="mp-profile-info">' +
@@ -147,7 +140,6 @@ class MyPageView extends AView
 						'<button class="ac-btn ac-btn-outline ac-btn-sm" id="btn-edit-profile">프로필 편집</button>' +
 					'</div>' +
 
-					// 편집 폼 (기본 숨김)
 					'<div class="mp-edit-form" id="mp-edit-form" style="display:none">' +
 						'<div class="mp-edit-row">' +
 							'<div class="ac-input-group" style="flex:2">' +
@@ -179,14 +171,12 @@ class MyPageView extends AView
 						'</div>' +
 					'</div>' +
 
-					// 탭
 					'<div class="mp-tabs">' +
 						'<button class="mp-tab active" data-tab="mine">내 프롬프트</button>' +
 						'<button class="mp-tab" data-tab="saved">저장됨</button>' +
 						'<button class="mp-tab" data-tab="purchased">구매함</button>' +
 					'</div>' +
 
-					// 탭 콘텐츠
 					'<div class="mp-tab-content" id="mp-tab-content">' +
 						'<div class="mp-loading"><div class="ac-spinner"></div></div>' +
 					'</div>' +
@@ -194,7 +184,6 @@ class MyPageView extends AView
 				'</div>' +
 			'</div>'
 	}
-
 
 	// ─────────────────────────────────────────
 	// 이벤트 바인딩
@@ -213,20 +202,17 @@ class MyPageView extends AView
 			theApp.mainContainer.open('Source/Auth/AuthView.lay')
 		})
 
-		// 아바타 클릭 → file input 열기
 		el.querySelector('#btn-avatar').addEventListener('click', function()
 		{
 			el.querySelector('#avatar-file-input').click()
 		})
 
-		// 파일 선택 → 업로드
 		el.querySelector('#avatar-file-input').addEventListener('change', function()
 		{
 			if (this.files && this.files[0])
 				self._uploadAvatar(this.files[0])
 		})
 
-		// 프로필 편집 토글
 		el.querySelector('#btn-edit-profile').addEventListener('click', function()
 		{
 			self._toggleEditForm(true)
@@ -240,13 +226,11 @@ class MyPageView extends AView
 			self._saveProfile()
 		})
 
-		// bio 글자 수
 		el.querySelector('#edit-bio').addEventListener('input', function()
 		{
 			el.querySelector('#bio-count').textContent = this.value.length + ' / 200'
 		})
 
-		// 탭 전환
 		el.querySelectorAll('.mp-tab').forEach(function(tab)
 		{
 			tab.addEventListener('click', function()
@@ -277,7 +261,6 @@ class MyPageView extends AView
 
 	async _uploadAvatar(file)
 	{
-		// 2MB 제한 검사
 		if (file.size > 2 * 1024 * 1024)
 		{
 			ToastManager.error('이미지는 2MB 이하여야 합니다')
@@ -292,11 +275,9 @@ class MyPageView extends AView
 			var result = await this.sb.uploadAvatar(this.currentUser.id, file)
 			if (result.error) throw new Error(result.error.message)
 
-			// users 테이블 avatar_url 업데이트
-			var err = await this.sb.updateUserProfile(this.currentUser.id, { avatar_url: result.url })
-			if (err) throw new Error(err.message)
+			var upd = await this.us.updateProfile(this.currentUser.id, { avatar_url: result.url })
+			if (upd.error) throw new Error(upd.error.message)
 
-			// 화면 반영
 			this.profile.avatar_url = result.url
 			var wrap = this.getElement().querySelector('.mp-avatar-wrap')
 			if (wrap)
@@ -342,20 +323,18 @@ class MyPageView extends AView
 
 		try
 		{
-			var profile = { display_name: displayName, bio: bio }
-			if (gender)    profile.gender     = gender
-			if (birthDate) profile.birth_date = birthDate
+			var data = { display_name: displayName, bio: bio }
+			if (gender)    data.gender     = gender
+			if (birthDate) data.birth_date = birthDate
 
-			var err = await this.sb.updateUserProfile(this.currentUser.id, profile)
-			if (err) throw new Error(err.message)
+			var result = await this.us.updateProfile(this.currentUser.id, data)
+			if (result.error) throw new Error(result.error.message)
 
-			// 로컬 반영
 			this.profile.display_name = displayName
 			this.profile.bio          = bio
 			this.profile.gender       = gender
 			this.profile.birth_date   = birthDate
 
-			// 화면 텍스트 업데이트
 			var nameEl = el.querySelector('#mp-display-name')
 			if (nameEl) nameEl.textContent = displayName
 
@@ -399,37 +378,20 @@ class MyPageView extends AView
 
 	async _loadMyPrompts(content)
 	{
-		var result = await this.sb.getClient()
-			.from('prompts')
-			.select('id, title, description, price, prompt_type, like_count, view_count, status')
-			.eq('user_id', this.currentUser.id)
-			.neq('status', 'hidden')
-			.order('created_at', { ascending: false })
-
+		var result  = await this.us.getUserPrompts(this.currentUser.id)
 		this._renderList(content, result.data || [], '등록한 프롬프트가 없습니다', '✍️')
 	}
 
 	async _loadSaved(content)
 	{
-		var result = await this.sb.getClient()
-			.from('prompt_saves')
-			.select('prompts(id, title, description, price, prompt_type, like_count, view_count)')
-			.eq('user_id', this.currentUser.id)
-			.order('created_at', { ascending: false })
-
+		var result  = await this.us.getSavedPrompts(this.currentUser.id)
 		var prompts = (result.data || []).map(function(row) { return row.prompts }).filter(Boolean)
 		this._renderList(content, prompts, '저장된 프롬프트가 없습니다', '🔖')
 	}
 
 	async _loadPurchased(content)
 	{
-		var result = await this.sb.getClient()
-			.from('orders')
-			.select('prompts(id, title, description, price, prompt_type, like_count, view_count)')
-			.eq('buyer_id', this.currentUser.id)
-			.eq('status', 'completed')
-			.order('created_at', { ascending: false })
-
+		var result  = await this.us.getUserOrders(this.currentUser.id)
 		var prompts = (result.data || []).map(function(row) { return row.prompts }).filter(Boolean)
 		this._renderList(content, prompts, '구매한 프롬프트가 없습니다', '🛒')
 	}

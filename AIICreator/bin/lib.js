@@ -15143,15 +15143,6 @@ SupabaseManager = class SupabaseManager
         return { data, error };
     }
 
-    async updateUserProfile(userId, profile)
-    {
-        const { error } = await this.client
-            .from('users')
-            .update(profile)
-            .eq('id', userId);
-        return error;
-    }
-
     async uploadAvatar(userId, file)
     {
         var ext  = file.name.split('.').pop().toLowerCase();
@@ -15478,12 +15469,9 @@ ErrorHandler._wasSignedIn = false
 
 		if (user)
 		{
-			var { data } = await sb.getClient()
-				.from('users')
-				.select('role')
-				.eq('id', user.id)
-				.single()
-			profile = data
+			var us     = new UserService(sb)
+			var result = await us.getAdminRole(user.id)
+			profile    = result.data
 
 			this._notifPanel = new NotificationPanel(sb)
 			unread = await this._notifPanel.getUnreadCount()
@@ -16249,7 +16237,6 @@ PromptService = class PromptService
 		var query = this.sb.getClient()
 			.from('prompts')
 			.select('id, title, description, price, prompt_type, like_count, view_count, result_image, users!user_id(username), ai_tools(name)')
-			.is('deleted_at', null)
 			.eq('status', 'published')
 
 		if (toolId)           query = query.eq('ai_tool_id', toolId)
@@ -16398,7 +16385,6 @@ PromptService = class PromptService
 				{ count: 'exact' }
 			)
 			.eq('status', status)
-			.is('deleted_at', null)
 			.order('created_at', { ascending: false })
 			.range(from, to)
 	}
@@ -16588,8 +16574,9 @@ PromptService = class PromptService
 	{
 		return this.sb.getClient()
 			.from('orders')
-			.select('id, amount, status, created_at, prompts(id, title, description, prompt_type, result_image, ai_tools(name))')
+			.select('id, amount, status, created_at, prompts(id, title, description, price, prompt_type, like_count, result_image, ai_tools(name))')
 			.eq('buyer_id', userId)
+			.eq('status', 'completed')
 			.order('created_at', { ascending: false })
 	}
 

@@ -4,29 +4,21 @@ class MainView extends AView
 	constructor()
 	{
 		super()
-		this.sb          = null
-		this.navBar      = null
-		this.filterBar   = null
-		this.grid        = null
-	}
-
-	init(context, evtListener)
-	{
-		super.init(context, evtListener)
+		this.sb        = null
+		this.ps        = null
+		this.navBar    = null
+		this.filterBar = null
+		this.grid      = null
 	}
 
 	onInitDone()
 	{
 		super.onInitDone()
 		this.sb = SupabaseManager.getInstance()
+		this.ps = new PromptService(this.sb)
 		this._renderShell()
 		this._initComponents()
 		this._bootstrap()
-	}
-
-	onActiveDone(isFirst)
-	{
-		super.onActiveDone(isFirst)
 	}
 
 	// ─────────────────────────────────────────
@@ -64,13 +56,9 @@ class MainView extends AView
 		})
 
 		this.grid = new PromptGrid(el.querySelector('#main-grid-wrap'), {
-			onCardClick: function(id)
-			{
-				theApp.openDetail(id)
-			}
+			onCardClick: function(id) { theApp.openDetail(id) }
 		})
 	}
-
 
 	// ─────────────────────────────────────────
 	// 부트스트랩
@@ -80,16 +68,10 @@ class MainView extends AView
 	{
 		await this.navBar.render()
 
-		var aiTools = await this._fetchAITools()
-		this.filterBar.render(aiTools)
+		var toolResult = await this.ps.getAITools()
+		this.filterBar.render(toolResult.data || [])
 
 		await this._loadPrompts()
-	}
-
-	async _fetchAITools()
-	{
-		var result = await this.sb.getClient().from('ai_tools').select('id, name').order('name')
-		return result.data || []
 	}
 
 	// ─────────────────────────────────────────
@@ -103,24 +85,13 @@ class MainView extends AView
 		var fs = this.filterBar.getState()
 		var kw = this.navBar.getKeyword()
 
-		var query = this.sb.getClient()
-			.from('prompts')
-			.select('id, title, description, price, prompt_type, like_count, view_count, users!user_id(username), ai_tools(name)')
-			.is('deleted_at', null)
-			.eq('status', 'published')
-
-		if (fs.toolId)           query = query.eq('ai_tool_id', fs.toolId)
-		if (fs.price === 'free') query = query.eq('price', '0')
-		else if (fs.price === 'paid') query = query.neq('price', '0')
-		if (fs.type !== 'all')   query = query.eq('prompt_type', fs.type)
-		if (kw)                  query = query.or('title.ilike.%' + kw + '%,description.ilike.%' + kw + '%')
-
-		if (fs.sort === 'popular')       query = query.order('like_count',  { ascending: false })
-		else if (fs.sort === 'price_asc')  query = query.order('price',      { ascending: true  })
-		else if (fs.sort === 'price_desc') query = query.order('price',      { ascending: false })
-		else                               query = query.order('created_at', { ascending: false })
-
-		var result = await query.limit(30)
+		var result = await this.ps.list({
+			toolId:  fs.toolId,
+			price:   fs.price,
+			type:    fs.type,
+			sort:    fs.sort,
+			keyword: kw
+		})
 
 		if (result.error)
 		{

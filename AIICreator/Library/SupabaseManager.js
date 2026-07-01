@@ -48,15 +48,6 @@ SupabaseManager = class SupabaseManager
         return { data, error };
     }
 
-    async updateUserProfile(userId, profile)
-    {
-        const { error } = await this.client
-            .from('users')
-            .update(profile)
-            .eq('id', userId);
-        return error;
-    }
-
     async uploadAvatar(userId, file)
     {
         var ext  = file.name.split('.').pop().toLowerCase();

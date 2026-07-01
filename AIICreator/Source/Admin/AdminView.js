@@ -5,18 +5,22 @@ class AdminView extends AView
 	{
 		super()
 		this.sb          = null
+		this.ps          = null
+		this.us          = null
 		this.currentUser = null
-		this.profile     = null        // public.users row (role 포함)
+		this.profile     = null
 		this.prompts     = []
 		this.page        = 0
 		this.pageSize    = 20
-		this.tab         = 'pending'   // 'pending' | 'published' | 'rejected'
+		this.tab         = 'pending'
 	}
 
 	onInitDone()
 	{
 		super.onInitDone()
 		this.sb = SupabaseManager.getInstance()
+		this.ps = new PromptService(this.sb)
+		this.us = new UserService(this.sb)
 		this._renderShell()
 		this._bootstrap()
 	}
@@ -36,12 +40,7 @@ class AdminView extends AView
 			return
 		}
 
-		var { data: profile } = await this.sb.getClient()
-			.from('users')
-			.select('role, display_name')
-			.eq('id', this.currentUser.id)
-			.single()
-
+		var { data: profile } = await this.us.getAdminRole(this.currentUser.id)
 		this.profile = profile
 
 		if (!profile || (profile.role !== 'main_admin' && profile.role !== 'sub_admin'))
@@ -85,18 +84,17 @@ class AdminView extends AView
 
 	_renderHeader()
 	{
-		var badge  = this.getElement().querySelector('#adm-role-badge')
-		var role   = this.profile && this.profile.role
+		var badge = this.getElement().querySelector('#adm-role-badge')
+		var role  = this.profile && this.profile.role
 		if (badge) badge.textContent = role === 'main_admin' ? '주 관리자' : '서브 관리자'
 
-		// main_admin이면 관리자 설정 탭 추가
 		var tabs = this.getElement().querySelector('#adm-tabs')
 		if (tabs && role === 'main_admin' && !tabs.querySelector('[data-tab="manage"]'))
 		{
 			var manageBtn = document.createElement('button')
-			manageBtn.className    = 'adm-tab adm-tab-manage'
-			manageBtn.dataset.tab  = 'manage'
-			manageBtn.textContent  = '관리자 설정'
+			manageBtn.className   = 'adm-tab adm-tab-manage'
+			manageBtn.dataset.tab = 'manage'
+			manageBtn.textContent = '관리자 설정'
 			tabs.appendChild(manageBtn)
 			manageBtn.addEventListener('click', function() { this._switchTab('manage') }.bind(this))
 		}
@@ -112,8 +110,7 @@ class AdminView extends AView
 			theApp.mainContainer.open('Source/MainView.lay')
 		})
 
-		var tabBtns = el.querySelectorAll('.adm-tab')
-		tabBtns.forEach(function(btn)
+		el.querySelectorAll('.adm-tab').forEach(function(btn)
 		{
 			btn.addEventListener('click', function()
 			{
@@ -127,8 +124,7 @@ class AdminView extends AView
 		this.tab  = tab
 		this.page = 0
 
-		var tabBtns = this.getElement().querySelectorAll('.adm-tab')
-		tabBtns.forEach(function(btn)
+		this.getElement().querySelectorAll('.adm-tab').forEach(function(btn)
 		{
 			btn.classList.toggle('adm-tab-active', btn.dataset.tab === tab)
 		})
@@ -148,15 +144,7 @@ class AdminView extends AView
 		var content = this.getElement().querySelector('#adm-content')
 		content.innerHTML = '<div class="adm-loading">불러오는 중...</div>'
 
-		var from  = this.page * this.pageSize
-		var to    = from + this.pageSize - 1
-
-		var result = await this.sb.getClient()
-			.from('prompts')
-			.select('id, title, description, price, prompt_type, status, rejection_reason, created_at, reviewed_at, users!user_id(display_name, email)', { count: 'exact' })
-			.eq('status', this.tab)
-			.order('created_at', { ascending: false })
-			.range(from, to)
+		var result = await this.ps.adminList(this.tab, this.page, this.pageSize)
 
 		if (result.error)
 		{
@@ -179,7 +167,7 @@ class AdminView extends AView
 		if (this.prompts.length === 0)
 		{
 			content.innerHTML = '<div class="adm-empty">' +
-				(tab === 'pending' ? '검수 대기 중인 프롬프트가 없습니다' :
+				(tab === 'pending'   ? '검수 대기 중인 프롬프트가 없습니다' :
 				 tab === 'published' ? '승인된 프롬프트가 없습니다' :
 				 '반려된 프롬프트가 없습니다') +
 			'</div>'
@@ -228,7 +216,6 @@ class AdminView extends AView
 
 		html += '</div>'
 
-		// 페이지네이션
 		var totalPages = Math.ceil(total / this.pageSize)
 		if (totalPages > 1)
 		{
@@ -241,7 +228,6 @@ class AdminView extends AView
 
 		content.innerHTML = html
 
-		// 이벤트 바인딩
 		content.querySelectorAll('.adm-btn-approve').forEach(function(btn)
 		{
 			btn.addEventListener('click', function() { self._approvePrompt(this.dataset.id) })
@@ -254,16 +240,8 @@ class AdminView extends AView
 
 		var prevBtn = content.querySelector('#adm-prev')
 		var nextBtn = content.querySelector('#adm-next')
-		if (prevBtn) prevBtn.addEventListener('click', function()
-		{
-			self.page--
-			self._loadPrompts()
-		})
-		if (nextBtn) nextBtn.addEventListener('click', function()
-		{
-			self.page++
-			self._loadPrompts()
-		})
+		if (prevBtn) prevBtn.addEventListener('click', function() { self.page--; self._loadPrompts() })
+		if (nextBtn) nextBtn.addEventListener('click', function() { self.page++; self._loadPrompts() })
 	}
 
 	// ─────────────────────────────────────────
@@ -272,24 +250,14 @@ class AdminView extends AView
 
 	async _approvePrompt(promptId)
 	{
-		var result = await this.sb.getClient()
-			.from('prompts')
-			.update({
-				status:           'published',
-				rejection_reason: null,
-				reviewed_at:      new Date().toISOString(),
-				reviewed_by:      this.currentUser.id
-			})
-			.eq('id', promptId)
-
+		var result = await this.ps.approve(promptId, this.currentUser.id)
 		if (result.error)
 		{
 			ToastManager.error('승인 실패: ' + result.error.message)
 			return
 		}
 
-		// 판매자에게 알림 전송
-		await this._sendNotification(promptId, 'prompt_approved')
+		await this.ps.sendNotification(promptId, 'prompt_approved')
 
 		ToastManager.success('프롬프트가 승인되었습니다')
 		await this._loadPrompts()
@@ -299,12 +267,11 @@ class AdminView extends AView
 	{
 		var self = this
 
-		// 기존 모달 제거
 		var existing = document.getElementById('adm-reject-modal')
 		if (existing) existing.remove()
 
 		var modal = document.createElement('div')
-		modal.id  = 'adm-reject-modal'
+		modal.id        = 'adm-reject-modal'
 		modal.className = 'adm-modal-overlay'
 		modal.innerHTML =
 			'<div class="adm-modal">' +
@@ -326,16 +293,11 @@ class AdminView extends AView
 		document.getElementById('adm-modal-confirm').addEventListener('click', async function()
 		{
 			var reason = document.getElementById('adm-reject-reason').value.trim()
-			if (!reason)
-			{
-				ToastManager.error('반려 사유를 입력해주세요')
-				return
-			}
+			if (!reason) { ToastManager.error('반려 사유를 입력해주세요'); return }
 			modal.remove()
 			await self._rejectPrompt(promptId, reason)
 		})
 
-		// 오버레이 클릭 닫기
 		modal.addEventListener('click', function(e)
 		{
 			if (e.target === modal) modal.remove()
@@ -344,60 +306,17 @@ class AdminView extends AView
 
 	async _rejectPrompt(promptId, reason)
 	{
-		var result = await this.sb.getClient()
-			.from('prompts')
-			.update({
-				status:           'rejected',
-				rejection_reason: reason,
-				reviewed_at:      new Date().toISOString(),
-				reviewed_by:      this.currentUser.id
-			})
-			.eq('id', promptId)
-
+		var result = await this.ps.reject(promptId, this.currentUser.id, reason)
 		if (result.error)
 		{
 			ToastManager.error('반려 처리 실패: ' + result.error.message)
 			return
 		}
 
-		await this._sendNotification(promptId, 'prompt_rejected', reason)
+		await this.ps.sendNotification(promptId, 'prompt_rejected', reason)
 
 		ToastManager.success('프롬프트가 반려 처리되었습니다')
 		await this._loadPrompts()
-	}
-
-	// ─────────────────────────────────────────
-	// 알림 전송
-	// ─────────────────────────────────────────
-
-	async _sendNotification(promptId, type, reason)
-	{
-		// 프롬프트 소유자 조회
-		var { data: prompt } = await this.sb.getClient()
-			.from('prompts')
-			.select('user_id, title')
-			.eq('id', promptId)
-			.single()
-
-		if (!prompt) return
-
-		var isApproved = type === 'prompt_approved'
-		var title = isApproved
-			? '프롬프트가 승인되었습니다'
-			: '프롬프트가 반려되었습니다'
-		var body = isApproved
-			? '등록하신 "' + prompt.title + '" 프롬프트가 검수를 통과하여 게시되었습니다.'
-			: '등록하신 "' + prompt.title + '" 프롬프트가 반려되었습니다.\n사유: ' + (reason || '')
-
-		await this.sb.getClient()
-			.from('notifications')
-			.insert({
-				user_id:   prompt.user_id,
-				type:      type,
-				title:     title,
-				body:      body,
-				prompt_id: promptId
-			})
 	}
 
 	// ─────────────────────────────────────────
@@ -409,14 +328,10 @@ class AdminView extends AView
 		var content = this.getElement().querySelector('#adm-content')
 		content.innerHTML = '<div class="adm-loading">불러오는 중...</div>'
 
-		var { data: admins } = await this.sb.getClient()
-			.from('users')
-			.select('id, display_name, email, role, created_at')
-			.in('role', ['main_admin', 'sub_admin'])
-			.order('role')
+		var { data: admins } = await this.us.getAdmins()
 
-		var self  = this
-		var html  =
+		var self = this
+		var html =
 			'<div class="adm-manage">' +
 				'<h2 class="adm-manage-title">관리자 목록</h2>' +
 				'<div class="adm-manage-list" id="adm-manage-list">'
@@ -455,13 +370,11 @@ class AdminView extends AView
 
 		content.innerHTML = html
 
-		// 해제 버튼
 		content.querySelectorAll('.adm-btn-remove-admin').forEach(function(btn)
 		{
 			btn.addEventListener('click', function() { self._removeSubAdmin(this.dataset.id) })
 		})
 
-		// 서브 관리자 지정
 		document.getElementById('adm-btn-add-sub').addEventListener('click', function()
 		{
 			self._addSubAdmin()
@@ -470,33 +383,25 @@ class AdminView extends AView
 
 	async _addSubAdmin()
 	{
-		var email  = document.getElementById('adm-sub-email').value.trim()
-		var result = document.getElementById('adm-search-result')
+		var email     = document.getElementById('adm-sub-email').value.trim()
+		var resultEl  = document.getElementById('adm-search-result')
 		if (!email) { ToastManager.error('이메일을 입력해주세요'); return }
 
-		var { data: user } = await this.sb.getClient()
-			.from('users')
-			.select('id, display_name, email, role')
-			.eq('email', email)
-			.single()
+		var { data: user } = await this.us.findByEmail(email)
 
 		if (!user)
 		{
-			result.innerHTML = '<div class="adm-search-none">해당 이메일의 회원을 찾을 수 없습니다</div>'
+			resultEl.innerHTML = '<div class="adm-search-none">해당 이메일의 회원을 찾을 수 없습니다</div>'
 			return
 		}
 
 		if (user.role === 'main_admin' || user.role === 'sub_admin')
 		{
-			result.innerHTML = '<div class="adm-search-none">이미 관리자 권한을 가진 계정입니다</div>'
+			resultEl.innerHTML = '<div class="adm-search-none">이미 관리자 권한을 가진 계정입니다</div>'
 			return
 		}
 
-		var { error } = await this.sb.getClient()
-			.from('users')
-			.update({ role: 'sub_admin' })
-			.eq('id', user.id)
-
+		var { error } = await this.us.addSubAdmin(user.id)
 		if (error)
 		{
 			ToastManager.error('지정 실패: ' + error.message)
@@ -505,17 +410,13 @@ class AdminView extends AView
 
 		ToastManager.success((user.display_name || user.email) + ' 님을 서브 관리자로 지정했습니다')
 		document.getElementById('adm-sub-email').value = ''
-		result.innerHTML = ''
+		resultEl.innerHTML = ''
 		this._renderManagePanel()
 	}
 
 	async _removeSubAdmin(userId)
 	{
-		var { error } = await this.sb.getClient()
-			.from('users')
-			.update({ role: 'user' })
-			.eq('id', userId)
-
+		var { error } = await this.us.removeSubAdmin(userId)
 		if (error)
 		{
 			ToastManager.error('해제 실패: ' + error.message)
@@ -525,9 +426,4 @@ class AdminView extends AView
 		ToastManager.success('서브 관리자 권한이 해제되었습니다')
 		this._renderManagePanel()
 	}
-
-	// ─────────────────────────────────────────
-	// 스타일
-	// ─────────────────────────────────────────
-
 }

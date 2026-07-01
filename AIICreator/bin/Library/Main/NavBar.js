@@ -32,12 +32,9 @@ NavBar = class NavBar
 
 		if (user)
 		{
-			var { data } = await sb.getClient()
-				.from('users')
-				.select('role')
-				.eq('id', user.id)
-				.single()
-			profile = data
+			var us     = new UserService(sb)
+			var result = await us.getAdminRole(user.id)
+			profile    = result.data
 
 			this._notifPanel = new NotificationPanel(sb)
 			unread = await this._notifPanel.getUnreadCount()

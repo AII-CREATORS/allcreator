@@ -111,8 +111,9 @@ UserService = class UserService
 	{
 		return this.sb.getClient()
 			.from('orders')
-			.select('id, amount, status, created_at, prompts(id, title, description, prompt_type, result_image, ai_tools(name))')
+			.select('id, amount, status, created_at, prompts(id, title, description, price, prompt_type, like_count, result_image, ai_tools(name))')
 			.eq('buyer_id', userId)
+			.eq('status', 'completed')
 			.order('created_at', { ascending: false })
 	}
 
