@@ -238,3 +238,21 @@
 .pg-spinner{width:36px;height:36px;border:3px solid var(--color-border);border-top-color:var(--color-accent);border-radius:50%;animation:pg-spin 0.7s linear infinite;}
 @keyframes pg-spin{to{transform:rotate(360deg)}}
 
+/* ── Revenue (수익 탭) ──────────────────────────────── */
+.rev-summary{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;padding-top:16px;margin-bottom:20px;}
+.rev-card{background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-md);padding:16px 20px;}
+.rev-card-accent{border-color:var(--color-accent);background:rgba(108,99,255,0.08);}
+.rev-card-label{font-size:0.75rem;color:var(--color-text-muted);margin-bottom:6px;}
+.rev-commission{font-size:0.6875rem;color:var(--color-text-dim);}
+.rev-card-value{font-family:var(--font-title);font-size:1.375rem;font-weight:700;color:var(--color-text);}
+.rev-card-accent .rev-card-value{color:var(--color-accent);}
+.rev-list{display:flex;flex-direction:column;gap:8px;}
+.rev-row{display:flex;align-items:center;justify-content:space-between;background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-md);padding:12px 16px;gap:16px;}
+.rev-row-info{flex:1;min-width:0;}
+.rev-row-title{font-size:0.9375rem;font-weight:600;color:var(--color-text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:3px;}
+.rev-row-date{font-size:0.8125rem;color:var(--color-text-dim);}
+.rev-row-amounts{display:flex;flex-direction:column;align-items:flex-end;gap:3px;flex-shrink:0;}
+.rev-row-gross{font-size:0.8125rem;color:var(--color-text-muted);}
+.rev-row-net{font-size:0.9375rem;font-weight:700;color:var(--color-accent);}
+@media(max-width:600px){.rev-summary{grid-template-columns:1fr 1fr;}.rev-card-accent{grid-column:1/-1;}}
+

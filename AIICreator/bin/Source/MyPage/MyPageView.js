@@ -175,6 +175,7 @@ MyPageView = class MyPageView extends AView
 						'<button class="mp-tab active" data-tab="mine">내 프롬프트</button>' +
 						'<button class="mp-tab" data-tab="saved">저장됨</button>' +
 						'<button class="mp-tab" data-tab="purchased">구매함</button>' +
+						'<button class="mp-tab" data-tab="revenue">수익</button>' +
 					'</div>' +
 
 					'<div class="mp-tab-content" id="mp-tab-content">' +
@@ -369,6 +370,7 @@ MyPageView = class MyPageView extends AView
 			if      (this.currentTab === 'mine')      await this._loadMyPrompts(content)
 			else if (this.currentTab === 'saved')     await this._loadSaved(content)
 			else if (this.currentTab === 'purchased') await this._loadPurchased(content)
+			else if (this.currentTab === 'revenue')   await this._loadRevenue(content)
 		}
 		catch (e)
 		{
@@ -394,6 +396,78 @@ MyPageView = class MyPageView extends AView
 		var result  = await this.us.getUserOrders(this.currentUser.id)
 		var prompts = (result.data || []).map(function(row) { return row.prompts }).filter(Boolean)
 		this._renderList(content, prompts, '구매한 프롬프트가 없습니다', '🛒')
+	}
+
+	async _loadRevenue(content)
+	{
+		var result = await this.us.getMyRevenue(this.currentUser.id)
+
+		if (result.error)
+		{
+			content.innerHTML = '<div class="mp-empty"><div class="mp-empty-icon">⚠️</div><div class="mp-empty-text">수익 정보를 불러올 수 없습니다</div></div>'
+			return
+		}
+
+		var rows = result.data || []
+
+		if (rows.length === 0)
+		{
+			content.innerHTML =
+				'<div class="mp-empty">' +
+					'<div class="mp-empty-icon">💰</div>' +
+					'<div class="mp-empty-text">아직 판매 내역이 없습니다</div>' +
+				'</div>'
+			return
+		}
+
+		// 합계 계산
+		var totalGross = rows.reduce(function(sum, r) { return sum + Number(r.gross_amount) }, 0)
+		var totalNet   = rows.reduce(function(sum, r) { return sum + Number(r.net_amount)   }, 0)
+		var totalCount = rows.length
+
+		var html =
+			// 요약 카드
+			'<div class="rev-summary">' +
+				'<div class="rev-card">' +
+					'<div class="rev-card-label">총 판매</div>' +
+					'<div class="rev-card-value">' + totalCount + '건</div>' +
+				'</div>' +
+				'<div class="rev-card">' +
+					'<div class="rev-card-label">총 매출</div>' +
+					'<div class="rev-card-value">' + totalGross.toLocaleString() + '원</div>' +
+				'</div>' +
+				'<div class="rev-card rev-card-accent">' +
+					'<div class="rev-card-label">순수익 <span class="rev-commission">(수수료 20% 제외)</span></div>' +
+					'<div class="rev-card-value">' + totalNet.toLocaleString() + '원</div>' +
+				'</div>' +
+			'</div>' +
+
+			// 개별 내역
+			'<div class="rev-list">'
+
+		rows.forEach(function(r)
+		{
+			var prompt  = r.orders && r.orders.prompts ? r.orders.prompts : null
+			var title   = prompt ? prompt.title : '알 수 없음'
+			var paidAt  = r.orders && r.orders.paid_at ? fmt.date(r.orders.paid_at) : fmt.date(r.created_at)
+			var gross   = Number(r.gross_amount).toLocaleString() + '원'
+			var net     = Number(r.net_amount).toLocaleString() + '원'
+
+			html +=
+				'<div class="rev-row">' +
+					'<div class="rev-row-info">' +
+						'<div class="rev-row-title">' + title + '</div>' +
+						'<div class="rev-row-date">' + paidAt + '</div>' +
+					'</div>' +
+					'<div class="rev-row-amounts">' +
+						'<span class="rev-row-gross">매출 ' + gross + '</span>' +
+						'<span class="rev-row-net">순수익 ' + net + '</span>' +
+					'</div>' +
+				'</div>'
+		})
+
+		html += '</div>'
+		content.innerHTML = html
 	}
 
 	_renderList(content, prompts, emptyMsg, emptyIcon)

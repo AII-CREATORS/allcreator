@@ -1,19 +1,10 @@
 {
 	"changed": [
-		"C:\\Users\\dicki\\AII CREATOR\\allcreator\\AIICreator\\bin\\Library\\fmt.js",
-		"C:\\Users\\dicki\\AII CREATOR\\allcreator\\AIICreator\\bin\\Library\\SupabaseManager.js",
-		"C:\\Users\\dicki\\AII CREATOR\\allcreator\\AIICreator\\bin\\Library\\Main\\NavBar.js",
-		"C:\\Users\\dicki\\AII CREATOR\\allcreator\\AIICreator\\bin\\Library\\Main\\NotificationPanel.js",
-		"C:\\Users\\dicki\\AII CREATOR\\allcreator\\AIICreator\\bin\\Library\\Services\\PromptService.js",
 		"C:\\Users\\dicki\\AII CREATOR\\allcreator\\AIICreator\\bin\\Library\\Services\\UserService.js",
 		"C:\\Users\\dicki\\AII CREATOR\\allcreator\\AIICreator\\bin\\Library\\PaymentManager.js",
 		"C:\\Users\\dicki\\AII CREATOR\\allcreator\\AIICreator\\bin\\Source\\AIICreatorApp.js",
-		"C:\\Users\\dicki\\AII CREATOR\\allcreator\\AIICreator\\bin\\Source\\MainView.js",
-		"C:\\Users\\dicki\\AII CREATOR\\allcreator\\AIICreator\\bin\\Source\\Auth\\AuthView.js",
 		"C:\\Users\\dicki\\AII CREATOR\\allcreator\\AIICreator\\bin\\Source\\Prompt\\PromptDetailView.js",
-		"C:\\Users\\dicki\\AII CREATOR\\allcreator\\AIICreator\\bin\\Source\\Prompt\\PromptRegisterView.js",
-		"C:\\Users\\dicki\\AII CREATOR\\allcreator\\AIICreator\\bin\\Source\\MyPage\\MyPageView.js",
-		"C:\\Users\\dicki\\AII CREATOR\\allcreator\\AIICreator\\bin\\Source\\Admin\\AdminView.js"
+		"C:\\Users\\dicki\\AII CREATOR\\allcreator\\AIICreator\\bin\\Source\\MyPage\\MyPageView.js"
 	],
 	"version": "5.1.1",
 	"C:\\Users\\dicki\\AII CREATOR\\allcreator\\AIICreator\\Template\\AIICreatorApp_global.css": 1782701649436.6206,
@@ -166,7 +157,7 @@
 	"C:\\Users\\dicki\\AII CREATOR\\allcreator\\AIICreator\\Framework\\afc\\style\\comp.css": 1782693623492.567,
 	"C:\\Users\\dicki\\AII CREATOR\\allcreator\\AIICreator\\Framework\\afc\\style\\basicStyle.css": 1782693623491.5627,
 	"C:\\Users\\dicki\\AII CREATOR\\allcreator\\AIICreator\\Library\\SupabaseManager.js": 1782889054309.8003,
-	"C:\\Users\\dicki\\AII CREATOR\\allcreator\\AIICreator\\Source\\AIICreatorApp.js": 1782894913839.6775,
+	"C:\\Users\\dicki\\AII CREATOR\\allcreator\\AIICreator\\Source\\AIICreatorApp.js": 1782895580765.4597,
 	"C:\\Users\\dicki\\AII CREATOR\\allcreator\\AIICreator\\Source\\MainView.js": 1782889054330.346,
 	"C:\\Users\\dicki\\AII CREATOR\\allcreator\\AIICreator\\Template\\styler.stl": 1782693623495.5627,
 	"C:\\Users\\dicki\\AII CREATOR\\allcreator\\AIICreator\\Source\\MainView.lay": 1782693623494.563,
@@ -174,11 +165,11 @@
 	"C:\\Users\\dicki\\AII CREATOR\\allcreator\\AIICreator\\Library\\ToastManager.js": 1782701649435.118,
 	"C:\\Users\\dicki\\AII CREATOR\\allcreator\\AIICreator\\Source\\Auth\\AuthView.js": 1782889054330.346,
 	"C:\\Users\\dicki\\AII CREATOR\\allcreator\\AIICreator\\Source\\Auth\\AuthView.lay": 1782704634980.8425,
-	"C:\\Users\\dicki\\AII CREATOR\\allcreator\\AIICreator\\Source\\Prompt\\PromptDetailView.js": 1782894937618.4307,
+	"C:\\Users\\dicki\\AII CREATOR\\allcreator\\AIICreator\\Source\\Prompt\\PromptDetailView.js": 1782895580765.4597,
 	"C:\\Users\\dicki\\AII CREATOR\\allcreator\\AIICreator\\Source\\Prompt\\PromptDetailView.lay": 1782792854241.0664,
 	"C:\\Users\\dicki\\AII CREATOR\\allcreator\\AIICreator\\Source\\Prompt\\PromptRegisterView.js": 1782889054343.869,
 	"C:\\Users\\dicki\\AII CREATOR\\allcreator\\AIICreator\\Source\\Prompt\\PromptRegisterView.lay": 1782792854247.7532,
-	"C:\\Users\\dicki\\AII CREATOR\\allcreator\\AIICreator\\Source\\MyPage\\MyPageView.js": 1782889054331.351,
+	"C:\\Users\\dicki\\AII CREATOR\\allcreator\\AIICreator\\Source\\MyPage\\MyPageView.js": 1782895850219.129,
 	"C:\\Users\\dicki\\AII CREATOR\\allcreator\\AIICreator\\Source\\MyPage\\MyPageView.lay": 1782792854234.6523,
 	"C:\\Users\\dicki\\AII CREATOR\\allcreator\\AIICreator\\Source\\Main\\NavBar.js": 1782778983568.0017,
 	"C:\\Users\\dicki\\AII CREATOR\\allcreator\\AIICreator\\Source\\Main\\FilterBar.js": 1782779012483.751,
@@ -190,8 +181,8 @@
 	"C:\\Users\\dicki\\AII CREATOR\\allcreator\\AIICreator\\Source\\Admin\\AdminView.js": 1782889054328.8235,
 	"C:\\Users\\dicki\\AII CREATOR\\allcreator\\AIICreator\\Source\\Admin\\AdminView.lay": 1782795459190.2756,
 	"C:\\Users\\dicki\\AII CREATOR\\allcreator\\AIICreator\\Library\\Services\\PromptService.js": 1782889054307.4705,
-	"C:\\Users\\dicki\\AII CREATOR\\allcreator\\AIICreator\\Library\\Services\\UserService.js": 1782889054308.4756,
+	"C:\\Users\\dicki\\AII CREATOR\\allcreator\\AIICreator\\Library\\Services\\UserService.js": 1782895813502.2334,
 	"C:\\Users\\dicki\\AII CREATOR\\allcreator\\AIICreator\\Library\\Main\\NotificationPanel.js": 1782889054306.4739,
 	"C:\\Users\\dicki\\AII CREATOR\\allcreator\\AIICreator\\Library\\fmt.js": 1782889054328.8235,
-	"C:\\Users\\dicki\\AII CREATOR\\allcreator\\AIICreator\\Library\\PaymentManager.js": 1782894623049.648
+	"C:\\Users\\dicki\\AII CREATOR\\allcreator\\AIICreator\\Library\\PaymentManager.js": 1782895580764.4607
 }

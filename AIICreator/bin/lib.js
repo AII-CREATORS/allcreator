@@ -16592,6 +16592,19 @@ PromptService = class PromptService
 			.eq('user_id', userId)
 			.order('created_at', { ascending: false })
 	}
+
+	// -----------------------------------------
+	// 판매자 수익 내역 (settlements)
+	// -----------------------------------------
+
+	async getMyRevenue(userId)
+	{
+		return this.sb.getClient()
+			.from('settlements')
+			.select('id, gross_amount, net_amount, commission_rate, status, created_at, orders(paid_at, prompts(id, title))')
+			.eq('creator_id', userId)
+			.order('created_at', { ascending: false })
+	}
 }
 
 ;
