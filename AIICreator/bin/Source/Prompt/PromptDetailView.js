@@ -4,12 +4,13 @@ PromptDetailView = class PromptDetailView extends AView
 	constructor()
 	{
 		super()
-		this.sb        = null
-		this.ps        = null
-		this.promptId  = null
-		this.prompt    = null
-		this.isLiked   = false
-		this.isSaved   = false
+		this.sb          = null
+		this.ps          = null
+		this.pm          = null
+		this.promptId    = null
+		this.prompt      = null
+		this.isLiked     = false
+		this.isSaved     = false
 		this.isPurchased = false
 		this.currentUser = null
 	}
@@ -19,6 +20,7 @@ PromptDetailView = class PromptDetailView extends AView
 		super.onInitDone()
 		this.sb       = SupabaseManager.getInstance()
 		this.ps       = new PromptService(this.sb)
+		this.pm       = PaymentManager.getInstance()
 		this.promptId = theApp.getDetailId() || null
 		this._renderSkeleton()
 		this._bootstrap()
@@ -280,27 +282,27 @@ PromptDetailView = class PromptDetailView extends AView
 	{
 		if (!this.currentUser) { ToastManager.error('로그인이 필요합니다'); return }
 
+		// 무료 프롬프트는 isPurchased가 항상 true → 이 버튼 자체가 표시 안 됨. 방어 코드만 유지
+		if (Number(this.prompt.price) === 0) return
+
+		// 유료: Toss 결제창 열기 (성공/취소 시 successUrl/failUrl로 리다이렉트)
 		var btn = this.getElement().querySelector('#btn-purchase')
-		if (btn) { btn.disabled = true; btn.textContent = '처리 중...' }
+		if (btn) { btn.disabled = true; btn.textContent = '결제창 연결 중...' }
 
 		try
 		{
-			var isFree = Number(this.prompt.price) === 0
-			var amount = isFree ? 0 : Number(this.prompt.price)
-
-			var result = await this.ps.purchase(this.promptId, this.currentUser.id, amount)
-
-			if (result.error) throw new Error(result.error.message)
-
-			this.isPurchased = true
-			ToastManager.success(isFree ? '무료 프롬프트가 추가되었습니다!' : '구매 완료!')
-			this._renderDetail()
-			this._bindEvents()
+			await this.pm.requestPayment(this.prompt, this.currentUser)
+			// requestPayment 이후 코드는 실행되지 않음 — 브라우저가 Toss 페이지로 이동
 		}
 		catch (e)
 		{
-			ToastManager.error('처리 실패: ' + e.message)
-			if (btn) { btn.disabled = false; btn.textContent = '다시 시도' }
+			// Toss SDK 자체 에러 (잘못된 키, 파라미터 오류 등)
+			ToastManager.error('결제창 열기 실패: ' + e.message)
+			if (btn)
+			{
+				btn.disabled    = false
+				btn.textContent = '구매하기 ' + Number(this.prompt.price).toLocaleString() + '원'
+			}
 		}
 	}
 

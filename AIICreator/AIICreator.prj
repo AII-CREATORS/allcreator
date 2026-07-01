@@ -106,6 +106,13 @@
                 "path": "Library\\Services\\"
               }
             ]
+          },
+          {
+            "type": 5,
+            "name": "PaymentManager.js",
+            "action": 9,
+            "relType": 1,
+            "path": "Library\\"
           }
         ]
       },

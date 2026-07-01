@@ -22,6 +22,10 @@ class AIICreatorApp extends AApplication
 		ErrorHandler.init()
 		this.setMainContainer(new APage('main'))
 
+		// PaymentManager 앱 전역 초기화
+		var pm = PaymentManager.getInstance()
+		pm.init(SupabaseManager.getInstance())
+
 		var origOpen = this.mainContainer.open.bind(this.mainContainer)
 
 		var LAY_TO_HASH = {
@@ -51,9 +55,76 @@ class AIICreatorApp extends AApplication
 			origOpen(lay)
 		}
 
+		// Toss 결제 리다이렉트 결과 감지
+		var payResult = pm.parsePaymentResult()
+		if (payResult)
+		{
+			pm.clearPaymentParams()
+			this._handlePaymentReturn(payResult)
+			return
+		}
+
 		try { history.replaceState({ lay: 'Source/Auth/AuthView.lay' }, '', '#/auth') }
 		catch(e) {}
 		origOpen('Source/Auth/AuthView.lay')
+	}
+
+	async _handlePaymentReturn(result)
+	{
+		if (result.type === 'fail')
+		{
+			if (result.promptId)
+			{
+				this._promptId = result.promptId
+				this.mainContainer.open('Source/Prompt/PromptDetailView.lay')
+			}
+			else
+			{
+				this.mainContainer.open('Source/MainView.lay')
+			}
+			setTimeout(function()
+			{
+				ToastManager.error('결제가 취소되었습니다' + (result.message ? ': ' + result.message : ''))
+			}, 300)
+			return
+		}
+
+		// 결제 성공 → Edge Function으로 승인 처리
+		try
+		{
+			var sb   = SupabaseManager.getInstance()
+			var user = await sb.getUser()
+
+			if (!user) throw new Error('로그인이 필요합니다')
+
+			var pm          = PaymentManager.getInstance()
+			var { data, error } = await pm.confirmPayment(
+				result.paymentKey,
+				result.orderId,
+				Number(result.amount),
+				result.promptId,
+				user.id
+			)
+
+			if (error) throw new Error(error.message || '결제 처리 실패')
+
+			this._promptId = result.promptId
+			this.mainContainer.open('Source/Prompt/PromptDetailView.lay')
+			setTimeout(function() { ToastManager.success('구매가 완료되었습니다!') }, 300)
+		}
+		catch (e)
+		{
+			if (result.promptId)
+			{
+				this._promptId = result.promptId
+				this.mainContainer.open('Source/Prompt/PromptDetailView.lay')
+			}
+			else
+			{
+				this.mainContainer.open('Source/MainView.lay')
+			}
+			setTimeout(function() { ToastManager.error('결제 처리 실패: ' + e.message) }, 300)
+		}
 	}
 
 	unitTest(unitUrl)
