@@ -1,4 +1,3 @@
-
 UserService = class UserService
 {
 	constructor(sb)
@@ -98,7 +97,7 @@ UserService = class UserService
 	{
 		return this.sb.getClient()
 			.from('prompts')
-			.select('id, title, price, prompt_type, status, like_count, view_count, created_at, result_image, ai_tools(name)')
+			.select('id, title, description, price, prompt_type, status, like_count, view_count, created_at, result_image, ai_tools(name)')
 			.eq('user_id', userId)
 			.is('deleted_at', null)
 			.order('created_at', { ascending: false })
@@ -112,7 +111,7 @@ UserService = class UserService
 	{
 		return this.sb.getClient()
 			.from('orders')
-			.select('id, amount, status, created_at, prompts(id, title, prompt_type, result_image, ai_tools(name))')
+			.select('id, amount, status, created_at, prompts(id, title, description, prompt_type, result_image, ai_tools(name))')
 			.eq('buyer_id', userId)
 			.order('created_at', { ascending: false })
 	}
@@ -125,7 +124,7 @@ UserService = class UserService
 	{
 		return this.sb.getClient()
 			.from('prompt_saves')
-			.select('id, created_at, prompts(id, title, price, prompt_type, like_count, result_image, ai_tools(name), users!user_id(username))')
+			.select('id, created_at, prompts(id, title, description, price, prompt_type, like_count, result_image, ai_tools(name))')
 			.eq('user_id', userId)
 			.order('created_at', { ascending: false })
 	}

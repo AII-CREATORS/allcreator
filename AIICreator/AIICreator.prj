@@ -70,6 +70,13 @@
                 "action": 9,
                 "relType": 1,
                 "path": "Library\\Main\\"
+              },
+              {
+                "type": 5,
+                "name": "NotificationPanel.js",
+                "action": 9,
+                "relType": 1,
+                "path": "Library\\Main\\"
               }
             ]
           },

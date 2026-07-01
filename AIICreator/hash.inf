@@ -1,5 +1,9 @@
 {
-	"changed": [],
+	"changed": [
+		"C:\\Users\\dicki\\AII CREATOR\\allcreator\\AIICreator\\bin\\Library\\Main\\NavBar.js",
+		"C:\\Users\\dicki\\AII CREATOR\\allcreator\\AIICreator\\bin\\Library\\Main\\NotificationPanel.js",
+		"C:\\Users\\dicki\\AII CREATOR\\allcreator\\AIICreator\\bin\\Library\\Services\\UserService.js"
+	],
 	"version": "5.1.1",
 	"C:\\Users\\dicki\\AII CREATOR\\allcreator\\AIICreator\\Template\\AIICreatorApp_global.css": 1782701649436.6206,
 	"C:\\Users\\dicki\\AII CREATOR\\allcreator\\AIICreator\\Framework\\afc\\library\\ARect.js": 1782693623482.5632,
@@ -168,12 +172,13 @@
 	"C:\\Users\\dicki\\AII CREATOR\\allcreator\\AIICreator\\Source\\Main\\NavBar.js": 1782778983568.0017,
 	"C:\\Users\\dicki\\AII CREATOR\\allcreator\\AIICreator\\Source\\Main\\FilterBar.js": 1782779012483.751,
 	"C:\\Users\\dicki\\AII CREATOR\\allcreator\\AIICreator\\Source\\Main\\PromptGrid.js": 1782779031803.1653,
-	"C:\\Users\\dicki\\AII CREATOR\\allcreator\\AIICreator\\Library\\Main\\NavBar.js": 1782800145316.741,
+	"C:\\Users\\dicki\\AII CREATOR\\allcreator\\AIICreator\\Library\\Main\\NavBar.js": 1782870590452.4092,
 	"C:\\Users\\dicki\\AII CREATOR\\allcreator\\AIICreator\\Library\\Main\\FilterBar.js": 1782800145315.7407,
 	"C:\\Users\\dicki\\AII CREATOR\\allcreator\\AIICreator\\Library\\Main\\PromptGrid.js": 1782806559121.1267,
 	"C:\\Users\\dicki\\AII CREATOR\\allcreator\\AIICreator\\Library\\ErrorHandler.js": 1782785676702.9163,
 	"C:\\Users\\dicki\\AII CREATOR\\allcreator\\AIICreator\\Source\\Admin\\AdminView.js": 1782800145319.7437,
 	"C:\\Users\\dicki\\AII CREATOR\\allcreator\\AIICreator\\Source\\Admin\\AdminView.lay": 1782795459190.2756,
-	"C:\\Users\\dicki\\AII CREATOR\\allcreator\\AIICreator\\Library\\Services\\PromptService.js": 1782809224708.2092,
-	"C:\\Users\\dicki\\AII CREATOR\\allcreator\\AIICreator\\Library\\Services\\UserService.js": 1782809237050.3103
+	"C:\\Users\\dicki\\AII CREATOR\\allcreator\\AIICreator\\Library\\Services\\PromptService.js": 1782809976225.4485,
+	"C:\\Users\\dicki\\AII CREATOR\\allcreator\\AIICreator\\Library\\Services\\UserService.js": 1782870604848.128,
+	"C:\\Users\\dicki\\AII CREATOR\\allcreator\\AIICreator\\Library\\Main\\NotificationPanel.js": 1782870562339.1587
 }

@@ -1,16 +1,15 @@
-
 NavBar = class NavBar
 {
 	constructor(container, callbacks)
 	{
-		this.el          = container
-		this.callbacks   = callbacks || {}
+		this.el               = container
+		this.callbacks        = callbacks || {}
 		this.searchTimer      = null
 		this.keyword          = ''
 		this._docClickHandler = null
+		this._notifPanel      = null
 	}
 
-	// auth 검증을 내부에서 처리 — 호출자는 인자 불필요
 	async render()
 	{
 		if (this._docClickHandler)
@@ -19,9 +18,17 @@ NavBar = class NavBar
 			this._docClickHandler = null
 		}
 
+		// 기존 패널이 열려있으면 닫기
+		if (this._notifPanel)
+		{
+			this._notifPanel._close()
+			this._notifPanel = null
+		}
+
 		var sb      = SupabaseManager.getInstance()
 		var user    = await sb.getUser()
 		var profile = null
+		var unread  = 0
 
 		if (user)
 		{
@@ -31,15 +38,18 @@ NavBar = class NavBar
 				.eq('id', user.id)
 				.single()
 			profile = data
+
+			this._notifPanel = new NotificationPanel(sb)
+			unread = await this._notifPanel.getUnreadCount()
 		}
 
-		this.el.innerHTML = this._html(user, profile)
+		this.el.innerHTML = this._html(user, profile, unread)
 		this._bindEvents(user, profile)
 	}
 
-	_html(user, profile)
+	_html(user, profile, unread)
 	{
-		var userArea = user ? this._userHTML(user, profile) : this._guestHTML()
+		var userArea = user ? this._userHTML(user, profile, unread) : this._guestHTML()
 
 		return '<div class="nb-inner">'
 			+ '<div class="nb-logo">'
@@ -58,7 +68,7 @@ NavBar = class NavBar
 		return '<button class="ac-btn ac-btn-outline ac-btn-sm" id="nb-btn-login">로그인</button>'
 	}
 
-	_userHTML(user, profile)
+	_userHTML(user, profile, unread)
 	{
 		var initial = (user.email || 'U')[0].toUpperCase()
 		var role    = profile && profile.role
@@ -68,8 +78,22 @@ NavBar = class NavBar
 			? '<button class="ac-btn ac-btn-outline ac-btn-sm nb-btn-admin" id="nb-btn-admin"> 관리자</button>'
 			: ''
 
+		var badgeHTML = unread > 0
+			? '<span class="nb-notif-badge" style="position:absolute;top:-4px;right:-4px;min-width:16px;height:16px;' +
+				'border-radius:8px;background:#FF6584;color:#fff;font-size:0.625rem;font-weight:700;' +
+				'display:flex;align-items:center;justify-content:center;padding:0 3px;pointer-events:none;">' +
+				(unread > 99 ? '99+' : String(unread)) +
+			  '</span>'
+			: ''
+
 		return adminBtn
 			+ '<button class="ac-btn ac-btn-secondary ac-btn-sm" id="nb-btn-register">+ 프롬프트 등록</button>'
+			+ '<button id="nb-btn-notif" style="position:relative;background:rgba(255,255,255,0.06);border:1px solid #2E2E48;' +
+				'border-radius:50%;width:36px;height:36px;cursor:pointer;font-size:1.1rem;' +
+				'display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:background 150ms ease;">' +
+				'🔔' +
+				badgeHTML +
+			  '</button>'
 			+ '<div class="ac-avatar nb-avatar" id="nb-avatar">' + initial + '</div>'
 			+ '<div class="nb-dropdown" id="nb-dropdown" style="display:none">'
 				+ '<div class="nb-dropdown-email">' + user.email + '</div>'
@@ -77,7 +101,6 @@ NavBar = class NavBar
 				+ '<button class="nb-dropdown-item" id="nb-btn-logout">로그아웃</button>'
 			+ '</div>'
 	}
-
 
 	_bindEvents(user, profile)
 	{
@@ -113,6 +136,24 @@ NavBar = class NavBar
 		{
 			if (self.callbacks.onAdmin) self.callbacks.onAdmin()
 		})
+
+		var btnNotif = el.querySelector('#nb-btn-notif')
+		if (btnNotif)
+		{
+			btnNotif.addEventListener('click', async function(e)
+			{
+				e.stopPropagation()
+				if (self._notifPanel) await self._notifPanel.toggle()
+			})
+			btnNotif.addEventListener('mouseenter', function()
+			{
+				btnNotif.style.background = 'rgba(108,99,255,0.2)'
+			})
+			btnNotif.addEventListener('mouseleave', function()
+			{
+				btnNotif.style.background = 'rgba(255,255,255,0.06)'
+			})
+		}
 
 		var avatar = el.querySelector('#nb-avatar')
 		if (avatar)
