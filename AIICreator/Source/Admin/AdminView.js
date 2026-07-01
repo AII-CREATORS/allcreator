@@ -13,22 +13,12 @@ class AdminView extends AView
 		this.tab         = 'pending'   // 'pending' | 'published' | 'rejected'
 	}
 
-	init(context, evtListener)
-	{
-		super.init(context, evtListener)
-	}
-
 	onInitDone()
 	{
 		super.onInitDone()
 		this.sb = SupabaseManager.getInstance()
 		this._renderShell()
 		this._bootstrap()
-	}
-
-	onActiveDone(isFirst)
-	{
-		super.onActiveDone(isFirst)
 	}
 
 	// ─────────────────────────────────────────
@@ -165,7 +155,6 @@ class AdminView extends AView
 			.from('prompts')
 			.select('id, title, description, price, prompt_type, status, rejection_reason, created_at, reviewed_at, users!user_id(display_name, email)', { count: 'exact' })
 			.eq('status', this.tab)
-			.is('deleted_at', null)
 			.order('created_at', { ascending: false })
 			.range(from, to)
 
@@ -203,7 +192,7 @@ class AdminView extends AView
 		{
 			var seller    = p.users ? (p.users.display_name || p.users.email) : '알 수 없음'
 			var priceText = Number(p.price) === 0 ? '무료' : Number(p.price).toLocaleString() + '원'
-			var dateText  = p.created_at ? new Date(p.created_at).toLocaleDateString('ko-KR') : ''
+			var dateText  = fmt.date(p.created_at)
 
 			var actionBtns = ''
 			if (tab === 'pending')

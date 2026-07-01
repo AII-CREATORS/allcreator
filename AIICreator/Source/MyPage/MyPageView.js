@@ -11,22 +11,12 @@ class MyPageView extends AView
 		this.isEditing   = false
 	}
 
-	init(context, evtListener)
-	{
-		super.init(context, evtListener)
-	}
-
 	onInitDone()
 	{
 		super.onInitDone()
 		this.sb = SupabaseManager.getInstance()
 		this._renderSkeleton()
 		this._bootstrap()
-	}
-
-	onActiveDone(isFirst)
-	{
-		super.onActiveDone(isFirst)
 	}
 
 	// ─────────────────────────────────────────
@@ -120,7 +110,7 @@ class MyPageView extends AView
 		var genderMap   = { male: '남성', female: '여성', other: '기타' }
 		var genderLabel = p.gender ? (genderMap[p.gender] || p.gender) : '—'
 		var birthLabel  = p.birth_date || '—'
-		var joinDate    = p.created_at ? p.created_at.slice(0, 10) : '—'
+		var joinDate    = fmt.date(p.created_at)
 
 		this.getElement().innerHTML =
 			'<div class="mp-wrap">' +
@@ -413,7 +403,7 @@ class MyPageView extends AView
 			.from('prompts')
 			.select('id, title, description, price, prompt_type, like_count, view_count, status')
 			.eq('user_id', this.currentUser.id)
-			.is('deleted_at', null)
+			.neq('status', 'hidden')
 			.order('created_at', { ascending: false })
 
 		this._renderList(content, result.data || [], '등록한 프롬프트가 없습니다', '✍️')

@@ -26,6 +26,13 @@
         "children": [
           {
             "type": 5,
+            "name": "fmt.js",
+            "action": 9,
+            "relType": 1,
+            "path": "Library\\"
+          },
+          {
+            "type": 5,
             "name": "SupabaseManager.js",
             "action": 9,
             "relType": 1,

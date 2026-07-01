@@ -5,6 +5,7 @@ class PromptDetailView extends AView
 	{
 		super()
 		this.sb        = null
+		this.ps        = null
 		this.promptId  = null
 		this.prompt    = null
 		this.isLiked   = false
@@ -13,28 +14,19 @@ class PromptDetailView extends AView
 		this.currentUser = null
 	}
 
-	init(context, evtListener)
-	{
-		super.init(context, evtListener)
-	}
-
 	onInitDone()
 	{
 		super.onInitDone()
 		this.sb       = SupabaseManager.getInstance()
+		this.ps       = new PromptService(this.sb)
 		this.promptId = theApp.getDetailId() || null
 		this._renderSkeleton()
 		this._bootstrap()
 	}
 
-	onActiveDone(isFirst)
-	{
-		super.onActiveDone(isFirst)
-	}
-
-	// ─────────────────────────────────────────
+	// -----------------------------------------
 	// 초기화
-	// ─────────────────────────────────────────
+	// -----------------------------------------
 
 	async _bootstrap()
 	{
@@ -54,7 +46,7 @@ class PromptDetailView extends AView
 			this._bindEvents()
 
 			// 조회수 증가 (비동기, 결과 무시)
-			this.sb.getClient().rpc('increment_view', { p_prompt_id: this.promptId })
+			this.ps.incrementView(this.promptId)
 		}
 		catch (e)
 		{
@@ -64,12 +56,7 @@ class PromptDetailView extends AView
 
 	async _loadPrompt()
 	{
-		var result = await this.sb.getClient()
-			.from('prompts')
-			.select('id, title, description, prompt_content, prompt_type, price, difficulty, like_count, save_count, view_count, created_at, users!user_id(id, username), ai_tools(name), categories(name)')
-			.eq('id', this.promptId)
-			.single()
-
+		var result = await this.ps.getDetail(this.promptId)
 		if (result.error) throw new Error(result.error.message)
 		this.prompt = result.data
 	}
@@ -78,31 +65,15 @@ class PromptDetailView extends AView
 	{
 		if (!this.currentUser) return
 
-		var sb  = this.sb.getClient()
-		var uid = this.currentUser.id
-		var pid = this.promptId
-
-		// 좋아요, 저장 병렬 조회
-		var queries = [
-			sb.from('prompt_likes').select('id').eq('prompt_id', pid).eq('user_id', uid).maybeSingle(),
-			sb.from('prompt_saves').select('id').eq('prompt_id', pid).eq('user_id', uid).maybeSingle()
-		]
-
-		// 유료 프롬프트면 구매 여부도 병렬 추가
-		var isFree = Number(this.prompt.price) === 0
-		if (!isFree)
-			queries.push(sb.from('orders').select('id').eq('prompt_id', pid).eq('buyer_id', uid).eq('status', 'completed').maybeSingle())
-
-		var results = await Promise.all(queries)
-
-		this.isLiked     = !!(results[0].data)
-		this.isSaved     = !!(results[1].data)
-		this.isPurchased = isFree ? true : !!(results[2] && results[2].data)
+		var status = await this.ps.getUserStatus(this.promptId, this.currentUser.id, this.prompt.price)
+		this.isLiked     = status.isLiked
+		this.isSaved     = status.isSaved
+		this.isPurchased = status.isPurchased
 	}
 
-	// ─────────────────────────────────────────
+	// -----------------------------------------
 	// 렌더링
-	// ─────────────────────────────────────────
+	// -----------------------------------------
 
 	_renderSkeleton()
 	{
@@ -176,6 +147,13 @@ class PromptDetailView extends AView
 						'</span>' +
 					'</div>' +
 
+					// 결과물 이미지
+					(p.result_image
+						? '<div style="width:100%;border-radius:16px;overflow:hidden;margin-bottom:20px;background:#2E2E48;">'
+							+ '<img src="' + p.result_image + '" style="width:100%;max-height:360px;object-fit:cover;display:block;" alt="결과물 이미지">'
+							+ '</div>'
+						: '') +
+
 					// 제목
 					'<h1 class="detail-title">' + p.title + '</h1>' +
 
@@ -224,41 +202,26 @@ class PromptDetailView extends AView
 		return '<button class="ac-btn ac-btn-secondary" id="btn-purchase">구매하기 ' + Number(this.prompt.price).toLocaleString() + '원</button>'
 	}
 
-
-	// ─────────────────────────────────────────
+	// -----------------------------------------
 	// 이벤트 바인딩
-	// ─────────────────────────────────────────
+	// -----------------------------------------
 
 	_bindEvents()
 	{
 		var el   = this.getElement()
 		var self = this
 
-		// 뒤로가기
 		el.querySelector('#btn-back').addEventListener('click', function() { self._goBack() })
 
-		// 좋아요
 		var btnLike = el.querySelector('#btn-like')
-		if (btnLike)
-		{
-			btnLike.addEventListener('click', function() { self._toggleLike() })
-		}
+		if (btnLike) btnLike.addEventListener('click', function() { self._toggleLike() })
 
-		// 저장
 		var btnSave = el.querySelector('#btn-save')
-		if (btnSave)
-		{
-			btnSave.addEventListener('click', function() { self._toggleSave() })
-		}
+		if (btnSave) btnSave.addEventListener('click', function() { self._toggleSave() })
 
-		// 구매 / 무료 사용
 		var btnPurchase = el.querySelector('#btn-purchase')
-		if (btnPurchase)
-		{
-			btnPurchase.addEventListener('click', function() { self._onPurchase() })
-		}
+		if (btnPurchase) btnPurchase.addEventListener('click', function() { self._onPurchase() })
 
-		// 로그인 필요
 		var btnLoginRequired = el.querySelector('#btn-login-required')
 		if (btnLoginRequired)
 		{
@@ -268,23 +231,19 @@ class PromptDetailView extends AView
 			})
 		}
 
-		// 복사
 		var btnCopy = el.querySelector('#btn-copy')
-		if (btnCopy)
-		{
-			btnCopy.addEventListener('click', function() { self._copyPrompt() })
-		}
+		if (btnCopy) btnCopy.addEventListener('click', function() { self._copyPrompt() })
 	}
 
-	// ─────────────────────────────────────────
+	// -----------------------------------------
 	// 액션
-	// ─────────────────────────────────────────
+	// -----------------------------------------
 
 	async _toggleLike()
 	{
 		if (!this.currentUser) { ToastManager.error('로그인이 필요합니다'); return }
 
-		var result = await this.sb.getClient().rpc('toggle_like', { p_prompt_id: this.promptId })
+		var result = await this.ps.toggleLike(this.promptId)
 		if (result.error) { ToastManager.error('오류가 발생했습니다'); return }
 
 		this.isLiked = !this.isLiked
@@ -302,7 +261,7 @@ class PromptDetailView extends AView
 	{
 		if (!this.currentUser) { ToastManager.error('로그인이 필요합니다'); return }
 
-		var result = await this.sb.getClient().rpc('toggle_save', { p_prompt_id: this.promptId })
+		var result = await this.ps.toggleSave(this.promptId)
 		if (result.error) { ToastManager.error('오류가 발생했습니다'); return }
 
 		this.isSaved = !this.isSaved
@@ -329,14 +288,7 @@ class PromptDetailView extends AView
 			var isFree = Number(this.prompt.price) === 0
 			var amount = isFree ? 0 : Number(this.prompt.price)
 
-			var result = await this.sb.getClient()
-				.from('orders')
-				.insert({
-					buyer_id:  this.currentUser.id,
-					prompt_id: this.promptId,
-					amount:    String(amount),
-					status:    'completed'
-				})
+			var result = await this.ps.purchase(this.promptId, this.currentUser.id, amount)
 
 			if (result.error) throw new Error(result.error.message)
 
@@ -360,11 +312,8 @@ class PromptDetailView extends AView
 			ToastManager.success('프롬프트가 클립보드에 복사되었습니다')
 		}).catch(function()
 		{
-			ToastManager.
-error('구매 처리 실패: ' + e.message)
-			btn.disabled    = false
-			btn.textContent = '구매하기'
-		}
+			ToastManager.error('복사에 실패했습니다')
+		})
 	}
 
 	_goBack()

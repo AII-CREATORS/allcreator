@@ -99,7 +99,7 @@ UserService = class UserService
 			.from('prompts')
 			.select('id, title, description, price, prompt_type, status, like_count, view_count, created_at, result_image, ai_tools(name)')
 			.eq('user_id', userId)
-			.is('deleted_at', null)
+			.neq('status', 'hidden')
 			.order('created_at', { ascending: false })
 	}
 

@@ -116,7 +116,7 @@ PromptService = class PromptService
 			.insert({
 				buyer_id:  buyerId,
 				prompt_id: promptId,
-				amount:    String(amount),
+				amount:    Number(amount),
 				status:    'completed'
 			})
 	}

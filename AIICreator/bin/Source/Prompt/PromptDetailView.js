@@ -14,11 +14,6 @@ PromptDetailView = class PromptDetailView extends AView
 		this.currentUser = null
 	}
 
-	init(context, evtListener)
-	{
-		super.init(context, evtListener)
-	}
-
 	onInitDone()
 	{
 		super.onInitDone()
@@ -27,11 +22,6 @@ PromptDetailView = class PromptDetailView extends AView
 		this.promptId = theApp.getDetailId() || null
 		this._renderSkeleton()
 		this._bootstrap()
-	}
-
-	onActiveDone(isFirst)
-	{
-		super.onActiveDone(isFirst)
 	}
 
 	// -----------------------------------------

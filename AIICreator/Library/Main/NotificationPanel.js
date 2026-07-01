@@ -137,7 +137,7 @@ NotificationPanel = class NotificationPanel
 		items.forEach(function(n)
 		{
 			var isUnread = !n.is_read
-			var timeText = self._timeAgo(n.created_at)
+			var timeText = fmt.timeAgo(n.created_at)
 			var icon     = self._typeIcon(n.type)
 
 			html +=
@@ -302,23 +302,6 @@ NotificationPanel = class NotificationPanel
 			.from('notifications')
 			.update({ is_read: true })
 			.eq('id', notifId)
-	}
-
-	// -----------------------------------------
-	// 유틸
-	// -----------------------------------------
-
-	_timeAgo(dateStr)
-	{
-		var diff = Date.now() - new Date(dateStr).getTime()
-		var min  = Math.floor(diff / 60000)
-		if (min < 1)   return '방금 전'
-		if (min < 60)  return min + '분 전'
-		var hr = Math.floor(min / 60)
-		if (hr < 24)   return hr + '시간 전'
-		var day = Math.floor(hr / 24)
-		if (day < 7)   return day + '일 전'
-		return new Date(dateStr).toLocaleDateString('ko-KR')
 	}
 
 	_typeIcon(type)

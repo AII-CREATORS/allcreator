@@ -1,10 +1,10 @@
+
 MyPageView = class MyPageView extends AView
 {
 	constructor()
 	{
 		super()
 		this.sb          = null
-		this.us          = null
 		this.currentUser = null
 		this.profile     = null
 		this.currentTab  = 'mine'
@@ -15,14 +15,13 @@ MyPageView = class MyPageView extends AView
 	{
 		super.onInitDone()
 		this.sb = SupabaseManager.getInstance()
-		this.us = new UserService(this.sb)
 		this._renderSkeleton()
 		this._bootstrap()
 	}
 
-	// -----------------------------------------
+	// ─────────────────────────────────────────
 	// 초기화
-	// -----------------------------------------
+	// ─────────────────────────────────────────
 
 	async _bootstrap()
 	{
@@ -35,20 +34,27 @@ MyPageView = class MyPageView extends AView
 			return
 		}
 
-		var profileResult = await this.us.getProfile(this.currentUser.id)
-		if (profileResult.error || !profileResult.data)
+		try
 		{
-			var ensured = await this.sb.ensureUserProfile(this.currentUser)
-			if (ensured.error)
+			await this._loadProfile()
+
+			// public.users row가 없는 경우(소셜 로그인 트리거 미발동) → 자동 생성
+			if (!this.profile)
+			{
+				var result = await this.sb.ensureUserProfile(this.currentUser)
+				if (result.data) this.profile = result.data
+			}
+		}
+		catch (e)
+		{
+			// row 없음 → ensureUserProfile로 생성 시도
+			var result = await this.sb.ensureUserProfile(this.currentUser)
+			if (result.error)
 			{
 				ToastManager.error('프로필을 불러올 수 없습니다')
 				return
 			}
-			this.profile = ensured.data
-		}
-		else
-		{
-			this.profile = profileResult.data
+			this.profile = result.data
 		}
 
 		this._renderLayout()
@@ -56,9 +62,21 @@ MyPageView = class MyPageView extends AView
 		this._loadTabData()
 	}
 
-	// -----------------------------------------
+	async _loadProfile()
+	{
+		var result = await this.sb.getClient()
+			.from('users')
+			.select('id, email, username, display_name, bio, gender, birth_date, avatar_url, created_at')
+			.eq('id', this.currentUser.id)
+			.single()
+
+		if (result.error) throw new Error(result.error.message)
+		this.profile = result.data
+	}
+
+	// ─────────────────────────────────────────
 	// 렌더링
-	// -----------------------------------------
+	// ─────────────────────────────────────────
 
 	_renderSkeleton()
 	{
@@ -92,7 +110,7 @@ MyPageView = class MyPageView extends AView
 		var genderMap   = { male: '남성', female: '여성', other: '기타' }
 		var genderLabel = p.gender ? (genderMap[p.gender] || p.gender) : '—'
 		var birthLabel  = p.birth_date || '—'
-		var joinDate    = p.created_at ? p.created_at.slice(0, 10) : '—'
+		var joinDate    = fmt.date(p.created_at)
 
 		this.getElement().innerHTML =
 			'<div class="mp-wrap">' +
@@ -105,9 +123,11 @@ MyPageView = class MyPageView extends AView
 
 				'<div class="mp-body">' +
 
+					// 프로필 카드
 					'<div class="mp-profile-card">' +
 						'<div class="mp-avatar-wrap">' +
 							this._avatarHTML() +
+							// 숨김 file input
 							'<input type="file" id="avatar-file-input" accept="image/jpeg,image/png,image/webp,image/gif" style="display:none">' +
 						'</div>' +
 						'<div class="mp-profile-info">' +
@@ -127,6 +147,7 @@ MyPageView = class MyPageView extends AView
 						'<button class="ac-btn ac-btn-outline ac-btn-sm" id="btn-edit-profile">프로필 편집</button>' +
 					'</div>' +
 
+					// 편집 폼 (기본 숨김)
 					'<div class="mp-edit-form" id="mp-edit-form" style="display:none">' +
 						'<div class="mp-edit-row">' +
 							'<div class="ac-input-group" style="flex:2">' +
@@ -158,12 +179,14 @@ MyPageView = class MyPageView extends AView
 						'</div>' +
 					'</div>' +
 
+					// 탭
 					'<div class="mp-tabs">' +
 						'<button class="mp-tab active" data-tab="mine">내 프롬프트</button>' +
 						'<button class="mp-tab" data-tab="saved">저장됨</button>' +
 						'<button class="mp-tab" data-tab="purchased">구매함</button>' +
 					'</div>' +
 
+					// 탭 콘텐츠
 					'<div class="mp-tab-content" id="mp-tab-content">' +
 						'<div class="mp-loading"><div class="ac-spinner"></div></div>' +
 					'</div>' +
@@ -172,9 +195,10 @@ MyPageView = class MyPageView extends AView
 			'</div>'
 	}
 
-	// -----------------------------------------
+
+	// ─────────────────────────────────────────
 	// 이벤트 바인딩
-	// -----------------------------------------
+	// ─────────────────────────────────────────
 
 	_bindEvents()
 	{
@@ -186,22 +210,23 @@ MyPageView = class MyPageView extends AView
 		el.querySelector('#btn-logout').addEventListener('click', async function()
 		{
 			await self.sb.signOut()
-			localStorage.removeItem('ac_persist_login')
-			sessionStorage.removeItem('ac_session_active')
 			theApp.mainContainer.open('Source/Auth/AuthView.lay')
 		})
 
+		// 아바타 클릭 → file input 열기
 		el.querySelector('#btn-avatar').addEventListener('click', function()
 		{
 			el.querySelector('#avatar-file-input').click()
 		})
 
+		// 파일 선택 → 업로드
 		el.querySelector('#avatar-file-input').addEventListener('change', function()
 		{
 			if (this.files && this.files[0])
 				self._uploadAvatar(this.files[0])
 		})
 
+		// 프로필 편집 토글
 		el.querySelector('#btn-edit-profile').addEventListener('click', function()
 		{
 			self._toggleEditForm(true)
@@ -215,11 +240,13 @@ MyPageView = class MyPageView extends AView
 			self._saveProfile()
 		})
 
+		// bio 글자 수
 		el.querySelector('#edit-bio').addEventListener('input', function()
 		{
 			el.querySelector('#bio-count').textContent = this.value.length + ' / 200'
 		})
 
+		// 탭 전환
 		el.querySelectorAll('.mp-tab').forEach(function(tab)
 		{
 			tab.addEventListener('click', function()
@@ -244,12 +271,13 @@ MyPageView = class MyPageView extends AView
 		}
 	}
 
-	// -----------------------------------------
+	// ─────────────────────────────────────────
 	// 아바타 업로드
-	// -----------------------------------------
+	// ─────────────────────────────────────────
 
 	async _uploadAvatar(file)
 	{
+		// 2MB 제한 검사
 		if (file.size > 2 * 1024 * 1024)
 		{
 			ToastManager.error('이미지는 2MB 이하여야 합니다')
@@ -264,9 +292,11 @@ MyPageView = class MyPageView extends AView
 			var result = await this.sb.uploadAvatar(this.currentUser.id, file)
 			if (result.error) throw new Error(result.error.message)
 
-			var upd = await this.us.updateProfile(this.currentUser.id, { avatar_url: result.url })
-			if (upd.error) throw new Error(upd.error.message)
+			// users 테이블 avatar_url 업데이트
+			var err = await this.sb.updateUserProfile(this.currentUser.id, { avatar_url: result.url })
+			if (err) throw new Error(err.message)
 
+			// 화면 반영
 			this.profile.avatar_url = result.url
 			var wrap = this.getElement().querySelector('.mp-avatar-wrap')
 			if (wrap)
@@ -292,9 +322,9 @@ MyPageView = class MyPageView extends AView
 		}
 	}
 
-	// -----------------------------------------
+	// ─────────────────────────────────────────
 	// 프로필 저장
-	// -----------------------------------------
+	// ─────────────────────────────────────────
 
 	async _saveProfile()
 	{
@@ -312,18 +342,20 @@ MyPageView = class MyPageView extends AView
 
 		try
 		{
-			var data = { display_name: displayName, bio: bio }
-			if (gender)    data.gender     = gender
-			if (birthDate) data.birth_date = birthDate
+			var profile = { display_name: displayName, bio: bio }
+			if (gender)    profile.gender     = gender
+			if (birthDate) profile.birth_date = birthDate
 
-			var result = await this.us.updateProfile(this.currentUser.id, data)
-			if (result.error) throw new Error(result.error.message)
+			var err = await this.sb.updateUserProfile(this.currentUser.id, profile)
+			if (err) throw new Error(err.message)
 
+			// 로컬 반영
 			this.profile.display_name = displayName
 			this.profile.bio          = bio
 			this.profile.gender       = gender
 			this.profile.birth_date   = birthDate
 
+			// 화면 텍스트 업데이트
 			var nameEl = el.querySelector('#mp-display-name')
 			if (nameEl) nameEl.textContent = displayName
 
@@ -344,9 +376,9 @@ MyPageView = class MyPageView extends AView
 		}
 	}
 
-	// -----------------------------------------
+	// ─────────────────────────────────────────
 	// 탭 데이터 로드
-	// -----------------------------------------
+	// ─────────────────────────────────────────
 
 	async _loadTabData()
 	{
@@ -367,20 +399,37 @@ MyPageView = class MyPageView extends AView
 
 	async _loadMyPrompts(content)
 	{
-		var result = await this.us.getUserPrompts(this.currentUser.id)
+		var result = await this.sb.getClient()
+			.from('prompts')
+			.select('id, title, description, price, prompt_type, like_count, view_count, status')
+			.eq('user_id', this.currentUser.id)
+			.neq('status', 'hidden')
+			.order('created_at', { ascending: false })
+
 		this._renderList(content, result.data || [], '등록한 프롬프트가 없습니다', '✍️')
 	}
 
 	async _loadSaved(content)
 	{
-		var result  = await this.us.getSavedPrompts(this.currentUser.id)
+		var result = await this.sb.getClient()
+			.from('prompt_saves')
+			.select('prompts(id, title, description, price, prompt_type, like_count, view_count)')
+			.eq('user_id', this.currentUser.id)
+			.order('created_at', { ascending: false })
+
 		var prompts = (result.data || []).map(function(row) { return row.prompts }).filter(Boolean)
 		this._renderList(content, prompts, '저장된 프롬프트가 없습니다', '🔖')
 	}
 
 	async _loadPurchased(content)
 	{
-		var result  = await this.us.getUserOrders(this.currentUser.id)
+		var result = await this.sb.getClient()
+			.from('orders')
+			.select('prompts(id, title, description, price, prompt_type, like_count, view_count)')
+			.eq('buyer_id', this.currentUser.id)
+			.eq('status', 'completed')
+			.order('created_at', { ascending: false })
+
 		var prompts = (result.data || []).map(function(row) { return row.prompts }).filter(Boolean)
 		this._renderList(content, prompts, '구매한 프롬프트가 없습니다', '🛒')
 	}
@@ -401,32 +450,22 @@ MyPageView = class MyPageView extends AView
 
 		prompts.forEach(function(p)
 		{
-			var isImage  = p.prompt_type === 'image'
-			var icon     = isImage ? '🎨' : '✍️'
-			var isFree   = Number(p.price) === 0
-			var price    = isFree
+			var isImage = p.prompt_type === 'image'
+			var icon    = isImage ? '🎨' : '✍️'
+			var isFree  = Number(p.price) === 0
+			var price   = isFree
 				? '<span class="mp-list-price free">무료</span>'
 				: '<span class="mp-list-price">' + Number(p.price).toLocaleString() + '원</span>'
 
-			var thumbHTML = p.result_image
-				? '<div style="width:56px;height:56px;border-radius:8px;overflow:hidden;flex-shrink:0;background:#2E2E48;">' +
-					'<img src="' + p.result_image + '" style="width:100%;height:100%;object-fit:cover;" alt="thumb" loading="lazy">' +
-				  '</div>'
-				: '<div style="width:56px;height:56px;border-radius:8px;flex-shrink:0;' +
-					'background:' + (isImage ? 'linear-gradient(135deg,#2A2048,#3D1F5A)' : 'linear-gradient(135deg,#2E2E48,#3A3A5A)') + ';' +
-					'display:flex;align-items:center;justify-content:center;font-size:1.5rem;">' +
-					icon +
-				  '</div>'
-
 			html +=
 				'<div class="mp-list-card" data-id="' + p.id + '">' +
-					thumbHTML +
-					'<div class="mp-list-info">' +
-						'<div class="mp-list-title">' + p.title + '</div>' +
-						(p.description ? '<div class="mp-list-desc">' + p.description + '</div>' : '') +
-					'</div>' +
-					price +
-				'</div>'
+					'<div class="mp-list-icon">' + icon + '</div>' +
+					'<div class="mp-list-info">'
+					+ '<div class="mp-list-title">' + p.title + '</div>'
+					+ '<div class="mp-list-desc">' + (p.description || '') + '</div>'
+				+ '</div>'
+				+ price
+			+ '</div>'
 		})
 
 		html += '</div>'
