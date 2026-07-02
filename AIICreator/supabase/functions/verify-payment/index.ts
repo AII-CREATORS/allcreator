@@ -147,9 +147,12 @@ Deno.serve(async (req) =>
       .eq('id', promptId)
 
     // ─────────────────────────────────────────
-    // 8. 구매 완료 알림 (구매자에게)
+    // 8. 알림 발송
+    //    - 구매자: 항상 발송 (구매 완료 확인)
+    //    - 판매자: notification_settings.purchase === true 인 경우만 발송
     // ─────────────────────────────────────────
 
+    // 구매자 알림 (항상)
     await supabase.from('notifications').insert({
       user_id:   buyerId,
       type:      'purchase_completed',
@@ -157,6 +160,30 @@ Deno.serve(async (req) =>
       body:      '"' + prompt.title + '" 프롬프트를 구매했습니다.',
       prompt_id: promptId
     })
+
+    // 판매자 알림 (notification_settings.purchase 체크)
+    const sellerId = prompt.user_id
+    if (sellerId !== buyerId)  // 자기 자신 구매 예외 처리
+    {
+      const { data: seller } = await supabase
+        .from('users')
+        .select('notification_settings')
+        .eq('id', sellerId)
+        .single()
+
+      const sellerNotiEnabled = seller?.notification_settings?.purchase !== false  // null/undefined → true (기본값)
+
+      if (sellerNotiEnabled)
+      {
+        await supabase.from('notifications').insert({
+          user_id:   sellerId,
+          type:      'sale_completed',
+          title:     '프롬프트가 판매되었습니다',
+          body:      '"' + prompt.title + '" 프롬프트가 판매되었습니다. 순수익: ' + netAmount.toLocaleString() + '원',
+          prompt_id: promptId
+        })
+      }
+    }
 
     return new Response(
       JSON.stringify({ success: true, orderId: order.id }),

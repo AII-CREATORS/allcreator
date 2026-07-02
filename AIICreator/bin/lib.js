@@ -16476,7 +16476,7 @@ PromptService = class PromptService
 	{
 		return this.sb.getClient()
 			.from('users')
-			.select('id, display_name, username, email, role, gender, birth_date, created_at, bio, avatar_url')
+			.select('id, display_name, username, email, role, gender, birth_date, created_at, bio, avatar_url, notification_settings')
 			.eq('id', userId)
 			.single()
 	}
@@ -16591,6 +16591,18 @@ PromptService = class PromptService
 			.select('id, created_at, prompts(id, title, description, price, prompt_type, like_count, result_image, ai_tools(name))')
 			.eq('user_id', userId)
 			.order('created_at', { ascending: false })
+	}
+
+	// -----------------------------------------
+	// 알림 설정 업데이트
+	// -----------------------------------------
+
+	async updateNotificationSettings(userId, settings)
+	{
+		return this.sb.getClient()
+			.from('users')
+			.update({ notification_settings: settings })
+			.eq('id', userId)
 	}
 
 	// -----------------------------------------

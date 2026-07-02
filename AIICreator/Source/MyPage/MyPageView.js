@@ -176,6 +176,7 @@ class MyPageView extends AView
 						'<button class="mp-tab" data-tab="saved">저장됨</button>' +
 						'<button class="mp-tab" data-tab="purchased">구매함</button>' +
 						'<button class="mp-tab" data-tab="revenue">수익</button>' +
+						'<button class="mp-tab" data-tab="settings">알림 설정</button>' +
 					'</div>' +
 
 					'<div class="mp-tab-content" id="mp-tab-content">' +
@@ -371,6 +372,7 @@ class MyPageView extends AView
 			else if (this.currentTab === 'saved')     await this._loadSaved(content)
 			else if (this.currentTab === 'purchased') await this._loadPurchased(content)
 			else if (this.currentTab === 'revenue')   await this._loadRevenue(content)
+			else if (this.currentTab === 'settings')  await this._loadSettings(content)
 		}
 		catch (e)
 		{
@@ -513,6 +515,78 @@ class MyPageView extends AView
 			{
 				theApp.openDetail(card.dataset.id)
 			})
+		})
+	}
+
+	// ─────────────────────────────────────────
+	// 알림 설정 탭
+	// ─────────────────────────────────────────
+
+	async _loadSettings(content)
+	{
+		// notification_settings가 없으면 기본값 사용
+		var ns = this.profile.notification_settings || { like: true, purchase: true }
+
+		content.innerHTML =
+			'<div class="noti-settings">' +
+				'<div class="noti-section-title">알림 설정</div>' +
+				'<div class="noti-desc">수신할 알림 유형을 선택하세요.</div>' +
+
+				'<div class="noti-row">' +
+					'<div class="noti-row-info">' +
+						'<div class="noti-row-label">좋아요 알림</div>' +
+						'<div class="noti-row-sub">내 프롬프트에 좋아요가 눌렸을 때 알림을 받습니다</div>' +
+					'</div>' +
+					'<label class="noti-toggle">' +
+						'<input type="checkbox" id="noti-like" ' + (ns.like !== false ? 'checked' : '') + '>' +
+						'<span class="noti-toggle-slider"></span>' +
+					'</label>' +
+				'</div>' +
+
+				'<div class="noti-row">' +
+					'<div class="noti-row-info">' +
+						'<div class="noti-row-label">판매 알림</div>' +
+						'<div class="noti-row-sub">내 프롬프트가 판매되었을 때 알림을 받습니다</div>' +
+					'</div>' +
+					'<label class="noti-toggle">' +
+						'<input type="checkbox" id="noti-purchase" ' + (ns.purchase !== false ? 'checked' : '') + '>' +
+						'<span class="noti-toggle-slider"></span>' +
+					'</label>' +
+				'</div>' +
+
+				'<button class="ac-btn ac-btn-primary ac-btn-sm noti-save-btn" id="btn-save-noti">설정 저장</button>' +
+			'</div>'
+
+		var self = this
+
+		content.querySelector('#btn-save-noti').addEventListener('click', async function()
+		{
+			var btn      = this
+			btn.disabled    = true
+			btn.textContent = '저장 중...'
+
+			var newSettings = {
+				like:     content.querySelector('#noti-like').checked,
+				purchase: content.querySelector('#noti-purchase').checked
+			}
+
+			try
+			{
+				var result = await self.us.updateNotificationSettings(self.currentUser.id, newSettings)
+				if (result.error) throw new Error(result.error.message)
+
+				self.profile.notification_settings = newSettings
+				ToastManager.success('알림 설정이 저장되었습니다')
+			}
+			catch (e)
+			{
+				ToastManager.error('저장 실패: ' + e.message)
+			}
+			finally
+			{
+				btn.disabled    = false
+				btn.textContent = '설정 저장'
+			}
 		})
 	}
 
