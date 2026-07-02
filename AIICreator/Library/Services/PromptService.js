@@ -59,25 +59,20 @@ PromptService = class PromptService
 	// 사용자 상태 (좋아요, 저장, 구매 여부)
 	// -----------------------------------------
 
-	async getUserStatus(promptId, userId, price)
+	async getUserStatus(promptId, userId)
 	{
-		var sb    = this.sb.getClient()
-		var isFree = Number(price) === 0
+		var sb = this.sb.getClient()
 
-		var queries = [
+		var results = await Promise.all([
 			sb.from('prompt_likes').select('id').eq('prompt_id', promptId).eq('user_id', userId).maybeSingle(),
-			sb.from('prompt_saves').select('id').eq('prompt_id', promptId).eq('user_id', userId).maybeSingle()
-		]
-
-		if (!isFree)
-			queries.push(sb.from('orders').select('id').eq('prompt_id', promptId).eq('buyer_id', userId).eq('status', 'completed').maybeSingle())
-
-		var results = await Promise.all(queries)
+			sb.from('prompt_saves').select('id').eq('prompt_id', promptId).eq('user_id', userId).maybeSingle(),
+			sb.from('orders').select('id').eq('prompt_id', promptId).eq('buyer_id', userId).eq('status', 'completed').maybeSingle()
+		])
 
 		return {
 			isLiked:     !!(results[0].data),
 			isSaved:     !!(results[1].data),
-			isPurchased: isFree ? true : !!(results[2] && results[2].data)
+			isPurchased: !!(results[2].data)
 		}
 	}
 

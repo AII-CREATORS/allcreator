@@ -67,7 +67,7 @@ class PromptDetailView extends AView
 	{
 		if (!this.currentUser) return
 
-		var status = await this.ps.getUserStatus(this.promptId, this.currentUser.id, this.prompt.price)
+		var status = await this.ps.getUserStatus(this.promptId, this.currentUser.id)
 		this.isLiked     = status.isLiked
 		this.isSaved     = status.isSaved
 		this.isPurchased = status.isPurchased
@@ -282,8 +282,35 @@ class PromptDetailView extends AView
 	{
 		if (!this.currentUser) { ToastManager.error('로그인이 필요합니다'); return }
 
-		// 무료 프롬프트는 isPurchased가 항상 true → 이 버튼 자체가 표시 안 됨. 방어 코드만 유지
-		if (Number(this.prompt.price) === 0) return
+		// 무료 프롬프트: orders INSERT 후 버튼 → 배지 교체
+		if (Number(this.prompt.price) === 0)
+		{
+			var btn = this.getElement().querySelector('#btn-purchase')
+			if (btn) { btn.disabled = true; btn.textContent = '처리 중...' }
+
+			var { error } = await this.sb.getClient()
+				.from('orders')
+				.insert({
+					buyer_id:  this.currentUser.id,
+					prompt_id: this.prompt.id,
+					order_no:  'free-' + Date.now(),
+					amount:    '0',
+					status:    'completed',
+					paid_at:   new Date().toISOString()
+				})
+
+			if (error)
+			{
+				ToastManager.error('처리 실패: ' + error.message)
+				if (btn) { btn.disabled = false; btn.textContent = '무료로 사용하기' }
+				return
+			}
+
+			this.isPurchased = true
+			if (btn) btn.outerHTML = '<span class="detail-purchased-badge">✅ 사용 중</span>'
+			ToastManager.success('이용 목록에 추가되었습니다')
+			return
+		}
 
 		// 유료: Toss 결제창 열기 (성공/취소 시 successUrl/failUrl로 리다이렉트)
 		var btn = this.getElement().querySelector('#btn-purchase')
