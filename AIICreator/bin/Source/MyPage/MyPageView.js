@@ -82,7 +82,9 @@ MyPageView = class MyPageView extends AView
 					'<h1 class="mp-nav-title">마이페이지</h1>' +
 				'</header>' +
 				'<div class="mp-body">' +
-					'<div class="mp-profile-skeleton"></div>' +
+					'<div class="mp-center">' +
+						'<div class="mp-profile-skeleton"></div>' +
+					'</div>' +
 				'</div>' +
 			'</div>'
 	}
@@ -106,6 +108,7 @@ MyPageView = class MyPageView extends AView
 		var genderLabel = p.gender ? (genderMap[p.gender] || p.gender) : '—'
 		var birthLabel  = p.birth_date || '—'
 		var joinDate    = fmt.date(p.created_at)
+		var ns          = p.notification_settings || { like: true, purchase: true }
 
 		this.getElement().innerHTML =
 			'<div class="mp-wrap">' +
@@ -117,6 +120,7 @@ MyPageView = class MyPageView extends AView
 				'</header>' +
 
 				'<div class="mp-body">' +
+				'<div class="mp-center">' +
 
 					'<div class="mp-profile-card">' +
 						'<div class="mp-avatar-wrap">' +
@@ -165,6 +169,28 @@ MyPageView = class MyPageView extends AView
 							'<textarea class="ac-input mp-bio-textarea" id="edit-bio" placeholder="나를 소개해보세요 (최대 200자)" maxlength="200">' + (p.bio || '') + '</textarea>' +
 							'<div class="mp-char-count" id="bio-count">' + (p.bio ? p.bio.length : 0) + ' / 200</div>' +
 						'</div>' +
+						// 알림 설정 섹션
+						'<div class="mp-edit-section-label">알림 설정</div>' +
+						'<div class="noti-row">' +
+							'<div class="noti-row-info">' +
+								'<div class="noti-row-label">좋아요 알림</div>' +
+								'<div class="noti-row-sub">내 프롬프트에 좋아요가 눌렸을 때 알림을 받습니다</div>' +
+							'</div>' +
+							'<label class="noti-toggle">' +
+								'<input type="checkbox" id="noti-like"' + (ns.like !== false ? ' checked' : '') + '>' +
+								'<span class="noti-toggle-slider"></span>' +
+							'</label>' +
+						'</div>' +
+						'<div class="noti-row">' +
+							'<div class="noti-row-info">' +
+								'<div class="noti-row-label">판매 알림</div>' +
+								'<div class="noti-row-sub">내 프롬프트가 판매되었을 때 알림을 받습니다</div>' +
+							'</div>' +
+							'<label class="noti-toggle">' +
+								'<input type="checkbox" id="noti-purchase"' + (ns.purchase !== false ? ' checked' : '') + '>' +
+								'<span class="noti-toggle-slider"></span>' +
+							'</label>' +
+						'</div>' +
 						'<div class="mp-edit-actions">' +
 							'<button class="ac-btn ac-btn-primary ac-btn-sm" id="btn-save-profile">저장</button>' +
 							'<button class="ac-btn ac-btn-outline ac-btn-sm" id="btn-cancel-edit">취소</button>' +
@@ -176,15 +202,15 @@ MyPageView = class MyPageView extends AView
 						'<button class="mp-tab" data-tab="saved">저장됨</button>' +
 						'<button class="mp-tab" data-tab="purchased">구매함</button>' +
 						'<button class="mp-tab" data-tab="revenue">수익</button>' +
-						'<button class="mp-tab" data-tab="settings">알림 설정</button>' +
 					'</div>' +
 
 					'<div class="mp-tab-content" id="mp-tab-content">' +
 						'<div class="mp-loading"><div class="ac-spinner"></div></div>' +
 					'</div>' +
 
-				'</div>' +
-			'</div>'
+				'</div>' +  // mp-center
+			'</div>' +      // mp-body
+		'</div>'            // mp-wrap
 	}
 
 	// ─────────────────────────────────────────
@@ -337,6 +363,16 @@ MyPageView = class MyPageView extends AView
 			this.profile.gender       = gender
 			this.profile.birth_date   = birthDate
 
+			// 알림 설정 함께 저장
+			var notiLikeEl     = el.querySelector('#noti-like')
+			var notiPurchaseEl = el.querySelector('#noti-purchase')
+			if (notiLikeEl && notiPurchaseEl)
+			{
+				var newSettings = { like: notiLikeEl.checked, purchase: notiPurchaseEl.checked }
+				var notiResult  = await this.us.updateNotificationSettings(this.currentUser.id, newSettings)
+				if (!notiResult.error) this.profile.notification_settings = newSettings
+			}
+
 			var nameEl = el.querySelector('#mp-display-name')
 			if (nameEl) nameEl.textContent = displayName
 
@@ -372,7 +408,6 @@ MyPageView = class MyPageView extends AView
 			else if (this.currentTab === 'saved')     await this._loadSaved(content)
 			else if (this.currentTab === 'purchased') await this._loadPurchased(content)
 			else if (this.currentTab === 'revenue')   await this._loadRevenue(content)
-			else if (this.currentTab === 'settings')  await this._loadSettings(content)
 		}
 		catch (e)
 		{
@@ -382,8 +417,69 @@ MyPageView = class MyPageView extends AView
 
 	async _loadMyPrompts(content)
 	{
-		var result  = await this.us.getUserPrompts(this.currentUser.id)
-		this._renderList(content, result.data || [], '등록한 프롬프트가 없습니다', '✍️')
+		var result = await this.us.getUserPrompts(this.currentUser.id)
+		var items  = result.data || []
+
+		if (!items.length)
+		{
+			content.innerHTML =
+				'<div class="mp-empty">' +
+					'<div class="mp-empty-icon">✍️</div>' +
+					'<div class="mp-empty-text">등록한 프롬프트가 없습니다</div>' +
+				'</div>'
+			return
+		}
+
+		var statusMap = {
+			pending:   { label: '검토 중', cls: 'badge-pending'   },
+			published: { label: '공개',    cls: 'badge-published' },
+			rejected:  { label: '반려',    cls: 'badge-rejected'  },
+			hidden:    { label: '숨김',    cls: 'badge-hidden'    }
+		}
+
+		var html = '<div class="mp-list">'
+
+		items.forEach(function(p)
+		{
+			var isImage  = p.prompt_type === 'image'
+			var icon     = isImage ? '🎨' : '✍️'
+			var isFree   = Number(p.price) === 0
+			var price    = isFree
+				? '<span class="mp-list-price free">무료</span>'
+				: '<span class="mp-list-price">' + Number(p.price).toLocaleString() + '원</span>'
+
+			var st      = statusMap[p.status] || { label: p.status, cls: 'badge-hidden' }
+			var badge   = '<span class="status-badge ' + st.cls + '">' + st.label + '</span>'
+
+			var reason  = (p.status === 'rejected' && p.rejection_reason)
+				? '<div class="my-prompt-reason">💬 반려 사유: ' + p.rejection_reason + '</div>'
+				: ''
+
+			html +=
+				'<div class="mp-list-card" data-id="' + p.id + '">' +
+					'<div class="mp-list-icon">' + icon + '</div>' +
+					'<div class="mp-list-info">' +
+						'<div class="mp-list-title">' + p.title + '</div>' +
+						'<div class="mp-list-desc">' + (p.description || '') + '</div>' +
+						reason +
+					'</div>' +
+					'<div class="mp-list-meta">' +
+						badge +
+						price +
+					'</div>' +
+				'</div>'
+		})
+
+		html += '</div>'
+		content.innerHTML = html
+
+		content.querySelectorAll('.mp-list-card').forEach(function(card)
+		{
+			card.addEventListener('click', function()
+			{
+				theApp.openDetail(card.dataset.id)
+			})
+		})
 	}
 
 	async _loadSaved(content)

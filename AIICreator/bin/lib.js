@@ -15528,11 +15528,12 @@ ErrorHandler._wasSignedIn = false
 				'🔔' +
 				badgeHTML +
 			  '</button>'
-			+ '<div class="ac-avatar nb-avatar" id="nb-avatar">' + initial + '</div>'
-			+ '<div class="nb-dropdown" id="nb-dropdown" style="display:none">'
-				+ '<div class="nb-dropdown-email">' + user.email + '</div>'
-				+ '<button class="nb-dropdown-item" id="nb-btn-mypage">마이페이지</button>'
-				+ '<button class="nb-dropdown-item" id="nb-btn-logout">로그아웃</button>'
+			+ '<div class="ac-avatar nb-avatar" id="nb-avatar">' + initial
+				+ '<div class="nb-dropdown" id="nb-dropdown" style="display:none">'
+					+ '<div class="nb-dropdown-email">' + user.email + '</div>'
+					+ '<button class="nb-dropdown-item" id="nb-btn-mypage">마이페이지</button>'
+					+ '<button class="nb-dropdown-item" id="nb-btn-logout">로그아웃</button>'
+				+ '</div>'
 			+ '</div>'
 	}
 
@@ -15592,9 +15593,11 @@ ErrorHandler._wasSignedIn = false
 		var avatar = el.querySelector('#nb-avatar')
 		if (avatar)
 		{
-			avatar.addEventListener('click', function()
+			avatar.addEventListener('click', function(e)
 			{
 				var dd = el.querySelector('#nb-dropdown')
+				// dropdown 내부 클릭은 toggle 무시 (자식이므로 이벤트 버블링됨)
+				if (dd && dd.contains(e.target)) return
 				if (dd) dd.style.display = dd.style.display === 'none' ? '' : 'none'
 			})
 		}
@@ -15603,7 +15606,8 @@ ErrorHandler._wasSignedIn = false
 		{
 			var dd = el.querySelector('#nb-dropdown')
 			var av = el.querySelector('#nb-avatar')
-			if (dd && av && !av.contains(e.target) && !dd.contains(e.target))
+			// dd가 av 안에 있으므로 av.contains만 체크하면 충분
+			if (dd && av && !av.contains(e.target))
 				dd.style.display = 'none'
 		}
 		document.addEventListener('click', this._docClickHandler)
@@ -16270,7 +16274,7 @@ PromptService = class PromptService
 	{
 		return this.sb.getClient()
 			.from('prompts')
-			.select('id, title, description, prompt_content, prompt_type, price, difficulty, like_count, save_count, view_count, created_at, result_image, users!user_id(id, username), ai_tools(name), categories(name)')
+			.select('id, title, description, prompt_content, prompt_type, price, difficulty, status, like_count, save_count, view_count, created_at, result_image, users!user_id(id, username), ai_tools(name), categories(name)')
 			.eq('id', promptId)
 			.single()
 	}
@@ -16555,7 +16559,7 @@ PromptService = class PromptService
 	{
 		return this.sb.getClient()
 			.from('prompts')
-			.select('id, title, description, price, prompt_type, status, like_count, view_count, created_at, result_image, ai_tools(name)')
+			.select('id, title, description, price, prompt_type, status, rejection_reason, like_count, view_count, created_at, result_image, ai_tools(name)')
 			.eq('user_id', userId)
 			.neq('status', 'hidden')
 			.order('created_at', { ascending: false })

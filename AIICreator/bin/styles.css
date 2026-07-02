@@ -274,3 +274,12 @@
 .noti-toggle input:checked + .noti-toggle-slider{background:var(--color-accent);}
 .noti-toggle input:checked + .noti-toggle-slider::before{transform:translateX(20px);}
 
+/* ── 내 프롬프트 status 배지 ─────────────────── */
+.mp-list-meta{display:flex;align-items:center;gap:8px;flex-shrink:0;margin-left:auto;padding-left:12px;}
+.status-badge{display:inline-block;font-size:0.8125rem;font-weight:700;padding:3px 10px;border-radius:20px;white-space:nowrap;}
+.badge-pending{background:rgba(234,179,8,0.18) !important;color:#eab308 !important;border:1px solid rgba(234,179,8,0.3);}
+.badge-published{background:rgba(59,130,246,0.18) !important;color:#3b82f6 !important;border:1px solid rgba(59,130,246,0.3);}
+.badge-rejected{background:rgba(239,68,68,0.18) !important;color:#ef4444 !important;border:1px solid rgba(239,68,68,0.3);}
+.badge-hidden{background:rgba(148,163,184,0.18) !important;color:#94a3b8 !important;border:1px solid rgba(148,163,184,0.3);}
+.my-prompt-reason{font-size:0.8125rem;color:#fff !important;font-weight:500;margin-top:6px;padding:6px 10px;background:rgba(239,68,68,0.65);border-left:3px solid #ef4444;border-radius:0 4px 4px 0;line-height:1.5;}
+

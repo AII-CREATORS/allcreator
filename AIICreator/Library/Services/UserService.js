@@ -97,7 +97,7 @@ UserService = class UserService
 	{
 		return this.sb.getClient()
 			.from('prompts')
-			.select('id, title, description, price, prompt_type, status, like_count, view_count, created_at, result_image, ai_tools(name)')
+			.select('id, title, description, price, prompt_type, status, rejection_reason, like_count, view_count, created_at, result_image, ai_tools(name)')
 			.eq('user_id', userId)
 			.neq('status', 'hidden')
 			.order('created_at', { ascending: false })

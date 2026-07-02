@@ -192,6 +192,9 @@ PromptDetailView = class PromptDetailView extends AView
 
 	_renderActionBtn(isFree)
 	{
+		// 반려된 프롬프트는 구매 버튼 미표시
+		if (this.prompt && this.prompt.status === 'rejected') return ''
+
 		if (this.isPurchased)
 			return '<span class="detail-purchased-badge">✅ ' + (isFree ? '사용 중' : '구매 완료') + '</span>'
 
