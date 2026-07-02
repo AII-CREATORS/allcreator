@@ -19,6 +19,15 @@ AIICreatorApp = class AIICreatorApp extends AApplication
 	onReady()
 	{
 		super.onReady()
+
+		// ── Supabase 초기화 이전에 URL 읽기 (implicit flow) ──────────────────
+		// Supabase createClient()가 hash를 비동기로 지우기 전에 먼저 확인
+		// PKCE flow는 hash에 type=recovery가 없으므로 ErrorHandler에서 이벤트로 보완
+		var rawHash   = window.location.hash
+		var rawSearch = window.location.search
+		if (rawHash.indexOf('type=recovery') !== -1 || rawSearch.indexOf('type=recovery') !== -1)
+			sessionStorage.setItem('ac_pw_recovery', '1')
+
 		ErrorHandler.init()
 		this.setMainContainer(new APage('main'))
 

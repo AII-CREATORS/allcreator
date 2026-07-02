@@ -15366,19 +15366,36 @@ ErrorHandler = class ErrorHandler
 		{
 			if (event === 'TOKEN_REFRESHED') return
 
-			// 세션이 만료되어 로그아웃 처리된 경우
-			if (event === 'SIGNED_OUT' && ErrorHandler._wasSignedIn)
+			// ── PASSWORD_RECOVERY (PKCE flow 포함) ───────────────────────────
+			// implicit flow: onReady()에서 URL hash로 이미 감지됨
+			// PKCE flow: URL에 type=recovery 없음 → 이 이벤트로 보완
+			// 이벤트 발화 시점이 onActiveDone 이후일 수 있으므로 AuthView를 재진입시킴
+			if (event === 'PASSWORD_RECOVERY')
 			{
-				ErrorHandler._wasSignedIn = false
-				ToastManager.warning('세션이 만료되었습니다. 다시 로그인해주세요')
+				sessionStorage.setItem('ac_pw_recovery', '1')
+				try { theApp.mainContainer.open('Source/Auth/AuthView.lay') }
+				catch (e) {}
+				return
+			}
 
-				try
+			// ── SIGNED_OUT ───────────────────────────────────────────────────
+			if (event === 'SIGNED_OUT')
+			{
+				// _suppressNextSignOut: 자동 로그인 미설정 회원의 앱 시작 시 signOut()은
+				// 만료가 아니므로 토스트/화면전환 억제
+				if (ErrorHandler._suppressNextSignOut)
 				{
-					theApp.mainContainer.open('Source/Auth/AuthView.lay')
+					ErrorHandler._suppressNextSignOut = false
+					return
 				}
-				catch (e)
+
+				if (ErrorHandler._wasSignedIn)
 				{
-					console.warn('[ErrorHandler] 화면 전환 실패:', e)
+					ErrorHandler._wasSignedIn = false
+					ToastManager.warning('세션이 만료되었습니다. 다시 로그인해주세요')
+
+					try { theApp.mainContainer.open('Source/Auth/AuthView.lay') }
+					catch (e) { console.warn('[ErrorHandler] 화면 전환 실패:', e) }
 				}
 				return
 			}
@@ -15433,7 +15450,8 @@ ErrorHandler = class ErrorHandler
 	}
 }
 
-ErrorHandler._wasSignedIn = false
+ErrorHandler._wasSignedIn        = false
+ErrorHandler._suppressNextSignOut = false
 
 ;NavBar = class NavBar
 {

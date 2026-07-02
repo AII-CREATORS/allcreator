@@ -4,28 +4,42 @@ AuthView = class AuthView extends AView
 	constructor()
 	{
 		super()
-		this.sb = null
+		this.sb         = null
 		this.currentTab = 'login'
 	}
 
 	onInitDone()
 	{
 		super.onInitDone()
+		this.sb = SupabaseManager.getInstance()
 		this._renderHTML()
 		this._bindEvents()
 		this._loadSavedEmail()
-		this.sb = SupabaseManager.getInstance()
 	}
 
 	async onActiveDone(isFirst)
 	{
 		super.onActiveDone(isFirst)
 
+		// ── 비밀번호 재설정 감지 (isFirst 무관하게 항상 최우선 처리) ──────────
+		// implicit flow: onReady()에서 URL hash로 감지 후 플래그 설정
+		// PKCE flow: ErrorHandler의 PASSWORD_RECOVERY 이벤트가 플래그 설정 후 재진입
+		var isRecovery = sessionStorage.getItem('ac_pw_recovery') === '1'
+		if (isRecovery)
+		{
+			sessionStorage.removeItem('ac_pw_recovery')
+			localStorage.removeItem('ac_no_persist')
+			sessionStorage.removeItem('ac_active_session')
+			this._showPasswordResetForm()
+			return
+		}
+
 		if (!isFirst) return
 
-		var hasOAuthHash = window.location.hash.indexOf('access_token') !== -1
-
-		if (hasOAuthHash)
+		// ── 소셜 로그인 OAuth 콜백 ────────────────────────────────────────────
+		var hash     = window.location.hash
+		var hasToken = hash.indexOf('access_token') !== -1
+		if (hasToken)
 		{
 			var self     = this
 			var listener = this.sb.getClient().auth.onAuthStateChange(function(event, session)
@@ -39,6 +53,21 @@ AuthView = class AuthView extends AView
 			return
 		}
 
+		// ── 자동 로그인 미설정 회원: 세션 정리 ───────────────────────────────
+		// Supabase는 항상 localStorage에 세션을 저장함
+		// ac_no_persist='1' 이고 ac_active_session 없으면 앱 시작 시 즉시 로그아웃
+		var noAutoLogin = localStorage.getItem('ac_no_persist') === '1'
+		var hasSession  = sessionStorage.getItem('ac_active_session') === '1'
+
+		if (noAutoLogin && !hasSession)
+		{
+			// ErrorHandler의 SIGNED_OUT 반응 억제 (만료가 아닌 정책적 로그아웃)
+			ErrorHandler._suppressNextSignOut = true
+			await this.sb.signOut()
+			return
+		}
+
+		// ── 자동 로그인 ───────────────────────────────────────────────────────
 		var user = await this.sb.getUser()
 		if (user) this._goToMain()
 	}
@@ -65,6 +94,67 @@ AuthView = class AuthView extends AView
 		}
 
 		this._goToMain()
+	}
+
+	// ─────────────────────────────────────────
+	// 비밀번호 재설정 폼 (이메일 링크 클릭 후)
+	// ─────────────────────────────────────────
+
+	_showPasswordResetForm()
+	{
+		var el   = this.getElement()
+		if (!el) return            // 뷰가 이미 교체된 경우 조용히 종료
+		var self = this
+
+		el.innerHTML =
+			'<div class="auth-wrap">' +
+				'<div class="auth-logo">' +
+					'<span class="auth-logo-text">ALL</span>' +
+					'<span class="auth-logo-accent">Creator</span>' +
+				'</div>' +
+				'<p class="auth-subtitle">새 비밀번호 설정</p>' +
+				'<div class="auth-box ac-card">' +
+					'<div class="ac-input-group">' +
+						'<label class="ac-label">새 비밀번호</label>' +
+						'<input class="ac-input" type="password" id="reset-pw" placeholder="6자 이상">' +
+					'</div>' +
+					'<div class="ac-input-group" style="margin-top:12px">' +
+						'<label class="ac-label">새 비밀번호 확인</label>' +
+						'<input class="ac-input" type="password" id="reset-pw2" placeholder="비밀번호 재입력">' +
+					'</div>' +
+					'<button class="ac-btn ac-btn-primary ac-w-full" id="btn-reset-pw" style="margin-top:20px">비밀번호 변경</button>' +
+				'</div>' +
+			'</div>'
+
+		el.querySelector('#btn-reset-pw').addEventListener('click', async function()
+		{
+			var pw  = el.querySelector('#reset-pw').value
+			var pw2 = el.querySelector('#reset-pw2').value
+
+			if (!pw)           { ToastManager.error('비밀번호를 입력해주세요'); return }
+			if (pw !== pw2)    { ToastManager.error('비밀번호가 일치하지 않습니다'); return }
+			if (pw.length < 6) { ToastManager.error('비밀번호는 6자 이상이어야 합니다'); return }
+
+			var btn = el.querySelector('#btn-reset-pw')
+			btn.disabled    = true
+			btn.textContent = '변경 중...'
+
+			var { error } = await self.sb.getClient().auth.updateUser({ password: pw })
+
+			if (error)
+			{
+				ToastManager.error(ErrorHandler.parseSupabaseError(error))
+				btn.disabled    = false
+				btn.textContent = '비밀번호 변경'
+				return
+			}
+
+			ToastManager.success('비밀번호가 변경되었습니다. 다시 로그인해주세요.')
+			await self.sb.signOut()
+			self._renderHTML()
+			self._bindEvents()
+			self._loadSavedEmail()
+		})
 	}
 
 	_showSocialCompletePanel(user, profile)
@@ -160,22 +250,32 @@ AuthView = class AuthView extends AView
 						'<button class="auth-tab active" data-tab="login">로그인</button>' +
 						'<button class="auth-tab" data-tab="signup">회원가입</button>' +
 					'</div>' +
+
+					// ── 로그인 패널 ──────────────────────────
 					'<div class="auth-panel" id="panel-login">' +
 						'<div class="ac-input-group">' +
 							'<label class="ac-label">이메일</label>' +
 							'<input class="ac-input" type="email" id="login-email" placeholder="email@example.com">' +
 						'</div>' +
-						'<div class="auth-remember">' +
-							'<label class="auth-remember-label">' +
-								'<input type="checkbox" id="chk-remember"> 이메일 저장' +
-							'</label>' +
-						'</div>' +
 						'<div class="ac-input-group" style="margin-top:12px">' +
 							'<label class="ac-label">비밀번호</label>' +
 							'<input class="ac-input" type="password" id="login-pw" placeholder="비밀번호 입력">' +
 						'</div>' +
-						'<button class="ac-btn ac-btn-primary ac-w-full" id="btn-login" style="margin-top:20px">로그인</button>' +
+						'<div class="auth-options-row">' +
+							'<label class="auth-check-label">' +
+								'<input type="checkbox" id="chk-remember"> 이메일 저장' +
+							'</label>' +
+							'<label class="auth-check-label">' +
+								'<input type="checkbox" id="chk-autologin"> 자동 로그인' +
+							'</label>' +
+						'</div>' +
+						'<button class="ac-btn ac-btn-primary ac-w-full" id="btn-login" style="margin-top:16px">로그인</button>' +
+						'<div class="auth-find-row">' +
+							'<button class="auth-find-btn" id="btn-find-pw">비밀번호 찾기</button>' +
+						'</div>' +
 					'</div>' +
+
+					// ── 회원가입 패널 ────────────────────────
 					'<div class="auth-panel" id="panel-signup" style="display:none">' +
 						'<div class="ac-input-group">' +
 							'<label class="ac-label">이메일</label>' +
@@ -187,7 +287,7 @@ AuthView = class AuthView extends AView
 						'</div>' +
 						'<div class="ac-input-group" style="margin-top:12px">' +
 							'<label class="ac-label">비밀번호</label>' +
-							'<input class="ac-input" type="password" id="signup-pw" placeholder="8자 이상 입력">' +
+							'<input class="ac-input" type="password" id="signup-pw" placeholder="6자 이상 입력">' +
 						'</div>' +
 						'<div class="ac-input-group" style="margin-top:12px">' +
 							'<label class="ac-label">비밀번호 확인</label>' +
@@ -210,6 +310,7 @@ AuthView = class AuthView extends AView
 						'</div>' +
 						'<button class="ac-btn ac-btn-primary ac-w-full" id="btn-signup" style="margin-top:20px">회원가입</button>' +
 					'</div>' +
+
 					'<div class="ac-divider-text" style="margin-top:20px">또는</div>' +
 					'<div style="margin-top:16px;display:flex;flex-direction:column;gap:10px">' +
 						'<button class="auth-social-btn" id="btn-google">' +
@@ -225,19 +326,24 @@ AuthView = class AuthView extends AView
 			'</div>'
 	}
 
-
 	// ─────────────────────────────────────────
-	// 이메일 저장 (localStorage)
+	// 이메일 저장 / 자동 로그인 복원
 	// ─────────────────────────────────────────
 
 	_loadSavedEmail()
 	{
+		var el    = this.getElement()
 		var saved = localStorage.getItem('ac_saved_email')
-		if (!saved) return
-		var emailInput  = this.getElement().querySelector('#login-email')
-		var chkRemember = this.getElement().querySelector('#chk-remember')
-		if (emailInput)  emailInput.value    = saved
-		if (chkRemember) chkRemember.checked = true
+		if (saved)
+		{
+			var emailInput = el.querySelector('#login-email')
+			if (emailInput) emailInput.value = saved
+			var chk = el.querySelector('#chk-remember')
+			if (chk) chk.checked = true
+		}
+
+		var autoChk = el.querySelector('#chk-autologin')
+		if (autoChk) autoChk.checked = localStorage.getItem('ac_no_persist') !== '1'
 	}
 
 	// ─────────────────────────────────────────
@@ -261,6 +367,7 @@ AuthView = class AuthView extends AView
 		el.querySelector('#btn-signup').addEventListener('click', function() { self._onSignup() })
 		el.querySelector('#btn-google').addEventListener('click', function() { self._onSocialLogin('google') })
 		el.querySelector('#btn-kakao').addEventListener('click',  function() { self._onSocialLogin('kakao') })
+		el.querySelector('#btn-find-pw').addEventListener('click', function() { self._showFindPwModal() })
 
 		this._bindTabKey()
 	}
@@ -325,15 +432,16 @@ AuthView = class AuthView extends AView
 	}
 
 	// ─────────────────────────────────────────
-	// 로그인 / 회원가입
+	// 로그인
 	// ─────────────────────────────────────────
 
 	async _onLogin()
 	{
-		var el    = this.getElement()
-		var email = el.querySelector('#login-email').value.trim()
-		var pw    = el.querySelector('#login-pw').value
-		var chk   = el.querySelector('#chk-remember').checked
+		var el      = this.getElement()
+		var email   = el.querySelector('#login-email').value.trim()
+		var pw      = el.querySelector('#login-pw').value
+		var chkSave = el.querySelector('#chk-remember').checked
+		var chkAuto = el.querySelector('#chk-autologin').checked
 
 		if (!email || !pw) { ToastManager.error('이메일과 비밀번호를 입력해주세요'); return }
 
@@ -351,11 +459,25 @@ AuthView = class AuthView extends AView
 			return
 		}
 
-		if (chk) localStorage.setItem('ac_saved_email', email)
-		else     localStorage.removeItem('ac_saved_email')
+		if (chkSave) localStorage.setItem('ac_saved_email', email)
+		else         localStorage.removeItem('ac_saved_email')
+
+		if (chkAuto)
+		{
+			localStorage.removeItem('ac_no_persist')
+		}
+		else
+		{
+			localStorage.setItem('ac_no_persist', '1')
+			sessionStorage.setItem('ac_active_session', '1')
+		}
 
 		this._goToMain()
 	}
+
+	// ─────────────────────────────────────────
+	// 회원가입
+	// ─────────────────────────────────────────
 
 	async _onSignup()
 	{
@@ -404,6 +526,138 @@ AuthView = class AuthView extends AView
 
 		if (error && error.message)
 			ToastManager.error(error.message)
+	}
+
+	// ─────────────────────────────────────────
+	// 비밀번호 찾기
+	// ─────────────────────────────────────────
+
+	_showFindPwModal()
+	{
+		var self    = this
+		var overlay = this._createModalShell('비밀번호 찾기')
+		var body    = overlay.querySelector('#find-body')
+
+		body.innerHTML =
+			'<p class="find-modal-desc">가입한 이메일 주소를 입력하면 비밀번호 재설정 링크를 발송합니다.</p>' +
+			'<div class="ac-input-group">' +
+				'<label class="ac-label">이메일</label>' +
+				'<input class="ac-input" type="email" id="findpw-email" placeholder="email@example.com">' +
+			'</div>' +
+			'<button class="ac-btn ac-btn-primary ac-w-full" id="findpw-btn-send" style="margin-top:16px">재설정 링크 발송</button>'
+
+		body.querySelector('#findpw-btn-send').addEventListener('click', async function()
+		{
+			var email = body.querySelector('#findpw-email').value.trim()
+			if (!email) { ToastManager.error('이메일을 입력해주세요'); return }
+
+			var btn = body.querySelector('#findpw-btn-send')
+			btn.disabled    = true
+			btn.textContent = '확인 중...'
+
+			// provider 확인
+			var { data } = await self.sb.getClient()
+				.from('users')
+				.select('auth_provider')
+				.eq('email', email)
+				.single()
+
+			if (!data)
+			{
+				btn.disabled    = false
+				btn.textContent = '재설정 링크 발송'
+				body.innerHTML =
+					'<div class="find-result find-result-error">' +
+						'<div class="find-result-icon">❌</div>' +
+						'<div class="find-result-msg">가입되지 않은 이메일입니다.</div>' +
+					'</div>' +
+					'<button class="ac-btn ac-w-full" id="findpw-retry" style="margin-top:16px">다시 입력</button>'
+				body.querySelector('#findpw-retry').addEventListener('click', function()
+				{
+					document.body.removeChild(overlay)
+					self._showFindPwModal()
+				})
+				return
+			}
+
+			if (data.auth_provider !== 'email')
+			{
+				var pName = data.auth_provider === 'kakao' ? '카카오' : 'Google'
+				btn.disabled    = false
+				btn.textContent = '재설정 링크 발송'
+				body.innerHTML =
+					'<div class="find-result find-result-info">' +
+						'<div class="find-result-icon">' + (data.auth_provider === 'kakao' ? '💛' : '🔵') + '</div>' +
+						'<div class="find-result-msg">' + pName + '로 가입된 계정입니다.<br>' + pName + ' 로그인으로 진행해주세요.</div>' +
+					'</div>' +
+					'<button class="ac-btn ac-btn-primary ac-w-full" id="findpw-done" style="margin-top:16px">확인</button>'
+				body.querySelector('#findpw-done').addEventListener('click', function()
+				{
+					document.body.removeChild(overlay)
+				})
+				return
+			}
+
+			// 이메일 회원 → 재설정 링크 발송
+			var redirectTo = window.location.href.split('#')[0].split('?')[0]
+			var { error } = await self.sb.getClient().auth.resetPasswordForEmail(email, { redirectTo })
+
+			btn.disabled    = false
+			btn.textContent = '재설정 링크 발송'
+
+			if (error)
+			{
+				ToastManager.error(ErrorHandler.parseSupabaseError(error))
+				return
+			}
+
+			body.innerHTML =
+				'<div class="find-result find-result-success">' +
+					'<div class="find-result-icon">📧</div>' +
+					'<div class="find-result-msg">' +
+						'<strong>' + email + '</strong>으로<br>' +
+						'비밀번호 재설정 링크를 발송했습니다.<br>' +
+						'<span style="font-size:0.8125rem;color:var(--color-text-dim)">이메일의 링크를 클릭하면 새 비밀번호를 설정할 수 있습니다.</span>' +
+					'</div>' +
+				'</div>' +
+				'<button class="ac-btn ac-w-full" id="findpw-close" style="margin-top:16px">닫기</button>'
+
+			body.querySelector('#findpw-close').addEventListener('click', function()
+			{
+				document.body.removeChild(overlay)
+			})
+		})
+	}
+
+	// ─────────────────────────────────────────
+	// 모달 공통 쉘 생성
+	// ─────────────────────────────────────────
+
+	_createModalShell(title)
+	{
+		var overlay = document.createElement('div')
+		overlay.className = 'find-modal-overlay'
+		overlay.innerHTML =
+			'<div class="find-modal">' +
+				'<div class="find-modal-header">' +
+					'<span class="find-modal-title">' + title + '</span>' +
+					'<button class="find-modal-close" id="find-close">✕</button>' +
+				'</div>' +
+				'<div class="find-modal-body" id="find-body"></div>' +
+			'</div>'
+
+		document.body.appendChild(overlay)
+
+		overlay.querySelector('#find-close').addEventListener('click', function()
+		{
+			if (overlay.parentNode) document.body.removeChild(overlay)
+		})
+		overlay.addEventListener('click', function(e)
+		{
+			if (e.target === overlay && overlay.parentNode) document.body.removeChild(overlay)
+		})
+
+		return overlay
 	}
 
 	_goToMain()

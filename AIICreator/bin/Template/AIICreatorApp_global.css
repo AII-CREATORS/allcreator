@@ -850,3 +850,40 @@ header#main-navbar{position:sticky;top:0;z-index:100;background:rgba(26,26,46,0.
    알림 패널 애니메이션
    ================================ */
 @keyframes notifSlideIn{from{transform:translateX(100%);opacity:0}to{transform:translateX(0);opacity:1}}
+
+/* ================================
+   AuthView — 자동 로그인 / 찾기 버튼
+   ================================ */
+.auth-options-row{display:flex;align-items:center;gap:16px;margin-top:10px;}
+.auth-check-label{display:flex;align-items:center;gap:6px;font-size:0.8125rem;color:var(--color-text-muted);cursor:pointer;}
+.auth-find-row{display:flex;align-items:center;justify-content:center;gap:8px;margin-top:12px;}
+.auth-find-btn{background:transparent;border:none;font-size:0.8125rem;color:var(--color-text-dim);cursor:pointer;padding:2px 0;transition:color var(--transition);}
+.auth-find-btn:hover{color:var(--color-accent);}
+.auth-find-sep{color:var(--color-border);font-size:0.8125rem;}
+
+/* ================================
+   전화번호 인증 UI
+   ================================ */
+.auth-phone-row{display:flex;align-items:center;gap:8px;}
+.auth-phone-status{font-size:0.8125rem;margin-top:6px;font-weight:500;}
+.auth-phone-ok{color:var(--color-success);}
+.auth-phone-fail{color:var(--color-error);}
+
+/* ================================
+   아이디 / 비밀번호 찾기 모달
+   ================================ */
+.find-modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.65);z-index:3000;display:flex;align-items:center;justify-content:center;padding:20px;}
+.find-modal{background:var(--color-surface);border:1px solid var(--color-border-light);border-radius:var(--radius-lg);width:100%;max-width:420px;box-shadow:var(--shadow-lg);overflow:hidden;}
+.find-modal-header{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--color-border);}
+.find-modal-title{font-family:var(--font-title);font-size:1rem;font-weight:700;color:var(--color-text);}
+.find-modal-close{background:transparent;border:none;font-size:1.125rem;color:var(--color-text-dim);cursor:pointer;padding:2px 6px;border-radius:var(--radius-sm);transition:all var(--transition);}
+.find-modal-close:hover{background:var(--color-surface-2);color:var(--color-text);}
+.find-modal-body{padding:20px;}
+.find-modal-desc{font-size:0.875rem;color:var(--color-text-muted);margin-bottom:16px;line-height:1.6;}
+.find-result{display:flex;flex-direction:column;align-items:center;gap:12px;padding:20px;border-radius:var(--radius-md);text-align:center;}
+.find-result-success{background:rgba(76,175,130,0.1);border:1px solid rgba(76,175,130,0.3);}
+.find-result-error{background:rgba(255,107,107,0.1);border:1px solid rgba(255,107,107,0.3);}
+.find-result-info{background:rgba(108,99,255,0.1);border:1px solid rgba(108,99,255,0.3);}
+.find-result-icon{font-size:2rem;}
+.find-result-msg{font-size:0.9375rem;color:var(--color-text-muted);line-height:1.6;}
+.find-email-display{font-size:1.125rem;color:var(--color-accent);display:block;margin-top:6px;}
