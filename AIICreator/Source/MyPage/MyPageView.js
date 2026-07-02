@@ -466,6 +466,7 @@ class MyPageView extends AView
 					'<div class="mp-list-meta">' +
 						badge +
 						price +
+						'<button class="mp-edit-btn" data-id="' + p.id + '">수정</button>' +
 					'</div>' +
 				'</div>'
 		})
@@ -478,6 +479,17 @@ class MyPageView extends AView
 			card.addEventListener('click', function()
 			{
 				theApp.openDetail(card.dataset.id)
+			})
+		})
+
+		// 수정 버튼: 카드 클릭 이벤트와 분리
+		content.querySelectorAll('.mp-edit-btn').forEach(function(btn)
+		{
+			btn.addEventListener('click', function(e)
+			{
+				e.stopPropagation()
+				theApp.editPromptId = btn.getAttribute('data-id')
+				theApp.mainContainer.open('Source/Prompt/PromptRegisterView.lay')
 			})
 		})
 	}

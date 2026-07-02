@@ -4,11 +4,13 @@ class PromptRegisterView extends AView
 	constructor()
 	{
 		super()
-		this.sb          = null
-		this.ps          = null
-		this.currentUser = null
-		this.aiTools     = []
-		this.categories  = []
+		this.sb            = null
+		this.ps            = null
+		this.currentUser   = null
+		this.aiTools       = []
+		this.categories    = []
+		this.editPromptId  = null   // 수정 모드일 때 설정됨
+		this.editPrompt    = null   // 수정 대상 데이터
 	}
 
 	onInitDone()
@@ -35,7 +37,28 @@ class PromptRegisterView extends AView
 			return
 		}
 
+		// 수정 모드 감지: theApp.editPromptId가 설정돼 있으면 수정 모드
+		if (theApp.editPromptId)
+		{
+			this.editPromptId    = theApp.editPromptId
+			theApp.editPromptId  = null  // 소비 후 초기화
+		}
+
 		await this._loadMeta()
+
+		// 수정 모드면 기존 데이터 로드
+		if (this.editPromptId)
+		{
+			var result = await this.ps.getDetail(this.editPromptId)
+			if (result.error || !result.data)
+			{
+				ToastManager.error('프롬프트를 불러올 수 없습니다')
+				this._goBack()
+				return
+			}
+			this.editPrompt = result.data
+		}
+
 		this._renderHTML()
 		this._bindEvents()
 	}
@@ -71,25 +94,36 @@ class PromptRegisterView extends AView
 
 	_renderHTML()
 	{
+		var isEdit = !!this.editPromptId
+		var p      = this.editPrompt || {}
+		var price  = isEdit ? Number(p.price || 0) : 0
+
+		// AI 도구 옵션 (수정 모드면 기존 값 selected)
+		var editToolId = isEdit && p.ai_tools ? (this._findToolId(p.ai_tools.name)) : ''
 		var toolOptions = '<option value="">AI 도구 선택 *</option>'
 		this.aiTools.forEach(function(t)
 		{
-			toolOptions += '<option value="' + t.id + '">' + t.name + '</option>'
+			toolOptions += '<option value="' + t.id + '"' + (t.id === editToolId ? ' selected' : '') + '>' + t.name + '</option>'
 		})
 
+		// 카테고리 옵션
+		var editCatId = isEdit && p.categories ? (this._findCatId(p.categories.name)) : ''
 		var catOptions = '<option value="">카테고리 선택</option>'
 		this.categories.forEach(function(c)
 		{
-			catOptions += '<option value="' + c.id + '">' + c.name + '</option>'
+			catOptions += '<option value="' + c.id + '"' + (c.id === editCatId ? ' selected' : '') + '>' + c.name + '</option>'
 		})
+
+		var typeText  = isEdit && p.prompt_type === 'image' ? ' selected' : ''
+		var typeImage = isEdit && p.prompt_type === 'image' ? ' selected' : ''
 
 		this.getElement().innerHTML =
 			'<div class="reg-wrap">' +
 
 				'<header class="reg-nav">' +
 					'<button class="reg-back" id="btn-back">← 돌아가기</button>' +
-					'<h1 class="reg-nav-title">프롬프트 등록</h1>' +
-					'<button class="ac-btn ac-btn-primary ac-btn-sm" id="btn-submit">등록하기</button>' +
+					'<h1 class="reg-nav-title">' + (isEdit ? '프롬프트 수정' : '프롬프트 등록') + '</h1>' +
+					'<button class="ac-btn ac-btn-primary ac-btn-sm" id="btn-submit">' + (isEdit ? '수정 완료' : '등록하기') + '</button>' +
 				'</header>' +
 
 				'<div class="reg-content">' +
@@ -98,15 +132,15 @@ class PromptRegisterView extends AView
 						// 제목
 						'<div class="ac-input-group">' +
 							'<label class="ac-label">제목 <span class="reg-required">*</span></label>' +
-							'<input class="ac-input" type="text" id="reg-title" placeholder="프롬프트 제목을 입력하세요" maxlength="100">' +
-							'<div class="reg-char-count" id="count-title">0 / 100</div>' +
+							'<input class="ac-input" type="text" id="reg-title" placeholder="프롬프트 제목을 입력하세요" maxlength="100" value="' + (isEdit ? (p.title || '').replace(/"/g, '&quot;') : '') + '">' +
+							'<div class="reg-char-count" id="count-title">' + (isEdit ? (p.title || '').length : 0) + ' / 100</div>' +
 						'</div>' +
 
 						// 설명
 						'<div class="ac-input-group">' +
 							'<label class="ac-label">설명 <span class="reg-required">*</span></label>' +
-							'<textarea class="ac-input reg-textarea" id="reg-desc" placeholder="프롬프트에 대한 간단한 설명을 입력하세요" maxlength="300"></textarea>' +
-							'<div class="reg-char-count" id="count-desc">0 / 300</div>' +
+							'<textarea class="ac-input reg-textarea" id="reg-desc" placeholder="프롬프트에 대한 간단한 설명을 입력하세요" maxlength="300">' + (isEdit ? (p.description || '') : '') + '</textarea>' +
+							'<div class="reg-char-count" id="count-desc">' + (isEdit ? (p.description || '').length : 0) + ' / 300</div>' +
 						'</div>' +
 
 						// AI 도구 + 카테고리
@@ -126,16 +160,16 @@ class PromptRegisterView extends AView
 							'<div class="ac-input-group" style="flex:1">' +
 								'<label class="ac-label">프롬프트 타입 <span class="reg-required">*</span></label>' +
 								'<select class="ac-input" id="reg-type">' +
-									'<option value="text">✍️ 텍스트</option>' +
-									'<option value="image">🎨 이미지</option>' +
+									'<option value="text"' + (isEdit && p.prompt_type === 'text' ? ' selected' : '') + '>✍️ 텍스트</option>' +
+									'<option value="image"' + (isEdit && p.prompt_type === 'image' ? ' selected' : '') + '>🎨 이미지</option>' +
 								'</select>' +
 							'</div>' +
 							'<div class="ac-input-group" style="flex:1">' +
 								'<label class="ac-label">난이도</label>' +
 								'<select class="ac-input" id="reg-difficulty">' +
-									'<option value="beginner">입문</option>' +
-									'<option value="intermediate">중급</option>' +
-									'<option value="advanced">고급</option>' +
+									'<option value="beginner"' + (isEdit && p.difficulty === 'beginner' ? ' selected' : '') + '>입문</option>' +
+									'<option value="intermediate"' + (isEdit && p.difficulty === 'intermediate' ? ' selected' : '') + '>중급</option>' +
+									'<option value="advanced"' + (isEdit && p.difficulty === 'advanced' ? ' selected' : '') + '>고급</option>' +
 								'</select>' +
 							'</div>' +
 						'</div>' +
@@ -144,8 +178,8 @@ class PromptRegisterView extends AView
 						'<div class="ac-input-group">' +
 							'<label class="ac-label">가격 (원)</label>' +
 							'<div class="reg-price-wrap">' +
-								'<input class="ac-input reg-price-input" type="number" id="reg-price" placeholder="0" min="0" value="0">' +
-								'<span class="reg-price-hint" id="price-hint">무료</span>' +
+								'<input class="ac-input reg-price-input" type="number" id="reg-price" placeholder="0" min="0" value="' + price + '">' +
+								'<span class="reg-price-hint' + (price > 0 ? ' paid' : '') + '" id="price-hint">' + (price > 0 ? price.toLocaleString() + '원' : '무료') + '</span>' +
 							'</div>' +
 						'</div>' +
 
@@ -154,14 +188,28 @@ class PromptRegisterView extends AView
 							'<label class="ac-label">프롬프트 내용 <span class="reg-required">*</span>' +
 								'<span class="reg-label-sub">— 구매자에게 공개되는 실제 프롬프트</span>' +
 							'</label>' +
-							'<textarea class="ac-input reg-textarea reg-textarea-lg" id="reg-content" placeholder="실제 프롬프트 내용을 입력하세요&#10;&#10;예시) Act as a senior software engineer..."></textarea>' +
-							'<div class="reg-char-count" id="count-content">0 자</div>' +
+							'<textarea class="ac-input reg-textarea reg-textarea-lg" id="reg-content" placeholder="실제 프롬프트 내용을 입력하세요&#10;&#10;예시) Act as a senior software engineer...">' + (isEdit ? (p.prompt_content || '') : '') + '</textarea>' +
+							'<div class="reg-char-count" id="count-content">' + (isEdit ? (p.prompt_content || '').length : 0) + ' 자</div>' +
 						'</div>' +
 
 					'</div>' +
 				'</div>' +
 
 			'</div>'
+	}
+
+	// AI 도구 이름으로 id 찾기
+	_findToolId(name)
+	{
+		var found = this.aiTools.filter(function(t) { return t.name === name })[0]
+		return found ? found.id : ''
+	}
+
+	// 카테고리 이름으로 id 찾기
+	_findCatId(name)
+	{
+		var found = this.categories.filter(function(c) { return c.name === name })[0]
+		return found ? found.id : ''
 	}
 
 	// ─────────────────────────────────────────
@@ -228,14 +276,14 @@ class PromptRegisterView extends AView
 		if (!toolId)  { ToastManager.error('AI 도구를 선택해주세요'); return }
 		if (price < 0){ ToastManager.error('가격은 0원 이상이어야 합니다'); return }
 
-		var btn = el.querySelector('#btn-submit')
+		var isEdit = !!this.editPromptId
+		var btn    = el.querySelector('#btn-submit')
 		btn.disabled    = true
-		btn.textContent = '등록 중...'
+		btn.textContent = isEdit ? '수정 중...' : '등록 중...'
 
 		try
 		{
 			var row = {
-				user_id:        this.currentUser.id,
 				title:          title,
 				description:    desc,
 				prompt_content: content,
@@ -243,27 +291,42 @@ class PromptRegisterView extends AView
 				prompt_type:    type,
 				difficulty:     difficulty,
 				price:          String(price),
-				status:         'pending'
+				category_id:    categoryId || null
 			}
 
-			if (categoryId) row.category_id = categoryId
-
-			var result = await this.ps.create(row)
-			if (result.error) throw new Error(result.error.message)
-
-			ToastManager.success('프롬프트가 등록되었습니다! 관리자 검수 후 게시됩니다.')
-			theApp.mainContainer.open('Source/MainView.lay')
+			var result
+			if (isEdit)
+			{
+				// update()가 내부적으로 status:'pending', rejection_reason:null 처리
+				result = await this.ps.update(this.editPromptId, row)
+				if (result.error) throw new Error(result.error.message)
+				ToastManager.success('수정되었습니다. 관리자 재검수 후 게시됩니다.')
+				theApp.mainContainer.open('Source/MyPage/MyPageView.lay')
+			}
+			else
+			{
+				row.user_id = this.currentUser.id
+				row.status  = 'pending'
+				result = await this.ps.create(row)
+				if (result.error) throw new Error(result.error.message)
+				ToastManager.success('프롬프트가 등록되었습니다! 관리자 검수 후 게시됩니다.')
+				theApp.mainContainer.open('Source/MainView.lay')
+			}
 		}
 		catch (e)
 		{
-			ToastManager.error('등록 실패: ' + e.message)
+			ToastManager.error((isEdit ? '수정' : '등록') + ' 실패: ' + e.message)
 			btn.disabled    = false
-			btn.textContent = '등록하기'
+			btn.textContent = isEdit ? '수정 완료' : '등록하기'
 		}
 	}
 
 	_goBack()
 	{
-		theApp.mainContainer.open('Source/MainView.lay')
+		// 수정 모드면 마이페이지로, 등록 모드면 메인으로
+		if (this.editPromptId)
+			theApp.mainContainer.open('Source/MyPage/MyPageView.lay')
+		else
+			theApp.mainContainer.open('Source/MainView.lay')
 	}
 }

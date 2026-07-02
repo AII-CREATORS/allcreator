@@ -16348,6 +16348,22 @@ PromptService = class PromptService
 		return this.sb.getClient().from('prompts').insert(data).select('id').single()
 	}
 
+	// -----------------------------------------
+	// 프롬프트 수정 (status → pending, rejection_reason 초기화)
+	// -----------------------------------------
+
+	async update(promptId, data)
+	{
+		data.status           = 'pending'
+		data.rejection_reason = null
+		return this.sb.getClient()
+			.from('prompts')
+			.update(data)
+			.eq('id', promptId)
+			.select('id')
+			.single()
+	}
+
 	async updateResultImage(promptId, imageUrl)
 	{
 		return this.sb.getClient()
