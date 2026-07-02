@@ -18,33 +18,7 @@ Deno.serve(async (req) =>
     const { paymentKey, orderId, amount, promptId, buyerId } = await req.json()
 
     // ─────────────────────────────────────────
-    // 1. Toss /confirm API 호출 (서버 측 결제 승인)
-    // ─────────────────────────────────────────
-
-    const tossSecretKey = Deno.env.get('TOSS_SECRET_KEY')!
-    const encoded       = btoa(tossSecretKey + ':')
-
-    const tossRes = await fetch('https://api.tosspayments.com/v1/payments/confirm', {
-      method:  'POST',
-      headers: {
-        Authorization:  `Basic ${encoded}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ paymentKey, orderId, amount })
-    })
-
-    const tossData = await tossRes.json()
-
-    if (!tossRes.ok)
-    {
-      return new Response(
-        JSON.stringify({ error: tossData.message || '결제 승인 실패', code: tossData.code }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      )
-    }
-
-    // ─────────────────────────────────────────
-    // 2. Supabase Service Role 클라이언트 (RLS 우회)
+    // 1. Supabase Service Role 클라이언트 (RLS 우회)
     // ─────────────────────────────────────────
 
     const supabase = createClient(
@@ -53,7 +27,7 @@ Deno.serve(async (req) =>
     )
 
     // ─────────────────────────────────────────
-    // 3. 프롬프트 조회 + 금액 위변조 검증
+    // 2. 프롬프트 조회 + 금액 위변조 검증
     // ─────────────────────────────────────────
 
     const { data: prompt, error: promptErr } = await supabase
@@ -80,7 +54,54 @@ Deno.serve(async (req) =>
     }
 
     // ─────────────────────────────────────────
-    // 4. orders INSERT
+    // 3. 중복 구매 체크 (Toss confirm 이전에 실행)
+    //    라이브 환경에서 confirm 이후 중복 감지 → 실제 결제는 완료됐는데 DB만 막힘
+    // ─────────────────────────────────────────
+
+    const { data: existingOrder } = await supabase
+      .from('orders')
+      .select('id')
+      .eq('buyer_id', buyerId)
+      .eq('prompt_id', promptId)
+      .eq('status', 'completed')
+      .maybeSingle()
+
+    if (existingOrder)
+    {
+      return new Response(
+        JSON.stringify({ error: '이미 구매한 프롬프트입니다', alreadyPurchased: true }),
+        { status: 409, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    // ─────────────────────────────────────────
+    // 4. Toss /confirm API 호출 (서버 측 결제 승인)
+    // ─────────────────────────────────────────
+
+    const tossSecretKey = Deno.env.get('TOSS_SECRET_KEY')!
+    const encoded       = btoa(tossSecretKey + ':')
+
+    const tossRes = await fetch('https://api.tosspayments.com/v1/payments/confirm', {
+      method:  'POST',
+      headers: {
+        Authorization:  `Basic ${encoded}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ paymentKey, orderId, amount })
+    })
+
+    const tossData = await tossRes.json()
+
+    if (!tossRes.ok)
+    {
+      return new Response(
+        JSON.stringify({ error: tossData.message || '결제 승인 실패', code: tossData.code }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    // ─────────────────────────────────────────
+    // 5. orders INSERT
     // ─────────────────────────────────────────
 
     const { data: order, error: orderErr } = await supabase
@@ -102,7 +123,7 @@ Deno.serve(async (req) =>
     if (orderErr) throw new Error('주문 생성 실패: ' + orderErr.message)
 
     // ─────────────────────────────────────────
-    // 5. settlements INSERT (수수료 20%)
+    // 6. settlements INSERT (수수료 20%)
     // ─────────────────────────────────────────
 
     const netAmount = Math.floor(amount * (1 - COMMISSION_RATE))
@@ -117,7 +138,7 @@ Deno.serve(async (req) =>
     })
 
     // ─────────────────────────────────────────
-    // 6. purchase_count 증가
+    // 7. purchase_count 증가
     // ─────────────────────────────────────────
 
     await supabase
@@ -126,7 +147,7 @@ Deno.serve(async (req) =>
       .eq('id', promptId)
 
     // ─────────────────────────────────────────
-    // 7. 구매 완료 알림 (구매자에게)
+    // 8. 구매 완료 알림 (구매자에게)
     // ─────────────────────────────────────────
 
     await supabase.from('notifications').insert({
