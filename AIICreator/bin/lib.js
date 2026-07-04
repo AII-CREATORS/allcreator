@@ -15950,8 +15950,13 @@ PromptGrid = class PromptGrid
 			'<div style="display:flex;align-items:center;justify-content:space-between;' +
 				'padding:20px 20px 16px;border-bottom:1px solid #2E2E48;flex-shrink:0;">' +
 				'<h2 style="font-size:1rem;font-weight:700;color:#F0F0FF;margin:0;">알림</h2>' +
-				'<button id="notif-close" style="background:rgba(255,255,255,0.08);border:none;' +
-					'border-radius:50%;width:30px;height:30px;cursor:pointer;color:#A0A0C0;font-size:0.9rem;">✕</button>' +
+				'<div style="display:flex;align-items:center;gap:8px;">' +
+					'<button id="notif-clear-all" style="background:none;border:1px solid #3E3E58;' +
+						'border-radius:6px;padding:4px 10px;cursor:pointer;color:#8080A0;font-size:0.75rem;' +
+						'transition:all 150ms ease;">모두 지우기</button>' +
+					'<button id="notif-close" style="background:rgba(255,255,255,0.08);border:none;' +
+						'border-radius:50%;width:30px;height:30px;cursor:pointer;color:#A0A0C0;font-size:0.9rem;">✕</button>' +
+				'</div>' +
 			'</div>' +
 			'<div id="notif-list" style="flex:1;overflow-y:auto;padding:12px 0;">' +
 				'<div style="text-align:center;padding:40px 20px;color:#6B6B8A;font-size:0.875rem;">불러오는 중...</div>' +
@@ -15963,6 +15968,11 @@ PromptGrid = class PromptGrid
 		panel.querySelector('#notif-close').addEventListener('click', function()
 		{
 			this._close()
+		}.bind(this))
+
+		panel.querySelector('#notif-clear-all').addEventListener('click', function()
+		{
+			this._clearAll()
 		}.bind(this))
 
 		this._outsideHandler = function(e)
@@ -16058,14 +16068,14 @@ PromptGrid = class PromptGrid
 					' data-prompt="' + (n.prompt_id || '') + '"' +
 					' data-body="' + encodeURIComponent(n.body || '') + '"' +
 					' data-read="' + (n.is_read ? '1' : '0') + '"' +
-					' style="padding:14px 20px;cursor:pointer;border-bottom:1px solid #1E1E32;transition:background 150ms ease;' +
+					' style="position:relative;padding:14px 20px;cursor:pointer;border-bottom:1px solid #1E1E32;transition:background 150ms ease;' +
 					(isUnread ? 'background:rgba(108,99,255,0.06);' : '') + '">' +
 					'<div style="display:flex;gap:12px;align-items:flex-start;">' +
 						'<div style="width:36px;height:36px;border-radius:50%;background:' + self._typeColor(n.type) + ';' +
 							'display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">' +
 							icon +
 						'</div>' +
-						'<div style="flex:1;min-width:0;">' +
+						'<div style="flex:1;min-width:0;padding-right:20px;">' +
 							'<div class="notif-title-text" style="font-size:0.875rem;font-weight:' + (isUnread ? '600' : '400') + ';color:' + (isUnread ? '#F0F0FF' : '#B0B0D0') + ';line-height:1.4;margin-bottom:4px;">' +
 								n.title +
 							'</div>' +
@@ -16074,6 +16084,10 @@ PromptGrid = class PromptGrid
 						'</div>' +
 						'<div class="notif-dot" style="' + (isUnread ? '' : 'display:none;') + 'width:7px;height:7px;border-radius:50%;background:#6C63FF;flex-shrink:0;margin-top:5px;"></div>' +
 					'</div>' +
+					'<button class="notif-item-del" data-del-id="' + n.id + '"' +
+						' style="position:absolute;top:8px;right:8px;background:none;border:none;' +
+						'color:#4A4A6A;font-size:0.75rem;cursor:pointer;padding:2px 5px;border-radius:4px;' +
+						'line-height:1;transition:color 150ms ease;">✕</button>' +
 				'</div>'
 		})
 
@@ -16085,12 +16099,28 @@ PromptGrid = class PromptGrid
 			item.addEventListener('mouseenter', function()
 			{
 				item.style.background = 'rgba(108,99,255,0.1)'
+				var delBtn = item.querySelector('.notif-item-del')
+				if (delBtn) delBtn.style.color = '#8080A0'
 			})
 			item.addEventListener('mouseleave', function()
 			{
 				item.style.background = item.getAttribute('data-read') === '0'
 					? 'rgba(108,99,255,0.06)'
 					: ''
+				var delBtn = item.querySelector('.notif-item-del')
+				if (delBtn) delBtn.style.color = '#4A4A6A'
+			})
+		})
+
+		listEl.querySelectorAll('.notif-item-del').forEach(function(btn)
+		{
+			btn.addEventListener('click', function(e)
+			{
+				e.stopPropagation()  // 아이템 클릭(_onItemClick) 버블링 차단
+				var id     = btn.getAttribute('data-del-id')
+				var item   = btn.closest('.notif-item')
+				var isUnrd = item ? item.getAttribute('data-read') === '0' : false
+				self._deleteOne(id, isUnrd, item)
 			})
 		})
 	}
@@ -16213,6 +16243,54 @@ PromptGrid = class PromptGrid
 			.from('notifications')
 			.update({ is_read: true })
 			.eq('id', notifId)
+	}
+
+	// -----------------------------------------
+	// 알림 전체 삭제
+	// -----------------------------------------
+
+	async _clearAll()
+	{
+		var { error } = await this.sb.getClient()
+			.from('notifications')
+			.delete()
+			.not('id', 'is', null)  // RLS가 current user 범위로 한정
+
+		if (error) { ToastManager.error('삭제 실패'); return }
+
+		var listEl = document.getElementById('notif-list')
+		if (listEl)
+			listEl.innerHTML = '<div style="text-align:center;padding:40px 20px;color:#6B6B8A;font-size:0.875rem;">알림이 없습니다</div>'
+
+		this.unreadCount = 0
+		this._updateBadge(0)
+	}
+
+	// -----------------------------------------
+	// 알림 개별 삭제
+	// -----------------------------------------
+
+	async _deleteOne(notifId, isUnread, itemEl)
+	{
+		var { error } = await this.sb.getClient()
+			.from('notifications')
+			.delete()
+			.eq('id', notifId)
+
+		if (error) { ToastManager.error('삭제 실패'); return }
+
+		if (itemEl) itemEl.remove()
+
+		if (isUnread)
+		{
+			this.unreadCount = Math.max(0, this.unreadCount - 1)
+			this._updateBadge(this.unreadCount)
+		}
+
+		// 남은 아이템이 없으면 빈 상태 표시
+		var listEl = document.getElementById('notif-list')
+		if (listEl && listEl.querySelectorAll('.notif-item').length === 0)
+			listEl.innerHTML = '<div style="text-align:center;padding:40px 20px;color:#6B6B8A;font-size:0.875rem;">알림이 없습니다</div>'
 	}
 
 	_typeIcon(type)

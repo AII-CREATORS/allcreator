@@ -28,7 +28,6 @@ AuthView = class AuthView extends AView
 		if (isRecovery)
 		{
 			sessionStorage.removeItem('ac_pw_recovery')
-			localStorage.removeItem('ac_no_persist')
 			sessionStorage.removeItem('ac_active_session')
 			this._showPasswordResetForm()
 			return
