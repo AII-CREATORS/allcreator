@@ -182,6 +182,9 @@
 .reg-price-input{width:180px;flex-shrink:0;}
 .reg-price-hint{font-size:0.9375rem;font-weight:700;color:var(--color-success);}
 .reg-price-hint.paid{color:var(--color-accent);}
+.reg-img-zone{border:2px dashed #2E2E48;border-radius:var(--radius-md);padding:24px 20px;text-align:center;transition:border-color 150ms ease,background 150ms ease;}
+.reg-img-zone:hover{border-color:#6C63FF;background:rgba(108,99,255,0.06);}
+.reg-img-preview{border-style:solid;border-color:#2E2E48;padding:16px;}
 .reg-required{color:var(--color-point);font-size:0.75rem;}
 .reg-label-sub{font-size:0.75rem;color:var(--color-text-dim);font-weight:400;margin-left:6px;}
 .skeleton-title{background:var(--color-surface-2);border-radius:var(--radius-md);animation:skeleton-pulse 1.5s ease infinite;}

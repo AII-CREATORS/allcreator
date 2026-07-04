@@ -11,6 +11,7 @@ class PromptRegisterView extends AView
 		this.categories    = []
 		this.editPromptId  = null   // 수정 모드일 때 설정됨
 		this.editPrompt    = null   // 수정 대상 데이터
+		this._pendingImageFile = null  // 업로드 대기 중인 이미지 파일
 	}
 
 	onInitDone()
@@ -189,6 +190,28 @@ class PromptRegisterView extends AView
 							'<div class="reg-char-count" id="count-content">' + (isEdit ? (p.prompt_content || '').length : 0) + ' 자</div>' +
 						'</div>' +
 
+						// 결과 이미지
+						'<div class="ac-input-group">' +
+							'<label class="ac-label">결과 이미지' +
+								'<span class="reg-label-sub">— 프롬프트 사용 결과 예시 (선택)</span>' +
+							'</label>' +
+							'<input type="file" id="reg-img-file" accept="image/*" style="display:none">' +
+							(isEdit && p.result_image
+								? '<div class="reg-img-zone reg-img-preview" id="reg-img-zone">' +
+									'<img src="' + p.result_image + '" style="max-width:100%;max-height:240px;border-radius:8px;display:block;margin:0 auto;">' +
+									'<div style="display:flex;gap:8px;justify-content:center;margin-top:10px;">' +
+										'<button type="button" class="ac-btn ac-btn-outline ac-btn-sm" id="reg-img-change">변경</button>' +
+										'<button type="button" class="ac-btn ac-btn-sm" id="reg-img-remove" style="color:#FF6584;border-color:#FF6584;">제거</button>' +
+									'</div>' +
+								'</div>'
+								: '<div class="reg-img-zone" id="reg-img-zone" style="cursor:pointer;">' +
+									'<div style="font-size:2rem;margin-bottom:8px;">🖼️</div>' +
+									'<div style="font-size:0.875rem;color:#8080A0;">클릭하거나 이미지를 끌어다 놓으세요</div>' +
+									'<div style="font-size:0.75rem;color:#4A4A6A;margin-top:4px;">JPG, PNG, GIF, WebP · 최대 5MB</div>' +
+								'</div>'
+							) +
+						'</div>' +
+
 					'</div>' +
 				'</div>' +
 
@@ -249,6 +272,122 @@ class PromptRegisterView extends AView
 				hint.className   = 'reg-price-hint paid'
 			}
 		})
+
+		this._bindImageEvents(el)
+	}
+
+	_bindImageEvents(el)
+	{
+		var self    = this
+		var zone    = el.querySelector('#reg-img-zone')
+		var fileInput = el.querySelector('#reg-img-file')
+		if (!zone || !fileInput) return
+
+		// 클릭으로 파일 선택 (변경 버튼 또는 빈 존)
+		zone.addEventListener('click', function(e)
+		{
+			if (e.target.id === 'reg-img-remove') return
+			fileInput.click()
+		})
+
+		// 드래그 앤 드롭
+		zone.addEventListener('dragover', function(e)
+		{
+			e.preventDefault()
+			zone.style.borderColor = '#6C63FF'
+			zone.style.background  = 'rgba(108,99,255,0.1)'
+		})
+		zone.addEventListener('dragleave', function()
+		{
+			zone.style.borderColor = ''
+			zone.style.background  = ''
+		})
+		zone.addEventListener('drop', function(e)
+		{
+			e.preventDefault()
+			zone.style.borderColor = ''
+			zone.style.background  = ''
+			var file = e.dataTransfer.files[0]
+			if (file) self._applyImageFile(el, file)
+		})
+
+		// 파일 선택
+		fileInput.addEventListener('change', function()
+		{
+			var file = fileInput.files[0]
+			if (file) self._applyImageFile(el, file)
+			fileInput.value = ''  // 같은 파일 재선택 허용
+		})
+
+		// 제거 버튼 (수정 모드 기존 이미지)
+		var removeBtn = el.querySelector('#reg-img-remove')
+		if (removeBtn)
+		{
+			removeBtn.addEventListener('click', function(e)
+			{
+				e.stopPropagation()
+				self._pendingImageFile   = null
+				self._pendingImageRemove = true
+				self._resetImageZone(el)
+			})
+		}
+	}
+
+	_applyImageFile(el, file)
+	{
+		if (!file.type.startsWith('image/'))
+		{
+			ToastManager.error('이미지 파일만 첨부할 수 있습니다')
+			return
+		}
+		if (file.size > 5 * 1024 * 1024)
+		{
+			ToastManager.error('이미지 크기는 5MB 이하여야 합니다')
+			return
+		}
+
+		this._pendingImageFile   = file
+		this._pendingImageRemove = false
+
+		var reader = new FileReader()
+		var self   = this
+		reader.onload = function(e)
+		{
+			var zone = el.querySelector('#reg-img-zone')
+			if (!zone) return
+			zone.innerHTML =
+				'<img src="' + e.target.result + '" style="max-width:100%;max-height:240px;border-radius:8px;display:block;margin:0 auto;">' +
+				'<div style="display:flex;gap:8px;justify-content:center;margin-top:10px;">' +
+					'<button type="button" class="ac-btn ac-btn-outline ac-btn-sm" id="reg-img-change">변경</button>' +
+					'<button type="button" class="ac-btn ac-btn-sm" id="reg-img-remove" style="color:#FF6584;border-color:#FF6584;">제거</button>' +
+				'</div>'
+			zone.style.cursor = 'default'
+
+			// 동적으로 추가된 버튼에 이벤트 재바인딩
+			zone.querySelector('#reg-img-change').addEventListener('click', function()
+			{
+				el.querySelector('#reg-img-file').click()
+			})
+			zone.querySelector('#reg-img-remove').addEventListener('click', function(ev)
+			{
+				ev.stopPropagation()
+				self._pendingImageFile   = null
+				self._pendingImageRemove = true
+				self._resetImageZone(el)
+			})
+		}
+		reader.readAsDataURL(file)
+	}
+
+	_resetImageZone(el)
+	{
+		var zone = el.querySelector('#reg-img-zone')
+		if (!zone) return
+		zone.innerHTML =
+			'<div style="font-size:2rem;margin-bottom:8px;">🖼️</div>' +
+			'<div style="font-size:0.875rem;color:#8080A0;">클릭하거나 이미지를 끌어다 놓으세요</div>' +
+			'<div style="font-size:0.75rem;color:#4A4A6A;margin-top:4px;">JPG, PNG, GIF, WebP · 최대 5MB</div>'
+		zone.style.cursor = 'pointer'
 	}
 
 	// ─────────────────────────────────────────
@@ -292,13 +431,16 @@ class PromptRegisterView extends AView
 			}
 
 			var result
+			var savedPromptId
 			if (isEdit)
 			{
+				// 이미지 제거 요청
+				if (this._pendingImageRemove) row.result_image = null
+
 				// update()가 내부적으로 status:'pending', rejection_reason:null 처리
 				result = await this.ps.update(this.editPromptId, row)
 				if (result.error) throw new Error(result.error.message)
-				ToastManager.success('수정되었습니다. 관리자 재검수 후 게시됩니다.')
-				theApp.mainContainer.open('Source/MyPage/MyPageView.lay')
+				savedPromptId = this.editPromptId
 			}
 			else
 			{
@@ -306,6 +448,28 @@ class PromptRegisterView extends AView
 				row.status  = 'pending'
 				result = await this.ps.create(row)
 				if (result.error) throw new Error(result.error.message)
+				savedPromptId = result.data.id
+			}
+
+			// 이미지 업로드 (파일이 선택된 경우)
+			if (this._pendingImageFile && savedPromptId)
+			{
+				btn.textContent = '이미지 업로드 중...'
+				var imgResult = await this.ps.uploadResultImage(savedPromptId, this._pendingImageFile)
+				if (!imgResult.error && imgResult.url)
+					await this.ps.updateResultImage(savedPromptId, imgResult.url)
+				// 이미지 실패는 등록 자체를 막지 않음 (토스트만)
+				if (imgResult.error)
+					ToastManager.error('이미지 업로드 실패: ' + imgResult.error.message)
+			}
+
+			if (isEdit)
+			{
+				ToastManager.success('수정되었습니다. 관리자 재검수 후 게시됩니다.')
+				theApp.mainContainer.open('Source/MyPage/MyPageView.lay')
+			}
+			else
+			{
 				ToastManager.success('프롬프트가 등록되었습니다! 관리자 검수 후 게시됩니다.')
 				theApp.mainContainer.open('Source/MainView.lay')
 			}
