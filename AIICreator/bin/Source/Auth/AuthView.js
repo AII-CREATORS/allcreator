@@ -35,11 +35,19 @@ AuthView = class AuthView extends AView
 
 		if (!isFirst) return
 
-		// ── 소셜 로그인 OAuth 콜백 ────────────────────────────────────────────
-		var hash     = window.location.hash
-		var hasToken = hash.indexOf('access_token') !== -1
-		if (hasToken)
+		// ── OAuth / PKCE 콜백 ────────────────────────────────────────────────
+		// implicit flow: hash에 access_token (hasToken)
+		// PKCE flow:     onReady()에서 ?code= 감지 후 ac_pkce_callback 설정
+		//   - PKCE OAuth  → SIGNED_IN  이벤트  → _handleOAuthCallback()
+		//   - PKCE recovery → PASSWORD_RECOVERY → ErrorHandler가 처리
+		var hash          = window.location.hash
+		var hasToken      = hash.indexOf('access_token') !== -1
+		var isPkceCallback = sessionStorage.getItem('ac_pkce_callback') === '1'
+
+		if (hasToken || isPkceCallback)
 		{
+			if (isPkceCallback) sessionStorage.removeItem('ac_pkce_callback')
+
 			var self     = this
 			var listener = this.sb.getClient().auth.onAuthStateChange(function(event, session)
 			{
@@ -48,6 +56,7 @@ AuthView = class AuthView extends AView
 					listener.data.subscription.unsubscribe()
 					self._handleOAuthCallback()
 				}
+				// PASSWORD_RECOVERY → ErrorHandler._setupAuthExpiry()가 ac_pw_recovery 플래그 설정 + AuthView 재오픈
 			})
 			return
 		}
@@ -149,6 +158,7 @@ AuthView = class AuthView extends AView
 			}
 
 			ToastManager.success('비밀번호가 변경되었습니다. 다시 로그인해주세요.')
+			ErrorHandler._suppressNextSignOut = true
 			await self.sb.signOut()
 			self._renderHTML()
 			self._bindEvents()

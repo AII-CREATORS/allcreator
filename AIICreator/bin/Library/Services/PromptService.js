@@ -100,22 +100,6 @@ PromptService = class PromptService
 	}
 
 	// -----------------------------------------
-	// 구매
-	// -----------------------------------------
-
-	async purchase(promptId, buyerId, amount)
-	{
-		return this.sb.getClient()
-			.from('orders')
-			.insert({
-				buyer_id:  buyerId,
-				prompt_id: promptId,
-				amount:    Number(amount),
-				status:    'completed'
-			})
-	}
-
-	// -----------------------------------------
 	// 프롬프트 등록
 	// -----------------------------------------
 

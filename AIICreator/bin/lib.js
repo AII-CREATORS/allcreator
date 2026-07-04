@@ -15645,6 +15645,7 @@ ErrorHandler._suppressNextSignOut = false
 		var btnLogout = el.querySelector('#nb-btn-logout')
 		if (btnLogout) btnLogout.addEventListener('click', async function()
 		{
+			ErrorHandler._suppressNextSignOut = true
 			if (self.callbacks.onLogout) await self.callbacks.onLogout()
 		})
 	}
@@ -16417,22 +16418,6 @@ PromptService = class PromptService
 	incrementView(promptId)
 	{
 		this.sb.getClient().rpc('increment_view', { p_prompt_id: promptId })
-	}
-
-	// -----------------------------------------
-	// 구매
-	// -----------------------------------------
-
-	async purchase(promptId, buyerId, amount)
-	{
-		return this.sb.getClient()
-			.from('orders')
-			.insert({
-				buyer_id:  buyerId,
-				prompt_id: promptId,
-				amount:    Number(amount),
-				status:    'completed'
-			})
 	}
 
 	// -----------------------------------------

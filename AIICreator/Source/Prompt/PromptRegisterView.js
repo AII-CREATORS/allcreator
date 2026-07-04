@@ -114,9 +114,6 @@ class PromptRegisterView extends AView
 			catOptions += '<option value="' + c.id + '"' + (c.id === editCatId ? ' selected' : '') + '>' + c.name + '</option>'
 		})
 
-		var typeText  = isEdit && p.prompt_type === 'image' ? ' selected' : ''
-		var typeImage = isEdit && p.prompt_type === 'image' ? ' selected' : ''
-
 		this.getElement().innerHTML =
 			'<div class="reg-wrap">' +
 

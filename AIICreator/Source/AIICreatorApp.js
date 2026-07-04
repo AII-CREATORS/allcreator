@@ -25,8 +25,15 @@ class AIICreatorApp extends AApplication
 		// PKCE flow는 hash에 type=recovery가 없으므로 ErrorHandler에서 이벤트로 보완
 		var rawHash   = window.location.hash
 		var rawSearch = window.location.search
+
+		// implicit flow: hash에 type=recovery 포함
 		if (rawHash.indexOf('type=recovery') !== -1 || rawSearch.indexOf('type=recovery') !== -1)
 			sessionStorage.setItem('ac_pw_recovery', '1')
+
+		// PKCE flow: ?code= 파라미터 존재 → OAuth 콜백 또는 recovery 콜백
+		// getUser() 자동 로그인을 막고 onAuthStateChange 이벤트로 분기 결정
+		if (rawSearch.indexOf('code=') !== -1)
+			sessionStorage.setItem('ac_pkce_callback', '1')
 
 		ErrorHandler.init()
 		this.setMainContainer(new APage('main'))
