@@ -228,6 +228,16 @@ AdminView = class AdminView extends AView
 
 		content.innerHTML = html
 
+		content.querySelectorAll('.adm-card').forEach(function(card)
+		{
+			card.addEventListener('click', function(e)
+			{
+				// 승인/반려 버튼 클릭은 상세 페이지 이동 제외
+				if (e.target.closest('.adm-card-actions')) return
+				theApp.openDetail(card.dataset.id)
+			})
+		})
+
 		content.querySelectorAll('.adm-btn-approve').forEach(function(btn)
 		{
 			btn.addEventListener('click', function() { self._approvePrompt(this.dataset.id) })
@@ -248,19 +258,46 @@ AdminView = class AdminView extends AView
 	// 승인 / 반려
 	// ─────────────────────────────────────────
 
-	async _approvePrompt(promptId)
+	_approvePrompt(promptId)
 	{
-		var result = await this.ps.approve(promptId, this.currentUser.id)
-		if (result.error)
+		var self = this
+
+		var existing = document.getElementById('adm-approve-modal')
+		if (existing) existing.remove()
+
+		var modal = document.createElement('div')
+		modal.id        = 'adm-approve-modal'
+		modal.className = 'adm-modal-overlay'
+		modal.innerHTML =
+			'<div class="adm-modal">' +
+				'<h3 class="adm-modal-title">승인 확인</h3>' +
+				'<p class="adm-modal-desc">해당 프롬프트를 승인하시겠습니까?<br>승인 후 마켓에 즉시 게시됩니다.</p>' +
+				'<div class="adm-modal-actions">' +
+					'<button class="ac-btn ac-btn-outline ac-btn-sm" id="adm-approve-cancel">취소</button>' +
+					'<button class="ac-btn ac-btn-primary ac-btn-sm" id="adm-approve-confirm">승인</button>' +
+				'</div>' +
+			'</div>'
+
+		document.body.appendChild(modal)
+
+		document.getElementById('adm-approve-cancel').addEventListener('click', function()
 		{
-			ToastManager.error('승인 실패: ' + result.error.message)
-			return
-		}
+			modal.remove()
+		})
 
-		await this.ps.sendNotification(promptId, 'prompt_approved')
+		document.getElementById('adm-approve-confirm').addEventListener('click', async function()
+		{
+			modal.remove()
 
-		ToastManager.success('프롬프트가 승인되었습니다')
-		await this._loadPrompts()
+			var result = await self.ps.approve(promptId, self.currentUser.id)
+			if (result.error) { ToastManager.error('승인 실패: ' + result.error.message); return }
+
+			await self.ps.sendNotification(promptId, 'prompt_approved')
+			ToastManager.success('프롬프트가 승인되었습니다')
+			await self._loadPrompts()
+		})
+
+		modal.addEventListener('click', function(e) { if (e.target === modal) modal.remove() })
 	}
 
 	_showRejectModal(promptId)

@@ -7,12 +7,14 @@ class PromptDetailView extends AView
 		this.sb          = null
 		this.ps          = null
 		this.pm          = null
+		this.us          = null
 		this.promptId    = null
 		this.prompt      = null
 		this.isLiked     = false
 		this.isSaved     = false
 		this.isPurchased = false
 		this.currentUser = null
+		this.isAdmin     = false
 	}
 
 	onInitDone()
@@ -21,6 +23,7 @@ class PromptDetailView extends AView
 		this.sb       = SupabaseManager.getInstance()
 		this.ps       = new PromptService(this.sb)
 		this.pm       = PaymentManager.getInstance()
+		this.us       = new UserService(this.sb)
 		this.promptId = theApp.getDetailId() || null
 		this._renderSkeleton()
 		this._bootstrap()
@@ -42,6 +45,14 @@ class PromptDetailView extends AView
 		try
 		{
 			this.currentUser = await this.sb.getUser()
+
+			// 관리자 여부 확인 (콘텐츠 전체 노출 판단용)
+			if (this.currentUser)
+			{
+				var { data: profile } = await this.us.getAdminRole(this.currentUser.id)
+				this.isAdmin = !!(profile && (profile.role === 'main_admin' || profile.role === 'sub_admin'))
+			}
+
 			await this._loadPrompt()
 			await this._loadUserStatus()
 			this._renderDetail()
@@ -110,7 +121,9 @@ class PromptDetailView extends AView
 
 		var actionBtn = this._renderActionBtn(isFree)
 
-		var contentHTML = this.isPurchased
+		// 관리자는 구매 여부와 무관하게 전체 내용 노출
+		var canView = this.isAdmin || this.isPurchased
+		var contentHTML = canView
 			? '<div class="prompt-content-box">' +
 				'<div class="prompt-content-label">프롬프트 내용</div>' +
 				'<pre class="prompt-content-text">' + (p.prompt_content || '') + '</pre>' +
@@ -183,7 +196,7 @@ class PromptDetailView extends AView
 						actionBtn +
 					'</div>' +
 
-					// 프롬프트 내용 (구매 여부에 따라)
+					// 프롬프트 내용
 					contentHTML +
 
 				'</div>' +
@@ -192,8 +205,9 @@ class PromptDetailView extends AView
 
 	_renderActionBtn(isFree)
 	{
-		// 반려된 프롬프트는 구매 버튼 미표시
+		// 반려된 프롬프트 또는 관리자는 구매 버튼 미표시
 		if (this.prompt && this.prompt.status === 'rejected') return ''
+		if (this.isAdmin) return ''
 
 		if (this.isPurchased)
 			return '<span class="detail-purchased-badge">✅ ' + (isFree ? '사용 중' : '구매 완료') + '</span>'
@@ -315,18 +329,16 @@ class PromptDetailView extends AView
 			return
 		}
 
-		// 유료: Toss 결제창 열기 (성공/취소 시 successUrl/failUrl로 리다이렉트)
+		// 유료: Toss 결제창 열기
 		var btn = this.getElement().querySelector('#btn-purchase')
 		if (btn) { btn.disabled = true; btn.textContent = '결제창 연결 중...' }
 
 		try
 		{
 			await this.pm.requestPayment(this.prompt, this.currentUser)
-			// requestPayment 이후 코드는 실행되지 않음 — 브라우저가 Toss 페이지로 이동
 		}
 		catch (e)
 		{
-			// Toss SDK 자체 에러 (잘못된 키, 파라미터 오류 등)
 			ToastManager.error('결제창 열기 실패: ' + e.message)
 			if (btn)
 			{

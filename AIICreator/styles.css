@@ -62,7 +62,8 @@
 .adm-page-info{font-size:0.875rem;color:var(--color-text-muted);}
 .adm-modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;z-index:1000;}
 .adm-modal{background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-lg);padding:28px;width:480px;max-width:90vw;}
-.adm-modal-title{font-size:1.0625rem;font-weight:700;color:var(--color-text);margin-bottom:16px;}
+.adm-modal-title{font-size:1.0625rem;font-weight:700;color:var(--color-text);margin-bottom:12px;}
+.adm-modal-desc{font-size:0.9rem;color:var(--color-text-muted);line-height:1.6;margin-bottom:20px;}
 .adm-modal-textarea{width:100%;resize:vertical;line-height:1.6;margin-bottom:16px;}
 .adm-modal-actions{display:flex;justify-content:flex-end;gap:10px;}
 .adm-manage{max-width:680px;margin:0 auto;}
@@ -161,6 +162,7 @@
 .prompt-locked{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:48px;background:var(--color-surface);border:1px dashed var(--color-border);border-radius:var(--radius-lg);gap:12px;}
 .prompt-locked-icon{font-size:2.5rem;}
 .prompt-locked-text{font-size:0.9375rem;color:var(--color-text-muted);text-align:center;}
+.prompt-content-admin-notice{margin-bottom:12px;padding:8px 12px;background:rgba(108,99,255,.1);border-left:3px solid var(--color-accent);border-radius:var(--radius-sm);font-size:0.8125rem;color:var(--color-accent);}
 .skeleton-title{height:32px;background:var(--color-surface-2);border-radius:var(--radius-md);margin-bottom:16px;animation:skeleton-pulse 1.5s ease infinite;}
 .skeleton-line{height:16px;background:var(--color-surface-2);border-radius:var(--radius-sm);margin-bottom:10px;animation:skeleton-pulse 1.5s ease infinite;}
 .skeleton-line.short{width:60%;}
