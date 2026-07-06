@@ -198,7 +198,7 @@ PromptRegisterView = class PromptRegisterView extends AView
 							'<input type="file" id="reg-img-file" accept="image/*" style="display:none">' +
 							(isEdit && p.result_image
 								? '<div class="reg-img-zone reg-img-preview" id="reg-img-zone">' +
-									'<img src="' + p.result_image + '" style="max-width:100%;max-height:240px;border-radius:8px;display:block;margin:0 auto;">' +
+									'<img src="' + p.result_image + '" style="max-width:100%;height:auto;border-radius:8px;display:block;margin:0 auto;">' +
 									'<div style="display:flex;gap:8px;justify-content:center;margin-top:10px;">' +
 										'<button type="button" class="ac-btn ac-btn-outline ac-btn-sm" id="reg-img-change">변경</button>' +
 										'<button type="button" class="ac-btn ac-btn-sm" id="reg-img-remove" style="color:#FF6584;border-color:#FF6584;">제거</button>' +
@@ -356,7 +356,7 @@ PromptRegisterView = class PromptRegisterView extends AView
 			var zone = el.querySelector('#reg-img-zone')
 			if (!zone) return
 			zone.innerHTML =
-				'<img src="' + e.target.result + '" style="max-width:100%;max-height:240px;border-radius:8px;display:block;margin:0 auto;">' +
+				'<img src="' + e.target.result + '" style="max-width:100%;height:auto;border-radius:8px;display:block;margin:0 auto;">' +
 				'<div style="display:flex;gap:8px;justify-content:center;margin-top:10px;">' +
 					'<button type="button" class="ac-btn ac-btn-outline ac-btn-sm" id="reg-img-change">변경</button>' +
 					'<button type="button" class="ac-btn ac-btn-sm" id="reg-img-remove" style="color:#FF6584;border-color:#FF6584;">제거</button>' +

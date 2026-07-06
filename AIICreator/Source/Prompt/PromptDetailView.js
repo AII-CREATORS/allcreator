@@ -152,7 +152,7 @@ class PromptDetailView extends AView
 					// 결과물 이미지
 					(p.result_image
 						? '<div style="width:100%;border-radius:16px;overflow:hidden;margin-bottom:20px;background:#2E2E48;">'
-							+ '<img src="' + p.result_image + '" style="width:100%;max-height:360px;object-fit:cover;display:block;" alt="결과물 이미지">'
+							+ '<img src="' + p.result_image + '" style="max-width:100%;height:auto;display:block;margin:0 auto;" alt="결과물 이미지">'
 							+ '</div>'
 						: '') +
 
