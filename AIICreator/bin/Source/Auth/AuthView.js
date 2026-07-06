@@ -58,6 +58,25 @@ AuthView = class AuthView extends AView
 				}
 				// PASSWORD_RECOVERY → ErrorHandler._setupAuthExpiry()가 ac_pw_recovery 플래그 설정 + AuthView 재오픈
 			})
+
+			// history.replaceState 레이스 컨디션 해결:
+			// Supabase initialize()가 ?code=를 읽기 전에 URL이 변경되므로
+			// onReady()에서 미리 저장한 코드로 직접 교환 요청
+			var storedCode = sessionStorage.getItem('ac_pkce_code')
+			if (storedCode)
+			{
+				sessionStorage.removeItem('ac_pkce_code')
+				this.sb.getClient().auth.exchangeCodeForSession(storedCode).then(function(result)
+				{
+					if (result.error)
+					{
+						listener.data.subscription.unsubscribe()
+						ToastManager.error('소셜 로그인 처리 실패: ' + result.error.message)
+					}
+					// 성공 시 SIGNED_IN 이벤트 자동 발화 → listener가 _handleOAuthCallback() 호출
+				})
+			}
+
 			return
 		}
 

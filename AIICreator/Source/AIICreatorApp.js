@@ -31,9 +31,23 @@ class AIICreatorApp extends AApplication
 			sessionStorage.setItem('ac_pw_recovery', '1')
 
 		// PKCE flow: ?code= 파라미터 존재 → OAuth 콜백 또는 recovery 콜백
-		// getUser() 자동 로그인을 막고 onAuthStateChange 이벤트로 분기 결정
 		if (rawSearch.indexOf('code=') !== -1)
+		{
 			sessionStorage.setItem('ac_pkce_callback', '1')
+
+			// history.replaceState가 ?code=를 동기적으로 제거하기 전에 값 저장
+			// → AuthView에서 exchangeCodeForSession()으로 수동 교환
+			var codeMatch = rawSearch.match(/[?&]code=([^&]+)/)
+			if (codeMatch) sessionStorage.setItem('ac_pkce_code', codeMatch[1])
+
+			// stale localStorage 세션 제거 (Supabase 클라이언트 생성 전)
+			// → initialize()가 GET /auth/v1/user 검증 시도하지 않음
+			// → 내부 signOut() 미발생 → POST /auth/v1/logout 403 방지
+			Object.keys(localStorage).forEach(function(key)
+			{
+				if (key.indexOf('-auth-token') !== -1) localStorage.removeItem(key)
+			})
+		}
 
 		ErrorHandler.init()
 		this.setMainContainer(new APage('main'))
@@ -80,9 +94,22 @@ class AIICreatorApp extends AApplication
 			return
 		}
 
-		try { history.replaceState({ lay: 'Source/Auth/AuthView.lay' }, '', '#/auth') }
-		catch(e) {}
-		origOpen('Source/Auth/AuthView.lay')
+		// PKCE 콜백 또는 비밀번호 재설정일 때만 AuthView, 그 외 일반 진입은 MainView
+		var isAuthCallback = sessionStorage.getItem('ac_pkce_callback') === '1'
+		                  || sessionStorage.getItem('ac_pw_recovery')   === '1'
+
+		if (isAuthCallback)
+		{
+			try { history.replaceState({ lay: 'Source/Auth/AuthView.lay' }, '', '#/auth') }
+			catch(e) {}
+			origOpen('Source/Auth/AuthView.lay')
+		}
+		else
+		{
+			try { history.replaceState({ lay: 'Source/MainView.lay' }, '', '#/') }
+			catch(e) {}
+			origOpen('Source/MainView.lay')
+		}
 	}
 
 	async _handlePaymentReturn(result)

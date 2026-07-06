@@ -18,7 +18,27 @@ class MainView extends AView
 		this.ps = new PromptService(this.sb)
 		this._renderShell()
 		this._initComponents()
-		this._bootstrap()
+		// _bootstrap()은 onActiveDone에서 호출 (auth 상태 확인 후 NavBar 렌더링)
+	}
+
+	async onActiveDone(isFirst)
+	{
+		super.onActiveDone(isFirst)
+
+		if (isFirst)
+		{
+			// ── 자동 로그인 미설정 회원: 저장된 세션 정리 ──────────────────────
+			// ac_no_persist='1' 이고 ac_active_session 없으면 앱 시작 시 즉시 로그아웃
+			var noAutoLogin = localStorage.getItem('ac_no_persist') === '1'
+			var hasSession  = sessionStorage.getItem('ac_active_session') === '1'
+			if (noAutoLogin && !hasSession)
+			{
+				ErrorHandler._suppressNextSignOut = true
+				await this.sb.signOut()
+			}
+		}
+
+		await this._bootstrap()
 	}
 
 	// ─────────────────────────────────────────
@@ -46,8 +66,10 @@ class MainView extends AView
 			onAdmin:    function()   { theApp.mainContainer.open('Source/Admin/AdminView.lay') },
 			onLogout:   async function()
 			{
+				sessionStorage.removeItem('ac_active_session')
 				await self.sb.signOut()
-				theApp.mainContainer.open('Source/Auth/AuthView.lay')
+				// AuthView로 이동하지 않고 MainView에서 게스트 상태로 재렌더링
+				await self._bootstrap()
 			}
 		})
 
