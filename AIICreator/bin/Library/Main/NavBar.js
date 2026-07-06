@@ -190,7 +190,7 @@ NavBar = class NavBar
 		var btnLogout = el.querySelector('#nb-btn-logout')
 		if (btnLogout) btnLogout.addEventListener('click', async function()
 		{
-			ErrorHandler._suppressNextSignOut = true
+			ErrorHandler._intentionalLogout = true
 			if (self.callbacks.onLogout) await self.callbacks.onLogout()
 		})
 	}

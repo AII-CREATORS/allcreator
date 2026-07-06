@@ -21,88 +21,85 @@ class AuthView extends AView
 	{
 		super.onActiveDone(isFirst)
 
-		// ── 비밀번호 재설정 감지 (isFirst 무관하게 항상 최우선 처리) ──────────
-		// implicit flow: onReady()에서 URL hash로 감지 후 플래그 설정
-		// PKCE flow: ErrorHandler의 PASSWORD_RECOVERY 이벤트가 플래그 설정 후 재진입
-		var isRecovery = sessionStorage.getItem('ac_pw_recovery') === '1'
-		if (isRecovery)
-		{
-			sessionStorage.removeItem('ac_pw_recovery')
-			sessionStorage.removeItem('ac_active_session')
-			this._showPasswordResetForm()
-			return
-		}
-
 		if (!isFirst) return
 
-		// ── OAuth / PKCE 콜백 ────────────────────────────────────────────────
-		// implicit flow: hash에 access_token (hasToken)
-		// PKCE flow:     onReady()에서 ?code= 감지 후 ac_pkce_callback 설정
-		//   - PKCE OAuth  → SIGNED_IN  이벤트  → _handleOAuthCallback()
-		//   - PKCE recovery → PASSWORD_RECOVERY → ErrorHandler가 처리
-		var hash          = window.location.hash
-		var hasToken      = hash.indexOf('access_token') !== -1
-		var isPkceCallback = sessionStorage.getItem('ac_pkce_callback') === '1'
-
-		if (hasToken || isPkceCallback)
+		// ── Auth 콜백 처리 (OAuth 소셜 로그인 또는 비밀번호 재설정) ──────────
+		// onReady()에서 URL 확인 후 저장한 타입: 'oauth' | 'recovery'
+		var callbackType = sessionStorage.getItem('ac_auth_callback')
+		if (callbackType)
 		{
-			if (isPkceCallback) sessionStorage.removeItem('ac_pkce_callback')
-
-			var self     = this
-			var listener = this.sb.getClient().auth.onAuthStateChange(function(event, session)
-			{
-				if (event === 'SIGNED_IN')
-				{
-					listener.data.subscription.unsubscribe()
-					self._handleOAuthCallback()
-				}
-				// PASSWORD_RECOVERY → ErrorHandler._setupAuthExpiry()가 ac_pw_recovery 플래그 설정 + AuthView 재오픈
-			})
-
-			// history.replaceState 레이스 컨디션 해결:
-			// Supabase initialize()가 ?code=를 읽기 전에 URL이 변경되므로
-			// onReady()에서 미리 저장한 코드로 직접 교환 요청
-			var storedCode = sessionStorage.getItem('ac_pkce_code')
-			if (storedCode)
-			{
-				sessionStorage.removeItem('ac_pkce_code')
-				this.sb.getClient().auth.exchangeCodeForSession(storedCode).then(function(result)
-				{
-					if (result.error)
-					{
-						listener.data.subscription.unsubscribe()
-						ToastManager.error('소셜 로그인 처리 실패: ' + result.error.message)
-					}
-					// 성공 시 SIGNED_IN 이벤트 자동 발화 → listener가 _handleOAuthCallback() 호출
-				})
-			}
-
+			sessionStorage.removeItem('ac_auth_callback')
+			await this._handleCallback(callbackType === 'recovery')
 			return
 		}
 
-		// ── 자동 로그인 미설정 회원: 세션 정리 ───────────────────────────────
-		// Supabase는 항상 localStorage에 세션을 저장함
-		// ac_no_persist='1' 이고 ac_active_session 없으면 앱 시작 시 즉시 로그아웃
-		var noAutoLogin = localStorage.getItem('ac_no_persist') === '1'
-		var hasSession  = sessionStorage.getItem('ac_active_session') === '1'
-
-		if (noAutoLogin && !hasSession)
-		{
-			// ErrorHandler의 SIGNED_OUT 반응 억제 (만료가 아닌 정책적 로그아웃)
-			ErrorHandler._suppressNextSignOut = true
-			await this.sb.signOut()
-			return
-		}
-
-		// ── 자동 로그인 ───────────────────────────────────────────────────────
+		// ── 자동 로그인: 기존 세션이 있으면 메인으로 ─────────────────────────
 		var user = await this.sb.getUser()
 		if (user) this._goToMain()
 	}
 
-	async _handleOAuthCallback()
+	// ─────────────────────────────────────────
+	// OAuth / 비밀번호 재설정 콜백 처리
+	// ─────────────────────────────────────────
+
+	async _handleCallback(isRecovery)
+	{
+		var self    = this
+		var handled = false
+
+		// Supabase가 ?code= 교환 완료 후 발화하는 이벤트를 수신
+		// SIGNED_IN        → OAuth/소셜 로그인 성공
+		// PASSWORD_RECOVERY → 비밀번호 재설정 링크 인증 성공
+		var sub = this.sb.getClient().auth.onAuthStateChange(function(event, session)
+		{
+			if (handled) return
+
+			if (event === 'SIGNED_IN')
+			{
+				handled = true
+				sub.data.subscription.unsubscribe()
+				self._handleOAuthSuccess()
+			}
+			else if (event === 'PASSWORD_RECOVERY')
+			{
+				handled = true
+				sub.data.subscription.unsubscribe()
+				self._showPasswordResetForm()
+			}
+			// INITIAL_SESSION 무시: initialize() 완료 전의 이전 세션일 수 있음
+		})
+
+		// getSession()은 내부적으로 initializePromise를 await함
+		// → Supabase의 ?code= 교환 완료 시점을 보장한 후 결과 확인
+		// → initialize()가 이미 완료되어 이벤트 없이 세션이 확립된 경우를 대비
+		var result = await this.sb.getClient().auth.getSession()
+
+		if (!handled)
+		{
+			sub.data.subscription.unsubscribe()
+
+			if (result.data && result.data.session)
+			{
+				if (isRecovery)
+					this._showPasswordResetForm()
+				else
+					this._handleOAuthSuccess()
+			}
+			else
+			{
+				// 코드 만료 또는 이미 사용된 코드
+				ToastManager.error('인증 처리에 실패했습니다. 다시 시도해주세요.')
+			}
+		}
+	}
+
+	async _handleOAuthSuccess()
 	{
 		var user = await this.sb.getUser()
 		if (!user) return
+
+		// 이번 브라우저 탭에서 로그인됨을 표시 (no-persist 재시작 감지용)
+		sessionStorage.setItem('ac_session_alive', '1')
 
 		var result = await this.sb.ensureUserProfile(user)
 
@@ -177,7 +174,8 @@ class AuthView extends AView
 			}
 
 			ToastManager.success('비밀번호가 변경되었습니다. 다시 로그인해주세요.')
-			ErrorHandler._suppressNextSignOut = true
+			ErrorHandler._intentionalLogout = true
+			sessionStorage.removeItem('ac_session_alive')
 			await self.sb.signOut()
 			self._renderHTML()
 			self._bindEvents()
@@ -491,14 +489,12 @@ class AuthView extends AView
 		else         localStorage.removeItem('ac_saved_email')
 
 		if (chkAuto)
-		{
 			localStorage.removeItem('ac_no_persist')
-		}
 		else
-		{
 			localStorage.setItem('ac_no_persist', '1')
-			sessionStorage.setItem('ac_active_session', '1')
-		}
+
+		// 이번 탭에서 로그인됨을 표시 (no-persist 재시작 감지용)
+		sessionStorage.setItem('ac_session_alive', '1')
 
 		this._goToMain()
 	}

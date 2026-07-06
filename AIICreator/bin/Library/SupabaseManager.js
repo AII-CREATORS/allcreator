@@ -26,7 +26,12 @@ SupabaseManager = class SupabaseManager
 
     _init()
     {
-        this.client = supabase.createClient(this.SUPABASE_URL, this.SUPABASE_KEY);
+        this.client = supabase.createClient(this.SUPABASE_URL, this.SUPABASE_KEY, {
+            auth: {
+                detectSessionInUrl: true,  // ?code= / #access_token= 자동 감지 및 교환
+                flowType:           'pkce' // PKCE flow 명시 (기본값이지만 명확성을 위해)
+            }
+        })
         // ※ onAuthStateChange는 ErrorHandler에서 등록 — 여기서 중복 등록 금지
     }
 

@@ -20,35 +20,32 @@ class AIICreatorApp extends AApplication
 	{
 		super.onReady()
 
-		// ── Supabase 초기화 이전에 URL 읽기 (implicit flow) ──────────────────
-		// Supabase createClient()가 hash를 비동기로 지우기 전에 먼저 확인
-		// PKCE flow는 hash에 type=recovery가 없으므로 ErrorHandler에서 이벤트로 보완
-		var rawHash   = window.location.hash
+		// ── No-persist: 새 브라우저 세션 시작 시 세션 토큰만 정확히 삭제 ────────
+		// 패턴 매칭(indexOf) 대신 정확한 키 사용
+		// → PKCE code_verifier(sb-...-auth-token-code-verifier) 삭제 방지
+		var noPersist    = localStorage.getItem('ac_no_persist') === '1'
+		var sessionAlive = sessionStorage.getItem('ac_session_alive') === '1'
+		if (noPersist && !sessionAlive)
+			localStorage.removeItem('sb-gnwpnesdjjjoevregdmo-auth-token')
+
+		// ── Auth 콜백 유형 감지 (Supabase 클라이언트 생성 전에 URL 캡처) ──────
+		// createClient()의 initialize()가 ?code= 처리 후 URL을 정리하므로
+		// 그 전에 타입을 sessionStorage에 저장해 AuthView가 참조할 수 있게 함
 		var rawSearch = window.location.search
+		var rawHash   = window.location.hash
+		var isAuthCallback = rawSearch.indexOf('code=') !== -1
+		                  || rawHash.indexOf('access_token') !== -1
 
-		// implicit flow: hash에 type=recovery 포함
-		if (rawHash.indexOf('type=recovery') !== -1 || rawSearch.indexOf('type=recovery') !== -1)
-			sessionStorage.setItem('ac_pw_recovery', '1')
-
-		// PKCE flow: ?code= 파라미터 존재 → OAuth 콜백 또는 recovery 콜백
-		if (rawSearch.indexOf('code=') !== -1)
+		if (isAuthCallback)
 		{
-			sessionStorage.setItem('ac_pkce_callback', '1')
-
-			// history.replaceState가 ?code=를 동기적으로 제거하기 전에 값 저장
-			// → AuthView에서 exchangeCodeForSession()으로 수동 교환
-			var codeMatch = rawSearch.match(/[?&]code=([^&]+)/)
-			if (codeMatch) sessionStorage.setItem('ac_pkce_code', codeMatch[1])
-
-			// stale localStorage 세션 제거 (Supabase 클라이언트 생성 전)
-			// → initialize()가 GET /auth/v1/user 검증 시도하지 않음
-			// → 내부 signOut() 미발생 → POST /auth/v1/logout 403 방지
-			Object.keys(localStorage).forEach(function(key)
-			{
-				if (key.indexOf('-auth-token') !== -1) localStorage.removeItem(key)
-			})
+			var isRecovery = rawSearch.indexOf('type=recovery') !== -1
+			              || rawHash.indexOf('type=recovery') !== -1
+			sessionStorage.setItem('ac_auth_callback', isRecovery ? 'recovery' : 'oauth')
 		}
 
+		// ── 앱 인프라 초기화 ─────────────────────────────────────────────────
+		// createClient() 호출 시점: detectSessionInUrl:true(기본값) 로
+		// ?code= / #access_token= 자동 감지 및 교환 시작 (initialize()는 async)
 		ErrorHandler.init()
 		this.setMainContainer(new APage('main'))
 
@@ -85,7 +82,7 @@ class AIICreatorApp extends AApplication
 			origOpen(lay)
 		}
 
-		// Toss 결제 리다이렉트 결과 감지
+		// ── Toss 결제 리다이렉트 ─────────────────────────────────────────────
 		var payResult = pm.parsePaymentResult()
 		if (payResult)
 		{
@@ -94,10 +91,9 @@ class AIICreatorApp extends AApplication
 			return
 		}
 
-		// PKCE 콜백 또는 비밀번호 재설정일 때만 AuthView, 그 외 일반 진입은 MainView
-		var isAuthCallback = sessionStorage.getItem('ac_pkce_callback') === '1'
-		                  || sessionStorage.getItem('ac_pw_recovery')   === '1'
-
+		// ── 초기 뷰 결정 ─────────────────────────────────────────────────────
+		// auth 콜백이면 AuthView (Supabase가 자동으로 ?code= 교환 처리)
+		// 일반 진입이면 MainView (게스트 또는 자동 로그인)
 		if (isAuthCallback)
 		{
 			try { history.replaceState({ lay: 'Source/Auth/AuthView.lay' }, '', '#/auth') }

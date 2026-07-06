@@ -226,7 +226,8 @@ class MyPageView extends AView
 
 		el.querySelector('#btn-logout').addEventListener('click', async function()
 		{
-			ErrorHandler._suppressNextSignOut = true
+			ErrorHandler._intentionalLogout = true
+			sessionStorage.removeItem('ac_session_alive')
 			await self.sb.signOut()
 			theApp.mainContainer.open('Source/Auth/AuthView.lay')
 		})
