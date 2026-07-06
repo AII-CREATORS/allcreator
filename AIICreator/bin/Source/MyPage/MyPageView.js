@@ -129,7 +129,6 @@ MyPageView = class MyPageView extends AView
 						'</div>' +
 						'<div class="mp-profile-info">' +
 							'<div class="mp-display-name" id="mp-display-name">' + (p.display_name || '이름 없음') + '</div>' +
-							'<div class="mp-username">@' + (p.username || '') + '</div>' +
 							'<div class="mp-bio" id="mp-bio">' + (p.bio || '<span style="color:var(--color-text-dim)">자기소개가 없습니다</span>') + '</div>' +
 							'<div class="mp-meta">' +
 								'<span>' + p.email + '</span>' +

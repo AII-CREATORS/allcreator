@@ -68,7 +68,7 @@ PromptGrid = class PromptGrid
 		var price     = isFree
 			? '<span class="ac-prompt-card-price free">무료</span>'
 			: '<span class="ac-prompt-card-price">' + Number(p.price).toLocaleString() + '원</span>'
-		var author    = p.users ? '@' + p.users.username : ''
+		var author    = p.users ? (p.users.display_name || '') : ''
 
 		var thumb = p.result_image
 			? '<div class="' + (isImage ? 'pg-thumb-image' : 'pg-thumb-text') + '" style="padding:0;overflow:hidden;">' +

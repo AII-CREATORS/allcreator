@@ -109,7 +109,7 @@ PromptDetailView = class PromptDetailView extends AView
 		var isFree   = Number(p.price) === 0
 		var toolName = p.ai_tools   ? p.ai_tools.name   : ''
 		var catName  = p.categories ? p.categories.name : ''
-		var author   = p.users      ? p.users.username  : '알 수 없음'
+		var author   = p.users ? (p.users.display_name || '알 수 없음') : '알 수 없음'
 		var initial  = author[0].toUpperCase()
 
 		var difficultyMap = { beginner: '입문', intermediate: '중급', advanced: '고급' }
@@ -121,13 +121,11 @@ PromptDetailView = class PromptDetailView extends AView
 
 		var actionBtn = this._renderActionBtn(isFree)
 
-		// 관리자는 구매 여부와 무관하게 전체 내용 노출
-		var canView = this.isAdmin || this.isPurchased
+		// 관리자 또는 판매자 본인은 구매 여부와 무관하게 전체 내용 노출
+		var isSeller = !!(this.currentUser && p.users && this.currentUser.id === p.users.id)
+		var canView  = this.isAdmin || isSeller || this.isPurchased
 		var contentHTML = canView
 			? '<div class="prompt-content-box">' +
-				(this.isAdmin && !this.isPurchased
-					? '<div class="prompt-content-admin-notice">🛡 관리자 미리보기 — 구매 없이 열람 중</div>'
-					: '') +
 				'<div class="prompt-content-label">프롬프트 내용</div>' +
 				'<pre class="prompt-content-text">' + (p.prompt_content || '') + '</pre>' +
 				'<button class="prompt-content-copy" id="btn-copy">📋 복사</button>' +
@@ -179,7 +177,7 @@ PromptDetailView = class PromptDetailView extends AView
 					'<div class="detail-meta">' +
 						'<div class="detail-author">' +
 							'<div class="ac-avatar ac-avatar-sm">' + initial + '</div>' +
-							'<span class="detail-author-name">@' + author + '</span>' +
+							'<span class="detail-author-name">' + author + '</span>' +
 						'</div>' +
 						'<div class="detail-stats">' +
 							'<span class="detail-stat">👁 ' + (p.view_count || 0) + '</span>' +
@@ -208,9 +206,10 @@ PromptDetailView = class PromptDetailView extends AView
 
 	_renderActionBtn(isFree)
 	{
-		// 반려된 프롬프트 또는 관리자는 구매 버튼 미표시
+		// 반려된 프롬프트, 관리자, 판매자 본인은 구매 버튼 미표시
 		if (this.prompt && this.prompt.status === 'rejected') return ''
 		if (this.isAdmin) return ''
+		if (this.currentUser && this.prompt.users && this.currentUser.id === this.prompt.users.id) return ''
 
 		if (this.isPurchased)
 			return '<span class="detail-purchased-badge">✅ ' + (isFree ? '사용 중' : '구매 완료') + '</span>'

@@ -15869,7 +15869,7 @@ PromptGrid = class PromptGrid
 		var price     = isFree
 			? '<span class="ac-prompt-card-price free">무료</span>'
 			: '<span class="ac-prompt-card-price">' + Number(p.price).toLocaleString() + '원</span>'
-		var author    = p.users ? '@' + p.users.username : ''
+		var author    = p.users ? (p.users.display_name || '') : ''
 
 		var thumb = p.result_image
 			? '<div class="' + (isImage ? 'pg-thumb-image' : 'pg-thumb-text') + '" style="padding:0;overflow:hidden;">' +
@@ -16324,7 +16324,7 @@ PromptService = class PromptService
 
 		var query = this.sb.getClient()
 			.from('prompts')
-			.select('id, title, description, price, prompt_type, like_count, view_count, result_image, users!user_id(username), ai_tools(name)')
+			.select('id, title, description, price, prompt_type, like_count, view_count, result_image, users!user_id(display_name), ai_tools(name)')
 			.eq('status', 'published')
 
 		if (toolId)           query = query.eq('ai_tool_id', toolId)
@@ -16358,7 +16358,7 @@ PromptService = class PromptService
 	{
 		return this.sb.getClient()
 			.from('prompts')
-			.select('id, title, description, prompt_content, prompt_type, price, difficulty, status, like_count, save_count, view_count, created_at, result_image, users!user_id(id, username), ai_tools(name), categories(name)')
+			.select('id, title, description, prompt_content, prompt_type, price, difficulty, status, like_count, save_count, view_count, created_at, result_image, users!user_id(id, display_name), ai_tools(name), categories(name)')
 			.eq('id', promptId)
 			.single()
 	}
