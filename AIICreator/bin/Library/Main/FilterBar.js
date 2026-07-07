@@ -40,6 +40,7 @@ FilterBar = class FilterBar
 					'<select class="fb-sort-select" id="fb-sort">' +
 						'<option value="latest">최신순</option>' +
 						'<option value="popular">인기순</option>' +
+						'<option value="views">조회순</option>' +
 						'<option value="price_asc">낮은 가격순</option>' +
 						'<option value="price_desc">높은 가격순</option>' +
 					'</select>' +

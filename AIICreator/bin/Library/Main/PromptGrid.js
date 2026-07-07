@@ -87,6 +87,7 @@ PromptGrid = class PromptGrid
 				'<div class="ac-prompt-card-footer">' +
 					price +
 					'<span class="ac-caption" style="display:flex;align-items:center;gap:6px">' +
+						'<span>👁 ' + (p.view_count || 0) + '</span>' +
 						'<span>♥ ' + (p.like_count || 0) + '</span>' +
 						'<span>' + author + '</span>' +
 					'</span>' +

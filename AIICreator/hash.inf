@@ -1,6 +1,6 @@
 {
 	"changed": [
-		"C:\\Users\\dicki\\AII CREATOR\\allcreator\\AIICreator\\bin\\Library\\Main\\NavBar.js"
+		"C:\\Users\\dicki\\AII CREATOR\\allcreator\\AIICreator\\bin\\Library\\Services\\PromptService.js"
 	],
 	"version": "5.1.1",
 	"C:\\Users\\dicki\\AII CREATOR\\allcreator\\AIICreator\\Template\\AIICreatorApp_global.css": 1782970415590.3223,
@@ -171,12 +171,12 @@
 	"C:\\Users\\dicki\\AII CREATOR\\allcreator\\AIICreator\\Source\\Main\\FilterBar.js": 1782779012483.751,
 	"C:\\Users\\dicki\\AII CREATOR\\allcreator\\AIICreator\\Source\\Main\\PromptGrid.js": 1782779031803.1653,
 	"C:\\Users\\dicki\\AII CREATOR\\allcreator\\AIICreator\\Library\\Main\\NavBar.js": 1783389676182.9214,
-	"C:\\Users\\dicki\\AII CREATOR\\allcreator\\AIICreator\\Library\\Main\\FilterBar.js": 1783386522776.0962,
-	"C:\\Users\\dicki\\AII CREATOR\\allcreator\\AIICreator\\Library\\Main\\PromptGrid.js": 1783328595544.6067,
+	"C:\\Users\\dicki\\AII CREATOR\\allcreator\\AIICreator\\Library\\Main\\FilterBar.js": 1783391187488.9739,
+	"C:\\Users\\dicki\\AII CREATOR\\allcreator\\AIICreator\\Library\\Main\\PromptGrid.js": 1783391211054.523,
 	"C:\\Users\\dicki\\AII CREATOR\\allcreator\\AIICreator\\Library\\ErrorHandler.js": 1783384785002.566,
 	"C:\\Users\\dicki\\AII CREATOR\\allcreator\\AIICreator\\Source\\Admin\\AdminView.js": 1783388870621.4595,
 	"C:\\Users\\dicki\\AII CREATOR\\allcreator\\AIICreator\\Source\\Admin\\AdminView.lay": 1782795459190.2756,
-	"C:\\Users\\dicki\\AII CREATOR\\allcreator\\AIICreator\\Library\\Services\\PromptService.js": 1783384785004.5647,
+	"C:\\Users\\dicki\\AII CREATOR\\allcreator\\AIICreator\\Library\\Services\\PromptService.js": 1783391503750.2407,
 	"C:\\Users\\dicki\\AII CREATOR\\allcreator\\AIICreator\\Library\\Services\\UserService.js": 1782970415588.3223,
 	"C:\\Users\\dicki\\AII CREATOR\\allcreator\\AIICreator\\Library\\Main\\NotificationPanel.js": 1783384785003.5654,
 	"C:\\Users\\dicki\\AII CREATOR\\allcreator\\AIICreator\\Library\\fmt.js": 1783384785005.5645,

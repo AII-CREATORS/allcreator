@@ -15684,6 +15684,7 @@ FilterBar = class FilterBar
 					'<select class="fb-sort-select" id="fb-sort">' +
 						'<option value="latest">최신순</option>' +
 						'<option value="popular">인기순</option>' +
+						'<option value="views">조회순</option>' +
 						'<option value="price_asc">낮은 가격순</option>' +
 						'<option value="price_desc">높은 가격순</option>' +
 					'</select>' +
@@ -15919,6 +15920,7 @@ PromptGrid = class PromptGrid
 				'<div class="ac-prompt-card-footer">' +
 					price +
 					'<span class="ac-caption" style="display:flex;align-items:center;gap:6px">' +
+						'<span>👁 ' + (p.view_count || 0) + '</span>' +
 						'<span>♥ ' + (p.like_count || 0) + '</span>' +
 						'<span>' + author + '</span>' +
 					'</span>' +
@@ -16385,10 +16387,11 @@ PromptService = class PromptService
 		if (type && type !== 'all') query = query.eq('prompt_type', type)
 		if (keyword) query = query.or('title.ilike.%' + keyword + '%,description.ilike.%' + keyword + '%')
 
-		if (sort === 'popular')        query = query.order('like_count',  { ascending: false })
-		else if (sort === 'price_asc') query = query.order('price',      { ascending: true  })
-		else if (sort === 'price_desc') query = query.order('price',     { ascending: false })
-		else                           query = query.order('created_at', { ascending: false })
+		if (sort === 'popular')         query = query.order('like_count',  { ascending: false })
+		else if (sort === 'views')      query = query.order('view_count',  { ascending: false })
+		else if (sort === 'price_asc')  query = query.order('price',      { ascending: true  })
+		else if (sort === 'price_desc') query = query.order('price',      { ascending: false })
+		else                            query = query.order('created_at', { ascending: false })
 
 		return query.limit(limit || 30)
 	}
@@ -16456,7 +16459,7 @@ PromptService = class PromptService
 
 	incrementView(promptId)
 	{
-		this.sb.getClient().rpc('increment_view', { p_prompt_id: promptId })
+		this.sb.getClient().rpc('increment_view', { p_prompt_id: promptId }).then(function() {})
 	}
 
 	// -----------------------------------------

@@ -25,10 +25,11 @@ PromptService = class PromptService
 		if (type && type !== 'all') query = query.eq('prompt_type', type)
 		if (keyword) query = query.or('title.ilike.%' + keyword + '%,description.ilike.%' + keyword + '%')
 
-		if (sort === 'popular')        query = query.order('like_count',  { ascending: false })
-		else if (sort === 'price_asc') query = query.order('price',      { ascending: true  })
-		else if (sort === 'price_desc') query = query.order('price',     { ascending: false })
-		else                           query = query.order('created_at', { ascending: false })
+		if (sort === 'popular')         query = query.order('like_count',  { ascending: false })
+		else if (sort === 'views')      query = query.order('view_count',  { ascending: false })
+		else if (sort === 'price_asc')  query = query.order('price',      { ascending: true  })
+		else if (sort === 'price_desc') query = query.order('price',      { ascending: false })
+		else                            query = query.order('created_at', { ascending: false })
 
 		return query.limit(limit || 30)
 	}
@@ -96,7 +97,7 @@ PromptService = class PromptService
 
 	incrementView(promptId)
 	{
-		this.sb.getClient().rpc('increment_view', { p_prompt_id: promptId })
+		this.sb.getClient().rpc('increment_view', { p_prompt_id: promptId }).then(function() {})
 	}
 
 	// -----------------------------------------
