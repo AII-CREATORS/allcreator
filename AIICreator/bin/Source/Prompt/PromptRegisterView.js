@@ -11,7 +11,8 @@ PromptRegisterView = class PromptRegisterView extends AView
 		this.categories    = []
 		this.editPromptId  = null   // 수정 모드일 때 설정됨
 		this.editPrompt    = null   // 수정 대상 데이터
-		this._pendingImageFile = null  // 업로드 대기 중인 이미지 파일
+		this._pendingImageFile   = null   // 업로드 대기 중인 이미지 파일
+		this._pendingImageRemove = false  // 수정 모드에서 이미지 제거 요청 여부
 	}
 
 	onInitDone()
@@ -33,6 +34,7 @@ PromptRegisterView = class PromptRegisterView extends AView
 
 		if (!this.currentUser)
 		{
+			theApp.editPromptId = null  // 오염 방지: 소비하지 않고 나가면 초기화
 			ToastManager.error('로그인이 필요합니다')
 			theApp.mainContainer.open('Source/Auth/AuthView.lay')
 			return

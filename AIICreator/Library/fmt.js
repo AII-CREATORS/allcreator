@@ -18,15 +18,6 @@ fmt = (function()
 		return d.getUTCFullYear() + '-' + _pad(d.getUTCMonth() + 1) + '-' + _pad(d.getUTCDate())
 	}
 
-	// 'YYYY-MM-DD HH:mm:ss' (KST)
-	function datetime(dateStr)
-	{
-		if (!dateStr) return '—'
-		var d = _toKST(dateStr)
-		return d.getUTCFullYear() + '-' + _pad(d.getUTCMonth() + 1) + '-' + _pad(d.getUTCDate())
-			+ ' ' + _pad(d.getUTCHours()) + ':' + _pad(d.getUTCMinutes()) + ':' + _pad(d.getUTCSeconds())
-	}
-
 	// 상대 시간 ('방금 전', 'N분 전', ...)
 	function timeAgo(dateStr)
 	{
@@ -42,5 +33,5 @@ fmt = (function()
 		return date(dateStr)
 	}
 
-	return { date: date, datetime: datetime, timeAgo: timeAgo }
+	return { date: date, timeAgo: timeAgo }
 })()

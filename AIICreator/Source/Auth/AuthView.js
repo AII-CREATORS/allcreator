@@ -4,8 +4,7 @@ class AuthView extends AView
 	constructor()
 	{
 		super()
-		this.sb         = null
-		this.currentTab = 'login'
+		this.sb = null
 	}
 
 	onInitDone()
@@ -446,7 +445,6 @@ class AuthView extends AView
 	_switchTab(tab)
 	{
 		var el = this.getElement()
-		this.currentTab = tab
 
 		el.querySelectorAll('.auth-tab').forEach(function(t)
 		{

@@ -45,7 +45,7 @@ class MainView extends AView
 		var self = this
 
 		this.navBar = new NavBar(el.querySelector('#main-navbar'), {
-			onSearch:   function(kw) { self._loadPrompts() },
+			onSearch:   function()   { self._loadPrompts() },
 			onLogin:    function()   { theApp.mainContainer.open('Source/Auth/AuthView.lay') },
 			onRegister: function()   { theApp.mainContainer.open('Source/Prompt/PromptRegisterView.lay') },
 			onMyPage:   function()   { theApp.mainContainer.open('Source/MyPage/MyPageView.lay') },
