@@ -105,6 +105,16 @@ NavBar = class NavBar
 		var self = this
 		var el   = this.el
 
+		var logo = el.querySelector('.nb-logo')
+		if (logo)
+		{
+			logo.style.cursor = 'pointer'
+			logo.addEventListener('click', function()
+			{
+				if (self.callbacks.onSearch) self.callbacks.onSearch('')
+			})
+		}
+
 		var searchInput = el.querySelector('#nb-search')
 		if (searchInput)
 		{

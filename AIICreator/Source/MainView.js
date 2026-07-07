@@ -18,7 +18,6 @@ class MainView extends AView
 		this.ps = new PromptService(this.sb)
 		this._renderShell()
 		this._initComponents()
-		// _bootstrap()은 onActiveDone에서 호출 (auth 상태 확인 후 NavBar 렌더링)
 	}
 
 	async onActiveDone(isFirst)
@@ -26,10 +25,6 @@ class MainView extends AView
 		super.onActiveDone(isFirst)
 		await this._bootstrap()
 	}
-
-	// ─────────────────────────────────────────
-	// 셸 렌더 & 컴포넌트 초기화
-	// ─────────────────────────────────────────
 
 	_renderShell()
 	{
@@ -54,13 +49,17 @@ class MainView extends AView
 			{
 				sessionStorage.removeItem('ac_session_alive')
 				await self.sb.signOut()
-				// AuthView로 이동하지 않고 MainView에서 게스트 상태로 재렌더링
+				theApp._filterState = null
 				await self._bootstrap()
 			}
 		})
 
 		this.filterBar = new FilterBar(el.querySelector('#main-filterbar'), {
-			onChange: function() { self._loadPrompts() }
+			onChange: function()
+			{
+				theApp._filterState = self.filterBar.getState()
+				self._loadPrompts()
+			}
 		})
 
 		this.grid = new PromptGrid(el.querySelector('#main-grid-wrap'), {
@@ -68,23 +67,16 @@ class MainView extends AView
 		})
 	}
 
-	// ─────────────────────────────────────────
-	// 부트스트랩
-	// ─────────────────────────────────────────
-
 	async _bootstrap()
 	{
 		await this.navBar.render()
 
 		var toolResult = await this.ps.getAITools()
 		this.filterBar.render(toolResult.data || [])
+		this.filterBar.restoreState(theApp._filterState)
 
 		await this._loadPrompts()
 	}
-
-	// ─────────────────────────────────────────
-	// 데이터 로드
-	// ─────────────────────────────────────────
 
 	async _loadPrompts()
 	{

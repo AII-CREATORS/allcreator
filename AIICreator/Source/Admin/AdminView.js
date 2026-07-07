@@ -21,8 +21,36 @@ class AdminView extends AView
 		this.sb = SupabaseManager.getInstance()
 		this.ps = new PromptService(this.sb)
 		this.us = new UserService(this.sb)
+
+		var el = this.getElement()
+		el.innerHTML =
+			'<header id="adm-navbar"></header>' +
+			'<div id="adm-body-wrap" class="adm-body-wrap"></div>'
+
+		this._initNavBar(el.querySelector('#adm-navbar'))
 		this._renderShell()
 		this._bootstrap()
+	}
+
+	_initNavBar(container)
+	{
+		var sb = this.sb
+		var nav = new NavBar(container, {
+			onSearch:   function() { theApp.mainContainer.open('Source/MainView.lay') },
+			onLogin:    function() { theApp.mainContainer.open('Source/Auth/AuthView.lay') },
+			onRegister: function() { theApp.mainContainer.open('Source/Prompt/PromptRegisterView.lay') },
+			onMyPage:   function() { theApp.mainContainer.open('Source/MyPage/MyPageView.lay') },
+			onAdmin:    function() { theApp.mainContainer.open('Source/Admin/AdminView.lay') },
+			onLogout:   async function()
+			{
+				ErrorHandler._intentionalLogout = true
+				sessionStorage.removeItem('ac_session_alive')
+				await sb.signOut()
+				theApp._filterState = null
+				theApp.mainContainer.open('Source/MainView.lay')
+			}
+		})
+		nav.render()
 	}
 
 	// ─────────────────────────────────────────
@@ -60,10 +88,10 @@ class AdminView extends AView
 
 	_renderShell()
 	{
-		this.getElement().innerHTML =
+		var body = this.getElement().querySelector('#adm-body-wrap') || this.getElement()
+		body.innerHTML =
 			'<div class="adm-wrap">' +
 				'<header class="adm-header" id="adm-header">' +
-					'<button class="adm-back" id="adm-btn-back">← 메인으로</button>' +
 					'<h1 class="adm-title">관리자 패널</h1>' +
 					'<span class="adm-role-badge" id="adm-role-badge"></span>' +
 				'</header>' +
@@ -104,11 +132,6 @@ class AdminView extends AView
 	{
 		var self = this
 		var el   = this.getElement()
-
-		el.querySelector('#adm-btn-back').addEventListener('click', function()
-		{
-			theApp.mainContainer.open('Source/MainView.lay')
-		})
 
 		el.querySelectorAll('.adm-tab').forEach(function(btn)
 		{

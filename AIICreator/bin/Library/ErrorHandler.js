@@ -86,7 +86,7 @@ ErrorHandler = class ErrorHandler
 	{
 		var sb = SupabaseManager.getInstance()
 
-		sb.getClient().auth.onAuthStateChange(function(event, session)
+		ErrorHandler._authSubscription = sb.getClient().auth.onAuthStateChange(function(event, session)
 		{
 			if (event === 'TOKEN_REFRESHED') return
 
@@ -158,3 +158,4 @@ ErrorHandler = class ErrorHandler
 }
 
 ErrorHandler._intentionalLogout = false
+ErrorHandler._authSubscription  = null

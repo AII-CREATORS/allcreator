@@ -15066,15 +15066,6 @@ fmt = (function()
 		return d.getUTCFullYear() + '-' + _pad(d.getUTCMonth() + 1) + '-' + _pad(d.getUTCDate())
 	}
 
-	// 'YYYY-MM-DD HH:mm:ss' (KST)
-	function datetime(dateStr)
-	{
-		if (!dateStr) return '—'
-		var d = _toKST(dateStr)
-		return d.getUTCFullYear() + '-' + _pad(d.getUTCMonth() + 1) + '-' + _pad(d.getUTCDate())
-			+ ' ' + _pad(d.getUTCHours()) + ':' + _pad(d.getUTCMinutes()) + ':' + _pad(d.getUTCSeconds())
-	}
-
 	// 상대 시간 ('방금 전', 'N분 전', ...)
 	function timeAgo(dateStr)
 	{
@@ -15090,7 +15081,7 @@ fmt = (function()
 		return date(dateStr)
 	}
 
-	return { date: date, datetime: datetime, timeAgo: timeAgo }
+	return { date: date, timeAgo: timeAgo }
 })()
 
 ;/**
@@ -15367,7 +15358,7 @@ ErrorHandler = class ErrorHandler
 	{
 		var sb = SupabaseManager.getInstance()
 
-		sb.getClient().auth.onAuthStateChange(function(event, session)
+		ErrorHandler._authSubscription = sb.getClient().auth.onAuthStateChange(function(event, session)
 		{
 			if (event === 'TOKEN_REFRESHED') return
 
@@ -15439,6 +15430,7 @@ ErrorHandler = class ErrorHandler
 }
 
 ErrorHandler._intentionalLogout = false
+ErrorHandler._authSubscription  = null
 
 ;NavBar = class NavBar
 {
@@ -15546,6 +15538,16 @@ ErrorHandler._intentionalLogout = false
 	{
 		var self = this
 		var el   = this.el
+
+		var logo = el.querySelector('.nb-logo')
+		if (logo)
+		{
+			logo.style.cursor = 'pointer'
+			logo.addEventListener('click', function()
+			{
+				if (self.callbacks.onSearch) self.callbacks.onSearch('')
+			})
+		}
 
 		var searchInput = el.querySelector('#nb-search')
 		if (searchInput)
@@ -15682,6 +15684,7 @@ FilterBar = class FilterBar
 					'<select class="fb-sort-select" id="fb-sort">' +
 						'<option value="latest">최신순</option>' +
 						'<option value="popular">인기순</option>' +
+						'<option value="views">조회순</option>' +
 						'<option value="price_asc">낮은 가격순</option>' +
 						'<option value="price_desc">높은 가격순</option>' +
 					'</select>' +
@@ -15775,6 +15778,35 @@ FilterBar = class FilterBar
 	// ─────────────────────────────────────────
 
 	getState() { return { toolId: this.state.toolId, sort: this.state.sort, price: this.state.price, type: this.state.type } }
+
+	// render() 후 이전 상태를 DOM에 반영 — onChange는 발생시키지 않음
+	restoreState(saved)
+	{
+		if (!saved) return
+
+		var el = this.el
+		this.state = { toolId: saved.toolId || null, sort: saved.sort || 'latest', price: saved.price || 'all', type: saved.type || 'all' }
+
+		// 도구 탭
+		el.querySelectorAll('.fb-tool-tab').forEach(function(t) { t.classList.remove('active') })
+		var toolSel = saved.toolId
+			? el.querySelector('.fb-tool-tab[data-tool="' + saved.toolId + '"]')
+			: el.querySelector('.fb-tool-tab[data-tool=""]')
+		if (toolSel) toolSel.classList.add('active')
+
+		// 정렬
+		el.querySelector('#fb-sort').value = saved.sort || 'latest'
+
+		// 가격 칩
+		el.querySelectorAll('#fb-price-chips .fb-chip').forEach(function(c) { c.classList.remove('active') })
+		var priceChip = el.querySelector('[data-price="' + (saved.price || 'all') + '"]')
+		if (priceChip) priceChip.classList.add('active')
+
+		// 타입 칩
+		el.querySelectorAll('#fb-type-chips .fb-chip').forEach(function(c) { c.classList.remove('active') })
+		var typeChip = el.querySelector('[data-type="' + (saved.type || 'all') + '"]')
+		if (typeChip) typeChip.classList.add('active')
+	}
 
 	reset()
 	{
@@ -15888,6 +15920,7 @@ PromptGrid = class PromptGrid
 				'<div class="ac-prompt-card-footer">' +
 					price +
 					'<span class="ac-caption" style="display:flex;align-items:center;gap:6px">' +
+						'<span>👁 ' + (p.view_count || 0) + '</span>' +
 						'<span>♥ ' + (p.like_count || 0) + '</span>' +
 						'<span>' + author + '</span>' +
 					'</span>' +
@@ -16354,10 +16387,11 @@ PromptService = class PromptService
 		if (type && type !== 'all') query = query.eq('prompt_type', type)
 		if (keyword) query = query.or('title.ilike.%' + keyword + '%,description.ilike.%' + keyword + '%')
 
-		if (sort === 'popular')        query = query.order('like_count',  { ascending: false })
-		else if (sort === 'price_asc') query = query.order('price',      { ascending: true  })
-		else if (sort === 'price_desc') query = query.order('price',     { ascending: false })
-		else                           query = query.order('created_at', { ascending: false })
+		if (sort === 'popular')         query = query.order('like_count',  { ascending: false })
+		else if (sort === 'views')      query = query.order('view_count',  { ascending: false })
+		else if (sort === 'price_asc')  query = query.order('price',      { ascending: true  })
+		else if (sort === 'price_desc') query = query.order('price',      { ascending: false })
+		else                            query = query.order('created_at', { ascending: false })
 
 		return query.limit(limit || 30)
 	}
@@ -16425,7 +16459,7 @@ PromptService = class PromptService
 
 	incrementView(promptId)
 	{
-		this.sb.getClient().rpc('increment_view', { p_prompt_id: promptId })
+		this.sb.getClient().rpc('increment_view', { p_prompt_id: promptId }).then(function() {})
 	}
 
 	// -----------------------------------------
@@ -16483,9 +16517,9 @@ PromptService = class PromptService
 		return this.sb.getClient()
 			.from('prompts')
 			.select(
-				'id, title, description, prompt_content, price, prompt_type, status, ' +
+				'id, title, description, price, prompt_type, status, ' +
 				'rejection_reason, created_at, result_image, ' +
-				'users!user_id(id, display_name, email, username), ai_tools(name)',
+				'users!user_id(id, display_name, email), ai_tools(name)',
 				{ count: 'exact' }
 			)
 			.eq('status', status)
