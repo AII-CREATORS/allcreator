@@ -165,6 +165,9 @@
 .detail-stats{display:flex;gap:16px;}
 .detail-stat{font-size:0.875rem;color:var(--color-text-dim);}
 .detail-description{font-size:1rem;line-height:1.7;color:var(--color-text-muted);margin-bottom:28px;}
+.detail-rejected-box{background:#FFDDDD;border:1px solid #F5AAAA;border-radius:var(--radius-md);padding:14px 18px;margin-bottom:20px;}
+.detail-rejected-label{font-size:0.75rem;font-weight:700;color:#8B0000;margin-bottom:4px;text-transform:uppercase;letter-spacing:0.05em;}
+.detail-rejected-reason{font-size:0.9375rem;color:#1A1A1A;line-height:1.5;}
 .detail-purchase-box{display:flex;align-items:center;justify-content:space-between;background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-lg);padding:20px 24px;margin-bottom:12px;}
 .detail-action-row{display:flex;align-items:center;gap:10px;margin-bottom:24px;}
 .detail-price{font-family:var(--font-title);font-size:1.75rem;font-weight:700;color:var(--color-accent);}

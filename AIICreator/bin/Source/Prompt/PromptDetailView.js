@@ -182,6 +182,14 @@ PromptDetailView = class PromptDetailView extends AView
 						'</span>' +
 					'</div>' +
 
+					// 반려 사유 (rejected 상태일 때만, 이미지 위)
+					(p.status === 'rejected' && p.rejection_reason
+						? '<div style="background:#FFDDDD;border:1px solid #F5AAAA;border-radius:10px;padding:14px 18px;margin-bottom:20px;">' +
+							'<div style="font-size:0.75rem;font-weight:700;color:#8B0000;margin-bottom:4px;text-transform:uppercase;letter-spacing:0.05em;">반려 사유</div>' +
+							'<div style="font-size:0.9375rem;color:#1A1A1A;line-height:1.5;">' + p.rejection_reason + '</div>' +
+						  '</div>'
+						: '') +
+
 					// 결과물 이미지
 					(p.result_image
 						? '<div style="width:100%;border-radius:16px;overflow:hidden;margin-bottom:20px;background:#2E2E48;">'

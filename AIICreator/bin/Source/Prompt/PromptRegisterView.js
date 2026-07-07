@@ -130,9 +130,11 @@ PromptRegisterView = class PromptRegisterView extends AView
 
 	_renderHTML()
 	{
-		var isEdit = !!this.editPromptId
-		var p      = this.editPrompt || {}
-		var price  = isEdit ? Number(p.price || 0) : 0
+		var isEdit      = !!this.editPromptId
+		var p           = this.editPrompt || {}
+		var price       = isEdit ? Number(p.price || 0) : 0
+		var isRejected  = isEdit && p.status === 'rejected'
+		var submitLabel = isRejected ? '재심사요청' : (isEdit ? '수정 완료' : '등록하기')
 
 		// AI 도구 옵션 (수정 모드면 기존 값 selected)
 		var editToolId = isEdit && p.ai_tools ? (this._findToolId(p.ai_tools.name)) : ''
@@ -242,7 +244,7 @@ PromptRegisterView = class PromptRegisterView extends AView
 						'</div>' +
 
 						'<div class="reg-submit-row">' +
-							'<button class="ac-btn ac-btn-primary" id="btn-submit">' + (isEdit ? '수정 완료' : '등록하기') + '</button>' +
+							'<button class="ac-btn ac-btn-primary" id="btn-submit">' + submitLabel + '</button>' +
 						'</div>' +
 
 					'</div>' +
@@ -517,7 +519,7 @@ PromptRegisterView = class PromptRegisterView extends AView
 		{
 			ToastManager.error((isEdit ? '수정' : '등록') + ' 실패: ' + e.message)
 			btn.disabled    = false
-			btn.textContent = isEdit ? '수정 완료' : '등록하기'
+			btn.textContent = (this.editPrompt && this.editPrompt.status === 'rejected') ? '재심사요청' : (isEdit ? '수정 완료' : '등록하기')
 		}
 	}
 
