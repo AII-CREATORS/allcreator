@@ -16413,7 +16413,7 @@ PromptService = class PromptService
 	{
 		return this.sb.getClient()
 			.from('prompts')
-			.select('id, title, description, prompt_content, prompt_type, price, difficulty, status, like_count, save_count, view_count, created_at, result_image, users!user_id(id, display_name), ai_tools(name), categories(name)')
+			.select('id, title, description, prompt_content, prompt_type, price, difficulty, status, rejection_reason, like_count, save_count, view_count, created_at, result_image, users!user_id(id, display_name), ai_tools(name), categories(name)')
 			.eq('id', promptId)
 			.single()
 	}
@@ -16572,19 +16572,35 @@ PromptService = class PromptService
 		var prompt = ref.data
 		if (!prompt) return
 
-		var isApproved = type === 'prompt_approved'
-		var title      = isApproved ? '프롬프트가 승인되었습니다' : '프롬프트가 반려되었습니다'
-		var body       = isApproved
-			? '등록하신 "' + prompt.title + '" 프롬프트가 검수를 통과하여 게시되었습니다.'
-			: '등록하신 "' + prompt.title + '" 프롬프트가 반려되었습니다.\n사유: ' + (reason || '')
+		// 알림 설정 확인 (like/purchase 타입만 적용; 승인/반려는 항상 전송)
+		if (type === 'prompt_liked' || type === 'prompt_purchased')
+		{
+			var { data: userProfile } = await this.sb.getClient()
+				.from('users')
+				.select('notification_settings')
+				.eq('id', prompt.user_id)
+				.single()
+
+			var ns = (userProfile && userProfile.notification_settings) || {}
+			if (type === 'prompt_liked'     && ns.like     === false) return
+			if (type === 'prompt_purchased' && ns.purchase === false) return
+		}
+
+		var msgMap = {
+			prompt_approved:  { title: '프롬프트가 승인되었습니다',  body: '등록하신 "' + prompt.title + '" 프롬프트가 검수를 통과하여 게시되었습니다.' },
+			prompt_rejected:  { title: '프롬프트가 반려되었습니다',  body: '등록하신 "' + prompt.title + '" 프롬프트가 반려되었습니다.\n사유: ' + (reason || '') },
+			prompt_liked:     { title: '좋아요를 받았습니다',        body: '"' + prompt.title + '" 프롬프트에 좋아요가 달렸습니다.' },
+			prompt_purchased: { title: '프롬프트가 판매되었습니다',  body: '"' + prompt.title + '" 프롬프트가 구매되었습니다.' }
+		}
+		var msg = msgMap[type] || { title: type, body: '' }
 
 		return this.sb.getClient()
 			.from('notifications')
 			.insert({
 				user_id:   prompt.user_id,
 				type:      type,
-				title:     title,
-				body:      body,
+				title:     msg.title,
+				body:      msg.body,
 				prompt_id: promptId
 			})
 	}
