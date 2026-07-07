@@ -9,7 +9,7 @@
 | 분류 | 기술 |
 |------|------|
 | **프레임워크** | SpiderGen (SPA 기반 JS 프레임워크) |
-| **백엔드 / DB** | Supabase (PostgreSQL + Row Level Security) |
+| **백엔드 / DB** | Supabase (PostgreSQL + Row Level Security |
 | **인증** | Supabase Auth — 이메일/비밀번호, OAuth 2.0 PKCE (Google, Kakao) |
 | **스토리지** | Supabase Storage (아바타 이미지, 프롬프트 결과 이미지) |
 | **서버리스** | Supabase Edge Functions (결제 승인 처리) |
