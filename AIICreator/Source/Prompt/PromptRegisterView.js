@@ -13,6 +13,7 @@ class PromptRegisterView extends AView
 		this.editPrompt    = null   // 수정 대상 데이터
 		this._pendingImageFile   = null   // 업로드 대기 중인 이미지 파일
 		this._pendingImageRemove = false  // 수정 모드에서 이미지 제거 요청 여부
+		this._displayInitial     = ''
 	}
 
 	onInitDone()
@@ -20,8 +21,37 @@ class PromptRegisterView extends AView
 		super.onInitDone()
 		this.sb = SupabaseManager.getInstance()
 		this.ps = new PromptService(this.sb)
+		this.us = new UserService(this.sb)
+
+		var el = this.getElement()
+		el.innerHTML =
+			'<header id="reg-navbar"></header>' +
+			'<div id="reg-body-wrap" class="reg-body-wrap"></div>'
+
+		this._initNavBar(el.querySelector('#reg-navbar'))
 		this._renderSkeleton()
 		this._bootstrap()
+	}
+
+	_initNavBar(container)
+	{
+		var sb = this.sb
+		var nav = new NavBar(container, {
+			onSearch:   function() { theApp.mainContainer.open('Source/MainView.lay') },
+			onLogin:    function() { theApp.mainContainer.open('Source/Auth/AuthView.lay') },
+			onRegister: function() { theApp.mainContainer.open('Source/Prompt/PromptRegisterView.lay') },
+			onMyPage:   function() { theApp.mainContainer.open('Source/MyPage/MyPageView.lay') },
+			onAdmin:    function() { theApp.mainContainer.open('Source/Admin/AdminView.lay') },
+			onLogout:   async function()
+			{
+				ErrorHandler._intentionalLogout = true
+				sessionStorage.removeItem('ac_session_alive')
+				await sb.signOut()
+				theApp._filterState = null
+				theApp.mainContainer.open('Source/MainView.lay')
+			}
+		})
+		nav.render()
 	}
 
 	// ─────────────────────────────────────────
@@ -39,6 +69,12 @@ class PromptRegisterView extends AView
 			theApp.mainContainer.open('Source/Auth/AuthView.lay')
 			return
 		}
+
+		// 헤더 아바타 이니셜용 display_name 로드
+		var { data: uProfile } = await this.us.getAdminRole(this.currentUser.id)
+		this._displayInitial = uProfile && uProfile.display_name
+			? uProfile.display_name[0].toUpperCase()
+			: this.currentUser.email[0].toUpperCase()
 
 		// 수정 모드 감지: theApp.editPromptId가 설정돼 있으면 수정 모드
 		if (theApp.editPromptId)
@@ -81,12 +117,9 @@ class PromptRegisterView extends AView
 
 	_renderSkeleton()
 	{
-		this.getElement().innerHTML =
+		var body = this.getElement().querySelector('#reg-body-wrap') || this.getElement()
+		body.innerHTML =
 			'<div class="reg-wrap">' +
-				'<header class="reg-nav">' +
-					'<button class="reg-back" id="btn-back">← 돌아가기</button>' +
-					'<h1 class="reg-nav-title">프롬프트 등록</h1>' +
-				'</header>' +
 				'<div class="reg-content">' +
 					'<div class="skeleton-title" style="height:32px;margin-bottom:16px"></div>' +
 					'<div class="skeleton-line"></div>' +
@@ -117,15 +150,9 @@ class PromptRegisterView extends AView
 			catOptions += '<option value="' + c.id + '"' + (c.id === editCatId ? ' selected' : '') + '>' + c.name + '</option>'
 		})
 
-		this.getElement().innerHTML =
+		var body = this.getElement().querySelector('#reg-body-wrap') || this.getElement()
+		body.innerHTML =
 			'<div class="reg-wrap">' +
-
-				'<header class="reg-nav">' +
-					'<button class="reg-back" id="btn-back">← 돌아가기</button>' +
-					'<h1 class="reg-nav-title">' + (isEdit ? '프롬프트 수정' : '프롬프트 등록') + '</h1>' +
-					'<button class="ac-btn ac-btn-primary ac-btn-sm" id="btn-submit">' + (isEdit ? '수정 완료' : '등록하기') + '</button>' +
-				'</header>' +
-
 				'<div class="reg-content">' +
 					'<div class="reg-form">' +
 
@@ -214,7 +241,12 @@ class PromptRegisterView extends AView
 							) +
 						'</div>' +
 
+						'<div class="reg-submit-row">' +
+							'<button class="ac-btn ac-btn-primary" id="btn-submit">' + (isEdit ? '수정 완료' : '등록하기') + '</button>' +
+						'</div>' +
+
 					'</div>' +
+
 				'</div>' +
 
 			'</div>'
@@ -243,7 +275,6 @@ class PromptRegisterView extends AView
 		var el   = this.getElement()
 		var self = this
 
-		el.querySelector('#btn-back').addEventListener('click', function() { self._goBack() })
 		el.querySelector('#btn-submit').addEventListener('click', function() { self._onSubmit() })
 
 		el.querySelector('#reg-title').addEventListener('input', function()
@@ -468,7 +499,13 @@ class PromptRegisterView extends AView
 			if (isEdit)
 			{
 				ToastManager.success('수정되었습니다. 관리자 재검수 후 게시됩니다.')
-				theApp.mainContainer.open('Source/MyPage/MyPageView.lay')
+				// 상세 페이지에서 진입한 경우 상세 페이지로 복귀, 아니면 마이페이지
+				var returnId = theApp.editReturnToDetail
+				theApp.editReturnToDetail = null
+				if (returnId)
+					theApp.openDetail(returnId)
+				else
+					theApp.mainContainer.open('Source/MyPage/MyPageView.lay')
 			}
 			else
 			{
@@ -486,10 +523,19 @@ class PromptRegisterView extends AView
 
 	_goBack()
 	{
-		// 수정 모드면 마이페이지로, 등록 모드면 메인으로
 		if (this.editPromptId)
-			theApp.mainContainer.open('Source/MyPage/MyPageView.lay')
+		{
+			// 상세 페이지에서 진입한 경우 → 상세 페이지로 복귀
+			var returnId = theApp.editReturnToDetail
+			theApp.editReturnToDetail = null
+			if (returnId)
+				theApp.openDetail(returnId)
+			else
+				theApp.mainContainer.open('Source/MyPage/MyPageView.lay')
+		}
 		else
+		{
 			theApp.mainContainer.open('Source/MainView.lay')
+		}
 	}
 }

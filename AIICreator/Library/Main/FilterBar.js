@@ -134,6 +134,35 @@ FilterBar = class FilterBar
 
 	getState() { return { toolId: this.state.toolId, sort: this.state.sort, price: this.state.price, type: this.state.type } }
 
+	// render() 후 이전 상태를 DOM에 반영 — onChange는 발생시키지 않음
+	restoreState(saved)
+	{
+		if (!saved) return
+
+		var el = this.el
+		this.state = { toolId: saved.toolId || null, sort: saved.sort || 'latest', price: saved.price || 'all', type: saved.type || 'all' }
+
+		// 도구 탭
+		el.querySelectorAll('.fb-tool-tab').forEach(function(t) { t.classList.remove('active') })
+		var toolSel = saved.toolId
+			? el.querySelector('.fb-tool-tab[data-tool="' + saved.toolId + '"]')
+			: el.querySelector('.fb-tool-tab[data-tool=""]')
+		if (toolSel) toolSel.classList.add('active')
+
+		// 정렬
+		el.querySelector('#fb-sort').value = saved.sort || 'latest'
+
+		// 가격 칩
+		el.querySelectorAll('#fb-price-chips .fb-chip').forEach(function(c) { c.classList.remove('active') })
+		var priceChip = el.querySelector('[data-price="' + (saved.price || 'all') + '"]')
+		if (priceChip) priceChip.classList.add('active')
+
+		// 타입 칩
+		el.querySelectorAll('#fb-type-chips .fb-chip').forEach(function(c) { c.classList.remove('active') })
+		var typeChip = el.querySelector('[data-type="' + (saved.type || 'all') + '"]')
+		if (typeChip) typeChip.classList.add('active')
+	}
+
 	reset()
 	{
 		var el = this.el

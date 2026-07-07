@@ -16,8 +16,36 @@ class MyPageView extends AView
 		super.onInitDone()
 		this.sb = SupabaseManager.getInstance()
 		this.us = new UserService(this.sb)
+
+		var el = this.getElement()
+		el.innerHTML =
+			'<header id="mp-navbar"></header>' +
+			'<div id="mp-body-wrap" class="mp-body-wrap"></div>'
+
+		this._initNavBar(el.querySelector('#mp-navbar'))
 		this._renderSkeleton()
 		this._bootstrap()
+	}
+
+	_initNavBar(container)
+	{
+		var sb = this.sb
+		var nav = new NavBar(container, {
+			onSearch:   function() { theApp.mainContainer.open('Source/MainView.lay') },
+			onLogin:    function() { theApp.mainContainer.open('Source/Auth/AuthView.lay') },
+			onRegister: function() { theApp.mainContainer.open('Source/Prompt/PromptRegisterView.lay') },
+			onMyPage:   function() { theApp.mainContainer.open('Source/MyPage/MyPageView.lay') },
+			onAdmin:    function() { theApp.mainContainer.open('Source/Admin/AdminView.lay') },
+			onLogout:   async function()
+			{
+				ErrorHandler._intentionalLogout = true
+				sessionStorage.removeItem('ac_session_alive')
+				await sb.signOut()
+				theApp._filterState = null
+				theApp.mainContainer.open('Source/MainView.lay')
+			}
+		})
+		nav.render()
 	}
 
 	// ─────────────────────────────────────────
@@ -74,12 +102,9 @@ class MyPageView extends AView
 
 	_renderSkeleton()
 	{
-		this.getElement().innerHTML =
+		var body = this.getElement().querySelector('#mp-body-wrap') || this.getElement()
+		body.innerHTML =
 			'<div class="mp-wrap">' +
-				'<header class="mp-nav">' +
-					'<button class="mp-back" id="btn-back">← 돌아가기</button>' +
-					'<h1 class="mp-nav-title">마이페이지</h1>' +
-				'</header>' +
 				'<div class="mp-body">' +
 					'<div class="mp-center">' +
 						'<div class="mp-profile-skeleton"></div>' +
@@ -109,14 +134,9 @@ class MyPageView extends AView
 		var joinDate    = fmt.date(p.created_at)
 		var ns          = p.notification_settings || { like: true, purchase: true }
 
-		this.getElement().innerHTML =
+		var body = this.getElement().querySelector('#mp-body-wrap') || this.getElement()
+		body.innerHTML =
 			'<div class="mp-wrap">' +
-
-				'<header class="mp-nav">' +
-					'<button class="mp-back" id="btn-back">← 돌아가기</button>' +
-					'<h1 class="mp-nav-title">마이페이지</h1>' +
-					'<button class="ac-btn ac-btn-outline ac-btn-sm" id="btn-logout">로그아웃</button>' +
-				'</header>' +
 
 				'<div class="mp-body">' +
 				'<div class="mp-center">' +
@@ -219,16 +239,6 @@ class MyPageView extends AView
 	{
 		var el   = this.getElement()
 		var self = this
-
-		el.querySelector('#btn-back').addEventListener('click', function() { self._goBack() })
-
-		el.querySelector('#btn-logout').addEventListener('click', async function()
-		{
-			ErrorHandler._intentionalLogout = true
-			sessionStorage.removeItem('ac_session_alive')
-			await self.sb.signOut()
-			theApp.mainContainer.open('Source/Auth/AuthView.lay')
-		})
 
 		el.querySelector('#btn-avatar').addEventListener('click', function()
 		{
@@ -628,8 +638,4 @@ class MyPageView extends AView
 		})
 	}
 
-	_goBack()
-	{
-		theApp.mainContainer.open('Source/MainView.lay')
-	}
 }

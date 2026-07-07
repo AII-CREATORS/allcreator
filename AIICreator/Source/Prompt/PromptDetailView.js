@@ -25,8 +25,39 @@ class PromptDetailView extends AView
 		this.pm       = PaymentManager.getInstance()
 		this.us       = new UserService(this.sb)
 		this.promptId = theApp.getDetailId() || null
+
+		// 외부 구조: navbar 슬롯 + body 슬롯 (navbar는 교체되지 않음)
+		var el = this.getElement()
+		el.innerHTML =
+			'<header id="detail-navbar"></header>' +
+			'<div id="detail-body" class="detail-body-wrap"></div>'
+
+		// NavBar — 한 번만 렌더
+		this._initNavBar(el.querySelector('#detail-navbar'))
+
 		this._renderSkeleton()
 		this._bootstrap()
+	}
+
+	_initNavBar(container)
+	{
+		var sb = this.sb
+		var nav = new NavBar(container, {
+			onSearch:   function() { theApp.mainContainer.open('Source/MainView.lay') },
+			onLogin:    function() { theApp.mainContainer.open('Source/Auth/AuthView.lay') },
+			onRegister: function() { theApp.mainContainer.open('Source/Prompt/PromptRegisterView.lay') },
+			onMyPage:   function() { theApp.mainContainer.open('Source/MyPage/MyPageView.lay') },
+			onAdmin:    function() { theApp.mainContainer.open('Source/Admin/AdminView.lay') },
+			onLogout:   async function()
+			{
+				ErrorHandler._intentionalLogout = true
+				sessionStorage.removeItem('ac_session_alive')
+				await sb.signOut()
+				theApp._filterState = null
+				theApp.mainContainer.open('Source/MainView.lay')
+			}
+		})
+		nav.render()
 	}
 
 	// -----------------------------------------
@@ -50,7 +81,10 @@ class PromptDetailView extends AView
 			if (this.currentUser)
 			{
 				var { data: profile } = await this.us.getAdminRole(this.currentUser.id)
-				this.isAdmin = !!(profile && (profile.role === 'main_admin' || profile.role === 'sub_admin'))
+				this.isAdmin         = !!(profile && (profile.role === 'main_admin' || profile.role === 'sub_admin'))
+				this._displayInitial = profile && profile.display_name
+					? profile.display_name[0].toUpperCase()
+					: this.currentUser.email[0].toUpperCase()
 			}
 
 			await this._loadPrompt()
@@ -90,11 +124,9 @@ class PromptDetailView extends AView
 
 	_renderSkeleton()
 	{
-		this.getElement().innerHTML =
+		var body = this.getElement().querySelector('#detail-body') || this.getElement()
+		body.innerHTML =
 			'<div class="detail-wrap">' +
-				'<header class="detail-nav">' +
-					'<button class="detail-back" id="btn-back">← 돌아가기</button>' +
-				'</header>' +
 				'<div class="detail-content">' +
 					'<div class="skeleton-title"></div>' +
 					'<div class="skeleton-line"></div>' +
@@ -135,22 +167,9 @@ class PromptDetailView extends AView
 				'<div class="prompt-locked-text">구매 후 프롬프트 내용을 확인할 수 있습니다</div>' +
 			  '</div>'
 
-		this.getElement().innerHTML =
+		var body = this.getElement().querySelector('#detail-body') || this.getElement()
+		body.innerHTML =
 			'<div class="detail-wrap">' +
-
-				// 상단 네비
-				'<header class="detail-nav">' +
-					'<button class="detail-back" id="btn-back">← 돌아가기</button>' +
-					'<div class="detail-nav-actions">' +
-						'<button class="detail-action-btn ' + (this.isSaved ? 'active' : '') + '" id="btn-save" title="저장">' +
-							(this.isSaved ? '🔖' : '📌') + ' ' + (p.save_count || 0) +
-						'</button>' +
-						'<button class="detail-action-btn ' + (this.isLiked ? 'active' : '') + '" id="btn-like" title="좋아요">' +
-							(this.isLiked ? '❤️' : '🤍') + ' ' + (p.like_count || 0) +
-						'</button>' +
-					'</div>' +
-				'</header>' +
-
 				'<div class="detail-content">' +
 
 					// 배지
@@ -197,6 +216,16 @@ class PromptDetailView extends AView
 						actionBtn +
 					'</div>' +
 
+					// 저장 · 좋아요 · 수정 버튼 행 (가격란 바로 아래)
+					'<div class="detail-action-row">' +
+						'<button class="detail-action-btn ' + (this.isSaved ? 'active' : '') + '" id="btn-save" title="저장">' +
+							(this.isSaved ? '🔖' : '📌') + ' 저장 ' + (p.save_count || 0) +
+						'</button>' +
+						'<button class="detail-action-btn ' + (this.isLiked ? 'active' : '') + '" id="btn-like" title="좋아요">' +
+							(this.isLiked ? '❤️' : '🤍') + ' 좋아요 ' + (p.like_count || 0) +
+						'</button>' +
+					'</div>' +
+
 					// 프롬프트 내용
 					contentHTML +
 
@@ -209,7 +238,8 @@ class PromptDetailView extends AView
 		// 반려된 프롬프트, 관리자, 판매자 본인은 구매 버튼 미표시
 		if (this.prompt && this.prompt.status === 'rejected') return ''
 		if (this.isAdmin) return ''
-		if (this.currentUser && this.prompt.users && this.currentUser.id === this.prompt.users.id) return ''
+		if (this.currentUser && this.prompt.users && this.currentUser.id === this.prompt.users.id)
+			return '<button class="ac-btn ac-btn-outline ac-btn-sm" id="btn-edit-prompt">✏️ 수정하기</button>'
 
 		if (this.isPurchased)
 			return '<span class="detail-purchased-badge">✅ ' + (isFree ? '사용 중' : '구매 완료') + '</span>'
@@ -232,8 +262,6 @@ class PromptDetailView extends AView
 		var el   = this.getElement()
 		var self = this
 
-		el.querySelector('#btn-back').addEventListener('click', function() { self._goBack() })
-
 		var btnLike = el.querySelector('#btn-like')
 		if (btnLike) btnLike.addEventListener('click', function() { self._toggleLike() })
 
@@ -254,6 +282,17 @@ class PromptDetailView extends AView
 
 		var btnCopy = el.querySelector('#btn-copy')
 		if (btnCopy) btnCopy.addEventListener('click', function() { self._copyPrompt() })
+
+		var btnEdit = el.querySelector('#btn-edit-prompt')
+		if (btnEdit)
+		{
+			btnEdit.addEventListener('click', function()
+			{
+				theApp.editPromptId       = self.prompt.id
+				theApp.editReturnToDetail = self.prompt.id
+				theApp.mainContainer.open('Source/Prompt/PromptRegisterView.lay')
+			})
+		}
 	}
 
 	// -----------------------------------------
@@ -326,8 +365,9 @@ class PromptDetailView extends AView
 			}
 
 			this.isPurchased = true
-			if (btn) btn.outerHTML = '<span class="detail-purchased-badge">✅ 사용 중</span>'
 			ToastManager.success('이용 목록에 추가되었습니다')
+			this._renderDetail()
+			this._bindEvents()
 			return
 		}
 
@@ -362,8 +402,4 @@ class PromptDetailView extends AView
 		})
 	}
 
-	_goBack()
-	{
-		theApp.mainContainer.open('Source/MainView.lay')
-	}
 }
