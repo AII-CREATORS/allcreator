@@ -154,9 +154,9 @@ PromptService = class PromptService
 		return this.sb.getClient()
 			.from('prompts')
 			.select(
-				'id, title, description, prompt_content, price, prompt_type, status, ' +
+				'id, title, description, price, prompt_type, status, ' +
 				'rejection_reason, created_at, result_image, ' +
-				'users!user_id(id, display_name, email, username), ai_tools(name)',
+				'users!user_id(id, display_name, email), ai_tools(name)',
 				{ count: 'exact' }
 			)
 			.eq('status', status)

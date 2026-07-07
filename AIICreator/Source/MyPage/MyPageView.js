@@ -8,8 +8,7 @@ class MyPageView extends AView
 		this.us          = null
 		this.currentUser = null
 		this.profile     = null
-		this.currentTab  = 'mine'
-		this.isEditing   = false
+		this.currentTab = 'mine'
 	}
 
 	onInitDone()
@@ -280,7 +279,6 @@ class MyPageView extends AView
 		{
 			form.style.display = show ? '' : 'none'
 			btn.style.display  = show ? 'none' : ''
-			this.isEditing     = show
 		}
 	}
 
@@ -352,9 +350,12 @@ class MyPageView extends AView
 
 		try
 		{
-			var data = { display_name: displayName, bio: bio }
-			if (gender)    data.gender     = gender
-			if (birthDate) data.birth_date = birthDate
+			var data = {
+				display_name: displayName,
+				bio:          bio,
+				gender:       gender    || null,
+				birth_date:   birthDate || null
+			}
 
 			var result = await this.us.updateProfile(this.currentUser.id, data)
 			if (result.error) throw new Error(result.error.message)

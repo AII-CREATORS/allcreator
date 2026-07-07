@@ -104,9 +104,13 @@ NotificationPanel = class NotificationPanel
 
 	async getUnreadCount()
 	{
+		var user = await this.sb.getUser()
+		if (!user) return 0
+
 		var result = await this.sb.getClient()
 			.from('notifications')
 			.select('id', { count: 'exact', head: true })
+			.eq('user_id', user.id)
 			.eq('is_read', false)
 		return result.count || 0
 	}
@@ -117,14 +121,22 @@ NotificationPanel = class NotificationPanel
 
 	async _loadNotifications()
 	{
+		var user   = await this.sb.getUser()
+		var listEl = document.getElementById('notif-list')
+		if (!listEl) return
+
+		if (!user)
+		{
+			listEl.innerHTML = '<div style="text-align:center;padding:40px 20px;color:#6B6B8A;font-size:0.875rem;">로그인이 필요합니다</div>'
+			return
+		}
+
 		var result = await this.sb.getClient()
 			.from('notifications')
 			.select('id, type, title, body, prompt_id, is_read, created_at')
+			.eq('user_id', user.id)
 			.order('created_at', { ascending: false })
 			.limit(50)
-
-		var listEl = document.getElementById('notif-list')
-		if (!listEl) return
 
 		if (result.error)
 		{
@@ -218,7 +230,7 @@ NotificationPanel = class NotificationPanel
 	// 아이템 클릭 (개별 읽음 처리)
 	// -----------------------------------------
 
-	_onItemClick(item)
+	async _onItemClick(item)
 	{
 		var type     = item.getAttribute('data-type')
 		var promptId = item.getAttribute('data-prompt')
@@ -228,7 +240,13 @@ NotificationPanel = class NotificationPanel
 		if (isUnread)
 		{
 			var notifId = item.getAttribute('data-id')
-			this._markOneRead(notifId)
+			var { error } = await this._markOneRead(notifId)
+
+			if (error)
+			{
+				ToastManager.error('읽음 처리에 실패했습니다')
+				return
+			}
 
 			item.setAttribute('data-read', '1')
 			item.classList.remove('notif-unread')
@@ -328,7 +346,7 @@ NotificationPanel = class NotificationPanel
 
 	async _markOneRead(notifId)
 	{
-		await this.sb.getClient()
+		return this.sb.getClient()
 			.from('notifications')
 			.update({ is_read: true })
 			.eq('id', notifId)
@@ -340,10 +358,13 @@ NotificationPanel = class NotificationPanel
 
 	async _clearAll()
 	{
+		var user = await this.sb.getUser()
+		if (!user) return
+
 		var { error } = await this.sb.getClient()
 			.from('notifications')
 			.delete()
-			.not('id', 'is', null)  // RLS가 current user 범위로 한정
+			.eq('user_id', user.id)
 
 		if (error) { ToastManager.error('삭제 실패'); return }
 
