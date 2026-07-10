@@ -30,7 +30,7 @@ PromptGrid = class PromptGrid
 		if (!prompts.length)
 		{
 			var msg = keyword
-				? '"' + keyword + '" 검색 결과가 없습니다'
+				? '"' + fmt.esc(keyword) + '" 검색 결과가 없습니다'
 				: '등록된 프롬프트가 없습니다'
 			this.el.innerHTML =
 				'<div class="pg-empty">' +
@@ -43,7 +43,7 @@ PromptGrid = class PromptGrid
 		var self   = this
 		var header = ''
 		if (keyword)
-			header = '<div class="pg-result-header"><strong>"' + keyword + '"</strong> 검색 결과 ' + prompts.length + '개</div>'
+			header = '<div class="pg-result-header"><strong>"' + fmt.esc(keyword) + '"</strong> 검색 결과 ' + prompts.length + '개</div>'
 
 		this.el.innerHTML = header + '<div class="pg-grid">' +
 			prompts.map(function(p) { return self._cardHTML(p) }).join('') +
@@ -68,7 +68,7 @@ PromptGrid = class PromptGrid
 		var price     = isFree
 			? '<span class="ac-prompt-card-price free">무료</span>'
 			: '<span class="ac-prompt-card-price">' + Number(p.price).toLocaleString() + '원</span>'
-		var author    = p.users ? (p.users.display_name || '') : ''
+		var author    = p.users ? fmt.esc(p.users.display_name || '') : ''
 
 		var thumb = p.result_image
 			? '<div class="' + (isImage ? 'pg-thumb-image' : 'pg-thumb-text') + '" style="padding:0;overflow:hidden;">' +
@@ -82,8 +82,8 @@ PromptGrid = class PromptGrid
 			thumb +
 			'<div class="ac-prompt-card-body">' +
 				'<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px">' + toolBadge + typeBadge + '</div>' +
-				'<div class="ac-prompt-card-title">' + p.title + '</div>' +
-				'<div class="ac-prompt-card-desc">' + (p.description || '') + '</div>' +
+				'<div class="ac-prompt-card-title">' + fmt.esc(p.title) + '</div>' +
+				'<div class="ac-prompt-card-desc">' + fmt.esc(p.description || '') + '</div>' +
 				'<div class="ac-prompt-card-footer">' +
 					price +
 					'<span class="ac-caption" style="display:flex;align-items:center;gap:6px">' +

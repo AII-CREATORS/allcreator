@@ -196,12 +196,12 @@ class AuthView extends AView
 				'<p class="auth-subtitle">조금 더 알려주세요 👋</p>' +
 				'<div class="auth-box ac-card">' +
 					'<p style="color:var(--color-text-muted);font-size:0.875rem;margin-bottom:20px;line-height:1.5">' +
-						'<strong style="color:var(--color-text)">' + (profile.display_name || '') + '</strong>님, 환영합니다!<br>' +
+						'<strong style="color:var(--color-text)">' + fmt.esc(profile.display_name || '') + '</strong>님, 환영합니다!<br>' +
 						'서비스 이용을 위해 추가 정보를 입력해주세요.' +
 					'</p>' +
 					'<div class="ac-input-group">' +
 						'<label class="ac-label">닉네임</label>' +
-						'<input class="ac-input" type="text" id="sc-displayname" value="' + (profile.display_name || '') + '" placeholder="다른 사람들에게 보일 이름">' +
+						'<input class="ac-input" type="text" id="sc-displayname" value="' + fmt.esc(profile.display_name || '') + '" placeholder="다른 사람들에게 보일 이름">' +
 					'</div>' +
 					'<div style="display:flex;gap:12px;margin-top:14px">' +
 						'<div class="ac-input-group" style="flex:1">' +
@@ -637,7 +637,7 @@ class AuthView extends AView
 				'<div class="find-result find-result-success">' +
 					'<div class="find-result-icon">📧</div>' +
 					'<div class="find-result-msg">' +
-						'<strong>' + email + '</strong>으로<br>' +
+						'<strong>' + fmt.esc(email) + '</strong>으로<br>' +
 						'비밀번호 재설정 링크를 발송했습니다.<br>' +
 						'<span style="font-size:0.8125rem;color:var(--color-text-dim)">이메일의 링크를 클릭하면 새 비밀번호를 설정할 수 있습니다.</span>' +
 					'</div>' +
