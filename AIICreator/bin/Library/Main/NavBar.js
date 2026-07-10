@@ -67,7 +67,11 @@ NavBar = class NavBar
 
 	_userHTML(user, profile, unread)
 	{
-		var initial = (user.email || 'U')[0].toUpperCase()
+		var initial   = fmt.esc((user.email || 'U')[0].toUpperCase())
+		var avatarUrl = profile && profile.avatar_url
+		var avatarInner = avatarUrl
+			? '<img src="' + fmt.esc(avatarUrl) + '" alt="avatar">'
+			: initial
 		var role    = profile && profile.role
 		var isAdmin = role === 'main_admin' || role === 'sub_admin'
 
@@ -91,9 +95,9 @@ NavBar = class NavBar
 				'🔔' +
 				badgeHTML +
 			  '</button>'
-			+ '<div class="ac-avatar nb-avatar" id="nb-avatar">' + initial
+			+ '<div class="ac-avatar nb-avatar" id="nb-avatar">' + avatarInner
 				+ '<div class="nb-dropdown" id="nb-dropdown" style="display:none">'
-					+ '<div class="nb-dropdown-email">' + user.email + '</div>'
+					+ '<div class="nb-dropdown-email">' + fmt.esc(user.email) + '</div>'
 					+ '<button class="nb-dropdown-item" id="nb-btn-mypage">마이페이지</button>'
 					+ '<button class="nb-dropdown-item" id="nb-btn-logout">로그아웃</button>'
 				+ '</div>'
@@ -206,4 +210,31 @@ NavBar = class NavBar
 	}
 
 	getKeyword() { return this.keyword }
+
+	// ─────────────────────────────────────────
+	// 서브 화면(Admin/MyPage/Detail/Register) 공용 NavBar 초기화
+	// MainView는 onSearch/onLogout 동작이 달라 별도로 구성함
+	// ─────────────────────────────────────────
+
+	static mountStandard(container)
+	{
+		var sb  = SupabaseManager.getInstance()
+		var nav = new NavBar(container, {
+			onSearch:   function() { theApp.mainContainer.open('Source/MainView.lay') },
+			onLogin:    function() { theApp.mainContainer.open('Source/Auth/AuthView.lay') },
+			onRegister: function() { theApp.mainContainer.open('Source/Prompt/PromptRegisterView.lay') },
+			onMyPage:   function() { theApp.mainContainer.open('Source/MyPage/MyPageView.lay') },
+			onAdmin:    function() { theApp.mainContainer.open('Source/Admin/AdminView.lay') },
+			onLogout:   async function()
+			{
+				ErrorHandler._intentionalLogout = true
+				sessionStorage.removeItem('ac_session_alive')
+				await sb.signOut()
+				theApp._filterState = null
+				theApp.mainContainer.open('Source/MainView.lay')
+			}
+		})
+		nav.render()
+		return nav
+	}
 }

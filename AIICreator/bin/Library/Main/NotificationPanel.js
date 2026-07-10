@@ -178,9 +178,9 @@ NotificationPanel = class NotificationPanel
 						'</div>' +
 						'<div style="flex:1;min-width:0;padding-right:20px;">' +
 							'<div class="notif-title-text" style="font-size:0.875rem;font-weight:' + (isUnread ? '600' : '400') + ';color:' + (isUnread ? '#F0F0FF' : '#B0B0D0') + ';line-height:1.4;margin-bottom:4px;">' +
-								n.title +
+								fmt.esc(n.title) +
 							'</div>' +
-							(n.body ? '<div style="font-size:0.775rem;color:#6B6B8A;line-height:1.5;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;">' + n.body + '</div>' : '') +
+							(n.body ? '<div style="font-size:0.775rem;color:#6B6B8A;line-height:1.5;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;">' + fmt.esc(n.body) + '</div>' : '') +
 							'<div style="font-size:0.725rem;color:#4A4A6A;margin-top:6px;">' + timeText + '</div>' +
 						'</div>' +
 						'<div class="notif-dot" style="' + (isUnread ? '' : 'display:none;') + 'width:7px;height:7px;border-radius:50%;background:#6C63FF;flex-shrink:0;margin-top:5px;"></div>' +
@@ -320,7 +320,7 @@ NotificationPanel = class NotificationPanel
 				'<h3 style="font-size:1rem;font-weight:700;color:#FF6584;margin:0 0 16px;">반려 사유</h3>' +
 				'<div style="background:#2A1520;border:1px solid rgba(255,101,132,0.3);border-radius:10px;' +
 					'padding:16px;font-size:0.875rem;color:#F0C0C8;line-height:1.7;white-space:pre-wrap;">' +
-					(body || '사유가 기록되지 않았습니다.') +
+					(body ? fmt.esc(body) : '사유가 기록되지 않았습니다.') +
 				'</div>' +
 				'<div style="text-align:right;margin-top:20px;">' +
 					'<button id="rej-popup-close" style="padding:8px 24px;border:none;border-radius:8px;' +

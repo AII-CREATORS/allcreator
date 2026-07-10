@@ -34,23 +34,7 @@ AdminView = class AdminView extends AView
 
 	_initNavBar(container)
 	{
-		var sb = this.sb
-		var nav = new NavBar(container, {
-			onSearch:   function() { theApp.mainContainer.open('Source/MainView.lay') },
-			onLogin:    function() { theApp.mainContainer.open('Source/Auth/AuthView.lay') },
-			onRegister: function() { theApp.mainContainer.open('Source/Prompt/PromptRegisterView.lay') },
-			onMyPage:   function() { theApp.mainContainer.open('Source/MyPage/MyPageView.lay') },
-			onAdmin:    function() { theApp.mainContainer.open('Source/Admin/AdminView.lay') },
-			onLogout:   async function()
-			{
-				ErrorHandler._intentionalLogout = true
-				sessionStorage.removeItem('ac_session_alive')
-				await sb.signOut()
-				theApp._filterState = null
-				theApp.mainContainer.open('Source/MainView.lay')
-			}
-		})
-		nav.render()
+		NavBar.mountStandard(container)
 	}
 
 	// ─────────────────────────────────────────
@@ -201,7 +185,7 @@ AdminView = class AdminView extends AView
 
 		this.prompts.forEach(function(p)
 		{
-			var seller    = p.users ? (p.users.display_name || p.users.email) : '알 수 없음'
+			var seller    = p.users ? fmt.esc(p.users.display_name || p.users.email) : '알 수 없음'
 			var priceText = Number(p.price) === 0 ? '무료' : Number(p.price).toLocaleString() + '원'
 			var dateText  = fmt.date(p.created_at)
 
@@ -220,7 +204,7 @@ AdminView = class AdminView extends AView
 			{
 				actionBtns =
 					'<button class="adm-btn-approve" data-id="' + p.id + '">재승인</button>' +
-					'<div class="adm-reject-reason">' + (p.rejection_reason || '') + '</div>'
+					'<div class="adm-reject-reason">' + fmt.esc(p.rejection_reason || '') + '</div>'
 			}
 
 			html +=
@@ -231,8 +215,8 @@ AdminView = class AdminView extends AView
 						'<span class="adm-card-date">' + dateText + '</span>' +
 						'<span class="adm-card-price">' + priceText + '</span>' +
 					'</div>' +
-					'<div class="adm-card-title">' + p.title + '</div>' +
-					'<div class="adm-card-desc">' + (p.description || '') + '</div>' +
+					'<div class="adm-card-title">' + fmt.esc(p.title) + '</div>' +
+					'<div class="adm-card-desc">' + fmt.esc(p.description || '') + '</div>' +
 					'<div class="adm-card-actions">' + actionBtns + '</div>' +
 				'</div>'
 		})
@@ -405,8 +389,8 @@ AdminView = class AdminView extends AView
 			html +=
 				'<div class="adm-manage-row">' +
 					'<div class="adm-manage-info">' +
-						'<span class="adm-manage-name">' + (u.display_name || u.email) + '</span>' +
-						'<span class="adm-manage-email">' + u.email + '</span>' +
+						'<span class="adm-manage-name">' + fmt.esc(u.display_name || u.email) + '</span>' +
+						'<span class="adm-manage-email">' + fmt.esc(u.email) + '</span>' +
 					'</div>' +
 					'<span class="adm-role-tag adm-role-' + u.role + '">' + roleLabel + '</span>' +
 					(canRemove

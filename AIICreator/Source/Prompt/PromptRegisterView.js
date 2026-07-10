@@ -13,7 +13,6 @@ class PromptRegisterView extends AView
 		this.editPrompt    = null   // 수정 대상 데이터
 		this._pendingImageFile   = null   // 업로드 대기 중인 이미지 파일
 		this._pendingImageRemove = false  // 수정 모드에서 이미지 제거 요청 여부
-		this._displayInitial     = ''
 	}
 
 	onInitDone()
@@ -21,7 +20,6 @@ class PromptRegisterView extends AView
 		super.onInitDone()
 		this.sb = SupabaseManager.getInstance()
 		this.ps = new PromptService(this.sb)
-		this.us = new UserService(this.sb)
 
 		var el = this.getElement()
 		el.innerHTML =
@@ -35,23 +33,7 @@ class PromptRegisterView extends AView
 
 	_initNavBar(container)
 	{
-		var sb = this.sb
-		var nav = new NavBar(container, {
-			onSearch:   function() { theApp.mainContainer.open('Source/MainView.lay') },
-			onLogin:    function() { theApp.mainContainer.open('Source/Auth/AuthView.lay') },
-			onRegister: function() { theApp.mainContainer.open('Source/Prompt/PromptRegisterView.lay') },
-			onMyPage:   function() { theApp.mainContainer.open('Source/MyPage/MyPageView.lay') },
-			onAdmin:    function() { theApp.mainContainer.open('Source/Admin/AdminView.lay') },
-			onLogout:   async function()
-			{
-				ErrorHandler._intentionalLogout = true
-				sessionStorage.removeItem('ac_session_alive')
-				await sb.signOut()
-				theApp._filterState = null
-				theApp.mainContainer.open('Source/MainView.lay')
-			}
-		})
-		nav.render()
+		NavBar.mountStandard(container)
 	}
 
 	// ─────────────────────────────────────────
@@ -69,12 +51,6 @@ class PromptRegisterView extends AView
 			theApp.mainContainer.open('Source/Auth/AuthView.lay')
 			return
 		}
-
-		// 헤더 아바타 이니셜용 display_name 로드
-		var { data: uProfile } = await this.us.getAdminRole(this.currentUser.id)
-		this._displayInitial = uProfile && uProfile.display_name
-			? uProfile.display_name[0].toUpperCase()
-			: this.currentUser.email[0].toUpperCase()
 
 		// 수정 모드 감지: theApp.editPromptId가 설정돼 있으면 수정 모드
 		if (theApp.editPromptId)
@@ -161,14 +137,14 @@ class PromptRegisterView extends AView
 						// 제목
 						'<div class="ac-input-group">' +
 							'<label class="ac-label">제목 <span class="reg-required">*</span></label>' +
-							'<input class="ac-input" type="text" id="reg-title" placeholder="프롬프트 제목을 입력하세요" maxlength="100" value="' + (isEdit ? (p.title || '').replace(/"/g, '&quot;') : '') + '">' +
+							'<input class="ac-input" type="text" id="reg-title" placeholder="프롬프트 제목을 입력하세요" maxlength="100" value="' + (isEdit ? fmt.esc(p.title || '') : '') + '">' +
 							'<div class="reg-char-count" id="count-title">' + (isEdit ? (p.title || '').length : 0) + ' / 100</div>' +
 						'</div>' +
 
 						// 설명
 						'<div class="ac-input-group">' +
 							'<label class="ac-label">설명 <span class="reg-required">*</span></label>' +
-							'<textarea class="ac-input reg-textarea" id="reg-desc" placeholder="프롬프트에 대한 간단한 설명을 입력하세요" maxlength="300">' + (isEdit ? (p.description || '') : '') + '</textarea>' +
+							'<textarea class="ac-input reg-textarea" id="reg-desc" placeholder="프롬프트에 대한 간단한 설명을 입력하세요" maxlength="300">' + (isEdit ? fmt.esc(p.description || '') : '') + '</textarea>' +
 							'<div class="reg-char-count" id="count-desc">' + (isEdit ? (p.description || '').length : 0) + ' / 300</div>' +
 						'</div>' +
 
@@ -217,7 +193,7 @@ class PromptRegisterView extends AView
 							'<label class="ac-label">프롬프트 내용 <span class="reg-required">*</span>' +
 								'<span class="reg-label-sub">— 구매자에게 공개되는 실제 프롬프트</span>' +
 							'</label>' +
-							'<textarea class="ac-input reg-textarea reg-textarea-lg" id="reg-content" placeholder="실제 프롬프트 내용을 입력하세요&#10;&#10;예시) Act as a senior software engineer...">' + (isEdit ? (p.prompt_content || '') : '') + '</textarea>' +
+							'<textarea class="ac-input reg-textarea reg-textarea-lg" id="reg-content" placeholder="실제 프롬프트 내용을 입력하세요&#10;&#10;예시) Act as a senior software engineer...">' + (isEdit ? fmt.esc(p.prompt_content || '') : '') + '</textarea>' +
 							'<div class="reg-char-count" id="count-content">' + (isEdit ? (p.prompt_content || '').length : 0) + ' 자</div>' +
 						'</div>' +
 
@@ -229,7 +205,7 @@ class PromptRegisterView extends AView
 							'<input type="file" id="reg-img-file" accept="image/*" style="display:none">' +
 							(isEdit && p.result_image
 								? '<div class="reg-img-zone reg-img-preview" id="reg-img-zone">' +
-									'<img src="' + p.result_image + '" style="max-width:100%;height:auto;border-radius:8px;display:block;margin:0 auto;">' +
+									'<img src="' + fmt.esc(p.result_image) + '" style="max-width:100%;height:auto;border-radius:8px;display:block;margin:0 auto;">' +
 									'<div style="display:flex;gap:8px;justify-content:center;margin-top:10px;">' +
 										'<button type="button" class="ac-btn ac-btn-outline ac-btn-sm" id="reg-img-change">변경</button>' +
 										'<button type="button" class="ac-btn ac-btn-sm" id="reg-img-remove" style="color:#FF6584;border-color:#FF6584;">제거</button>' +

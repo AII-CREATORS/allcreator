@@ -15081,7 +15081,19 @@ fmt = (function()
 		return date(dateStr)
 	}
 
-	return { date: date, timeAgo: timeAgo }
+	// HTML 이스케이프 (innerHTML에 삽입되는 사용자 입력값 XSS 방지용)
+	function esc(str)
+	{
+		if (str === null || str === undefined) return ''
+		return String(str)
+			.replace(/&/g, '&amp;')
+			.replace(/</g, '&lt;')
+			.replace(/>/g, '&gt;')
+			.replace(/"/g, '&quot;')
+			.replace(/'/g, '&#39;')
+	}
+
+	return { date: date, timeAgo: timeAgo, esc: esc }
 })()
 
 ;/**
@@ -15501,7 +15513,11 @@ ErrorHandler._authSubscription  = null
 
 	_userHTML(user, profile, unread)
 	{
-		var initial = (user.email || 'U')[0].toUpperCase()
+		var initial   = fmt.esc((user.email || 'U')[0].toUpperCase())
+		var avatarUrl = profile && profile.avatar_url
+		var avatarInner = avatarUrl
+			? '<img src="' + fmt.esc(avatarUrl) + '" alt="avatar">'
+			: initial
 		var role    = profile && profile.role
 		var isAdmin = role === 'main_admin' || role === 'sub_admin'
 
@@ -15525,9 +15541,9 @@ ErrorHandler._authSubscription  = null
 				'🔔' +
 				badgeHTML +
 			  '</button>'
-			+ '<div class="ac-avatar nb-avatar" id="nb-avatar">' + initial
+			+ '<div class="ac-avatar nb-avatar" id="nb-avatar">' + avatarInner
 				+ '<div class="nb-dropdown" id="nb-dropdown" style="display:none">'
-					+ '<div class="nb-dropdown-email">' + user.email + '</div>'
+					+ '<div class="nb-dropdown-email">' + fmt.esc(user.email) + '</div>'
 					+ '<button class="nb-dropdown-item" id="nb-btn-mypage">마이페이지</button>'
 					+ '<button class="nb-dropdown-item" id="nb-btn-logout">로그아웃</button>'
 				+ '</div>'
@@ -15640,6 +15656,33 @@ ErrorHandler._authSubscription  = null
 	}
 
 	getKeyword() { return this.keyword }
+
+	// ─────────────────────────────────────────
+	// 서브 화면(Admin/MyPage/Detail/Register) 공용 NavBar 초기화
+	// MainView는 onSearch/onLogout 동작이 달라 별도로 구성함
+	// ─────────────────────────────────────────
+
+	static mountStandard(container)
+	{
+		var sb  = SupabaseManager.getInstance()
+		var nav = new NavBar(container, {
+			onSearch:   function() { theApp.mainContainer.open('Source/MainView.lay') },
+			onLogin:    function() { theApp.mainContainer.open('Source/Auth/AuthView.lay') },
+			onRegister: function() { theApp.mainContainer.open('Source/Prompt/PromptRegisterView.lay') },
+			onMyPage:   function() { theApp.mainContainer.open('Source/MyPage/MyPageView.lay') },
+			onAdmin:    function() { theApp.mainContainer.open('Source/Admin/AdminView.lay') },
+			onLogout:   async function()
+			{
+				ErrorHandler._intentionalLogout = true
+				sessionStorage.removeItem('ac_session_alive')
+				await sb.signOut()
+				theApp._filterState = null
+				theApp.mainContainer.open('Source/MainView.lay')
+			}
+		})
+		nav.render()
+		return nav
+	}
 }
 
 ;
@@ -15863,7 +15906,7 @@ PromptGrid = class PromptGrid
 		if (!prompts.length)
 		{
 			var msg = keyword
-				? '"' + keyword + '" 검색 결과가 없습니다'
+				? '"' + fmt.esc(keyword) + '" 검색 결과가 없습니다'
 				: '등록된 프롬프트가 없습니다'
 			this.el.innerHTML =
 				'<div class="pg-empty">' +
@@ -15876,7 +15919,7 @@ PromptGrid = class PromptGrid
 		var self   = this
 		var header = ''
 		if (keyword)
-			header = '<div class="pg-result-header"><strong>"' + keyword + '"</strong> 검색 결과 ' + prompts.length + '개</div>'
+			header = '<div class="pg-result-header"><strong>"' + fmt.esc(keyword) + '"</strong> 검색 결과 ' + prompts.length + '개</div>'
 
 		this.el.innerHTML = header + '<div class="pg-grid">' +
 			prompts.map(function(p) { return self._cardHTML(p) }).join('') +
@@ -15901,7 +15944,7 @@ PromptGrid = class PromptGrid
 		var price     = isFree
 			? '<span class="ac-prompt-card-price free">무료</span>'
 			: '<span class="ac-prompt-card-price">' + Number(p.price).toLocaleString() + '원</span>'
-		var author    = p.users ? (p.users.display_name || '') : ''
+		var author    = p.users ? fmt.esc(p.users.display_name || '') : ''
 
 		var thumb = p.result_image
 			? '<div class="' + (isImage ? 'pg-thumb-image' : 'pg-thumb-text') + '" style="padding:0;overflow:hidden;">' +
@@ -15915,8 +15958,8 @@ PromptGrid = class PromptGrid
 			thumb +
 			'<div class="ac-prompt-card-body">' +
 				'<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px">' + toolBadge + typeBadge + '</div>' +
-				'<div class="ac-prompt-card-title">' + p.title + '</div>' +
-				'<div class="ac-prompt-card-desc">' + (p.description || '') + '</div>' +
+				'<div class="ac-prompt-card-title">' + fmt.esc(p.title) + '</div>' +
+				'<div class="ac-prompt-card-desc">' + fmt.esc(p.description || '') + '</div>' +
 				'<div class="ac-prompt-card-footer">' +
 					price +
 					'<span class="ac-caption" style="display:flex;align-items:center;gap:6px">' +
@@ -16110,9 +16153,9 @@ PromptGrid = class PromptGrid
 						'</div>' +
 						'<div style="flex:1;min-width:0;padding-right:20px;">' +
 							'<div class="notif-title-text" style="font-size:0.875rem;font-weight:' + (isUnread ? '600' : '400') + ';color:' + (isUnread ? '#F0F0FF' : '#B0B0D0') + ';line-height:1.4;margin-bottom:4px;">' +
-								n.title +
+								fmt.esc(n.title) +
 							'</div>' +
-							(n.body ? '<div style="font-size:0.775rem;color:#6B6B8A;line-height:1.5;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;">' + n.body + '</div>' : '') +
+							(n.body ? '<div style="font-size:0.775rem;color:#6B6B8A;line-height:1.5;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;">' + fmt.esc(n.body) + '</div>' : '') +
 							'<div style="font-size:0.725rem;color:#4A4A6A;margin-top:6px;">' + timeText + '</div>' +
 						'</div>' +
 						'<div class="notif-dot" style="' + (isUnread ? '' : 'display:none;') + 'width:7px;height:7px;border-radius:50%;background:#6C63FF;flex-shrink:0;margin-top:5px;"></div>' +
@@ -16252,7 +16295,7 @@ PromptGrid = class PromptGrid
 				'<h3 style="font-size:1rem;font-weight:700;color:#FF6584;margin:0 0 16px;">반려 사유</h3>' +
 				'<div style="background:#2A1520;border:1px solid rgba(255,101,132,0.3);border-radius:10px;' +
 					'padding:16px;font-size:0.875rem;color:#F0C0C8;line-height:1.7;white-space:pre-wrap;">' +
-					(body || '사유가 기록되지 않았습니다.') +
+					(body ? fmt.esc(body) : '사유가 기록되지 않았습니다.') +
 				'</div>' +
 				'<div style="text-align:right;margin-top:20px;">' +
 					'<button id="rej-popup-close" style="padding:8px 24px;border:none;border-radius:8px;' +
@@ -16407,15 +16450,16 @@ PromptService = class PromptService
 
 	// -----------------------------------------
 	// 프롬프트 상세
+	// 구매/소유/관리자 여부를 서버(RPC)에서 검증한 뒤에만 prompt_content를 포함해 반환
+	// (RLS만으로는 비구매자도 prompt_content를 직접 조회할 수 있어 결제 우회가 가능했음)
 	// -----------------------------------------
 
 	async getDetail(promptId)
 	{
-		return this.sb.getClient()
-			.from('prompts')
-			.select('id, title, description, prompt_content, prompt_type, price, difficulty, status, rejection_reason, like_count, save_count, view_count, created_at, result_image, users!user_id(id, display_name), ai_tools(name), categories(name)')
-			.eq('id', promptId)
-			.single()
+		var result = await this.sb.getClient().rpc('get_prompt_detail', { p_prompt_id: promptId })
+		if (result.error) return result
+		if (!result.data) return { data: null, error: { message: '프롬프트를 찾을 수 없습니다' } }
+		return { data: result.data, error: null }
 	}
 
 	// -----------------------------------------
@@ -16655,7 +16699,7 @@ PromptService = class PromptService
 	{
 		return this.sb.getClient()
 			.from('users')
-			.select('role, display_name')
+			.select('role, display_name, avatar_url')
 			.eq('id', userId)
 			.single()
 	}

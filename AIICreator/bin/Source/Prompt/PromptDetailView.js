@@ -41,23 +41,7 @@ PromptDetailView = class PromptDetailView extends AView
 
 	_initNavBar(container)
 	{
-		var sb = this.sb
-		var nav = new NavBar(container, {
-			onSearch:   function() { theApp.mainContainer.open('Source/MainView.lay') },
-			onLogin:    function() { theApp.mainContainer.open('Source/Auth/AuthView.lay') },
-			onRegister: function() { theApp.mainContainer.open('Source/Prompt/PromptRegisterView.lay') },
-			onMyPage:   function() { theApp.mainContainer.open('Source/MyPage/MyPageView.lay') },
-			onAdmin:    function() { theApp.mainContainer.open('Source/Admin/AdminView.lay') },
-			onLogout:   async function()
-			{
-				ErrorHandler._intentionalLogout = true
-				sessionStorage.removeItem('ac_session_alive')
-				await sb.signOut()
-				theApp._filterState = null
-				theApp.mainContainer.open('Source/MainView.lay')
-			}
-		})
-		nav.render()
+		NavBar.mountStandard(container)
 	}
 
 	// -----------------------------------------
@@ -81,10 +65,7 @@ PromptDetailView = class PromptDetailView extends AView
 			if (this.currentUser)
 			{
 				var { data: profile } = await this.us.getAdminRole(this.currentUser.id)
-				this.isAdmin         = !!(profile && (profile.role === 'main_admin' || profile.role === 'sub_admin'))
-				this._displayInitial = profile && profile.display_name
-					? profile.display_name[0].toUpperCase()
-					: this.currentUser.email[0].toUpperCase()
+				this.isAdmin = !!(profile && (profile.role === 'main_admin' || profile.role === 'sub_admin'))
 			}
 
 			await this._loadPrompt()
@@ -137,12 +118,13 @@ PromptDetailView = class PromptDetailView extends AView
 
 	_renderDetail()
 	{
-		var p        = this.prompt
-		var isFree   = Number(p.price) === 0
-		var toolName = p.ai_tools   ? p.ai_tools.name   : ''
-		var catName  = p.categories ? p.categories.name : ''
-		var author   = p.users ? (p.users.display_name || '알 수 없음') : '알 수 없음'
-		var initial  = author[0].toUpperCase()
+		var p          = this.prompt
+		var isFree     = Number(p.price) === 0
+		var toolName   = p.ai_tools   ? p.ai_tools.name   : ''
+		var catName    = p.categories ? p.categories.name : ''
+		var authorRaw  = p.users ? (p.users.display_name || '알 수 없음') : '알 수 없음'
+		var initial    = fmt.esc(authorRaw[0].toUpperCase())
+		var author     = fmt.esc(authorRaw)
 
 		var difficultyMap = { beginner: '입문', intermediate: '중급', advanced: '고급' }
 		var difficulty    = difficultyMap[p.difficulty] || p.difficulty || ''
@@ -159,7 +141,7 @@ PromptDetailView = class PromptDetailView extends AView
 		var contentHTML = canView
 			? '<div class="prompt-content-box">' +
 				'<div class="prompt-content-label">프롬프트 내용</div>' +
-				'<pre class="prompt-content-text">' + (p.prompt_content || '') + '</pre>' +
+				'<pre class="prompt-content-text">' + fmt.esc(p.prompt_content || '') + '</pre>' +
 				'<button class="prompt-content-copy" id="btn-copy">📋 복사</button>' +
 			  '</div>'
 			: '<div class="prompt-locked">' +
@@ -174,9 +156,9 @@ PromptDetailView = class PromptDetailView extends AView
 
 					// 배지
 					'<div class="detail-badges">' +
-						(toolName ? '<span class="ac-badge ac-badge-accent">' + toolName + '</span>' : '') +
-						(catName  ? '<span class="ac-badge ac-badge-dim">'   + catName  + '</span>' : '') +
-						(difficulty ? '<span class="ac-badge ac-badge-dim">' + difficulty + '</span>' : '') +
+						(toolName ? '<span class="ac-badge ac-badge-accent">' + fmt.esc(toolName) + '</span>' : '') +
+						(catName  ? '<span class="ac-badge ac-badge-dim">'   + fmt.esc(catName)  + '</span>' : '') +
+						(difficulty ? '<span class="ac-badge ac-badge-dim">' + fmt.esc(difficulty) + '</span>' : '') +
 						'<span class="ac-badge ' + (p.prompt_type === 'image' ? 'ac-badge-point' : 'ac-badge-dim') + '">' +
 							(p.prompt_type === 'image' ? '🎨 이미지' : '✍️ 텍스트') +
 						'</span>' +
@@ -184,21 +166,21 @@ PromptDetailView = class PromptDetailView extends AView
 
 					// 반려 사유 (rejected 상태일 때만, 이미지 위)
 					(p.status === 'rejected' && p.rejection_reason
-						? '<div style="background:#FFDDDD;border:1px solid #F5AAAA;border-radius:10px;padding:14px 18px;margin-bottom:20px;">' +
-							'<div style="font-size:0.75rem;font-weight:700;color:#8B0000;margin-bottom:4px;text-transform:uppercase;letter-spacing:0.05em;">반려 사유</div>' +
-							'<div style="font-size:0.9375rem;color:#1A1A1A;line-height:1.5;">' + p.rejection_reason + '</div>' +
+						? '<div class="detail-rejected-box">' +
+							'<div class="detail-rejected-label">반려 사유</div>' +
+							'<div class="detail-rejected-reason">' + fmt.esc(p.rejection_reason) + '</div>' +
 						  '</div>'
 						: '') +
 
 					// 결과물 이미지
 					(p.result_image
-						? '<div style="width:100%;border-radius:16px;overflow:hidden;margin-bottom:20px;background:#2E2E48;">'
-							+ '<img src="' + p.result_image + '" style="max-width:100%;height:auto;display:block;margin:0 auto;" alt="결과물 이미지">'
+						? '<div class="detail-result-image">'
+							+ '<img src="' + fmt.esc(p.result_image) + '" alt="결과물 이미지">'
 							+ '</div>'
 						: '') +
 
 					// 제목
-					'<h1 class="detail-title">' + p.title + '</h1>' +
+					'<h1 class="detail-title">' + fmt.esc(p.title) + '</h1>' +
 
 					// 작성자 + 통계
 					'<div class="detail-meta">' +
@@ -216,7 +198,7 @@ PromptDetailView = class PromptDetailView extends AView
 					'<hr class="ac-divider">' +
 
 					// 설명
-					'<p class="detail-description">' + (p.description || '') + '</p>' +
+					'<p class="detail-description">' + fmt.esc(p.description || '') + '</p>' +
 
 					// 가격 + 구매 버튼
 					'<div class="detail-purchase-box">' +

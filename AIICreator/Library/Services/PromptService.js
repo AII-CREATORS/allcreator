@@ -45,15 +45,16 @@ PromptService = class PromptService
 
 	// -----------------------------------------
 	// 프롬프트 상세
+	// 구매/소유/관리자 여부를 서버(RPC)에서 검증한 뒤에만 prompt_content를 포함해 반환
+	// (RLS만으로는 비구매자도 prompt_content를 직접 조회할 수 있어 결제 우회가 가능했음)
 	// -----------------------------------------
 
 	async getDetail(promptId)
 	{
-		return this.sb.getClient()
-			.from('prompts')
-			.select('id, title, description, prompt_content, prompt_type, price, difficulty, status, rejection_reason, like_count, save_count, view_count, created_at, result_image, users!user_id(id, display_name), ai_tools(name), categories(name)')
-			.eq('id', promptId)
-			.single()
+		var result = await this.sb.getClient().rpc('get_prompt_detail', { p_prompt_id: promptId })
+		if (result.error) return result
+		if (!result.data) return { data: null, error: { message: '프롬프트를 찾을 수 없습니다' } }
+		return { data: result.data, error: null }
 	}
 
 	// -----------------------------------------

@@ -33,5 +33,17 @@ fmt = (function()
 		return date(dateStr)
 	}
 
-	return { date: date, timeAgo: timeAgo }
+	// HTML 이스케이프 (innerHTML에 삽입되는 사용자 입력값 XSS 방지용)
+	function esc(str)
+	{
+		if (str === null || str === undefined) return ''
+		return String(str)
+			.replace(/&/g, '&amp;')
+			.replace(/</g, '&lt;')
+			.replace(/>/g, '&gt;')
+			.replace(/"/g, '&quot;')
+			.replace(/'/g, '&#39;')
+	}
+
+	return { date: date, timeAgo: timeAgo, esc: esc }
 })()

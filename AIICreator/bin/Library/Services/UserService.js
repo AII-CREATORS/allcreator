@@ -38,7 +38,7 @@ UserService = class UserService
 	{
 		return this.sb.getClient()
 			.from('users')
-			.select('role, display_name')
+			.select('role, display_name, avatar_url')
 			.eq('id', userId)
 			.single()
 	}

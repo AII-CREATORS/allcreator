@@ -29,23 +29,7 @@ MyPageView = class MyPageView extends AView
 
 	_initNavBar(container)
 	{
-		var sb = this.sb
-		var nav = new NavBar(container, {
-			onSearch:   function() { theApp.mainContainer.open('Source/MainView.lay') },
-			onLogin:    function() { theApp.mainContainer.open('Source/Auth/AuthView.lay') },
-			onRegister: function() { theApp.mainContainer.open('Source/Prompt/PromptRegisterView.lay') },
-			onMyPage:   function() { theApp.mainContainer.open('Source/MyPage/MyPageView.lay') },
-			onAdmin:    function() { theApp.mainContainer.open('Source/Admin/AdminView.lay') },
-			onLogout:   async function()
-			{
-				ErrorHandler._intentionalLogout = true
-				sessionStorage.removeItem('ac_session_alive')
-				await sb.signOut()
-				theApp._filterState = null
-				theApp.mainContainer.open('Source/MainView.lay')
-			}
-		})
-		nav.render()
+		NavBar.mountStandard(container)
 	}
 
 	// ─────────────────────────────────────────
@@ -117,10 +101,10 @@ MyPageView = class MyPageView extends AView
 	{
 		var p = this.profile
 		if (p.avatar_url)
-			return '<img class="mp-avatar mp-avatar-img" id="mp-avatar-img" src="' + p.avatar_url + '" alt="avatar">' +
+			return '<img class="mp-avatar mp-avatar-img" id="mp-avatar-img" src="' + fmt.esc(p.avatar_url) + '" alt="avatar">' +
 				   '<div class="mp-avatar-overlay" id="btn-avatar">📷</div>'
 
-		var initial = (p.display_name || p.email || 'U')[0].toUpperCase()
+		var initial = fmt.esc((p.display_name || p.email || 'U')[0].toUpperCase())
 		return '<div class="mp-avatar mp-avatar-initial" id="mp-avatar-initial">' + initial + '</div>' +
 			   '<div class="mp-avatar-overlay" id="btn-avatar">📷</div>'
 	}
@@ -147,10 +131,10 @@ MyPageView = class MyPageView extends AView
 							'<input type="file" id="avatar-file-input" accept="image/jpeg,image/png,image/webp,image/gif" style="display:none">' +
 						'</div>' +
 						'<div class="mp-profile-info">' +
-							'<div class="mp-display-name" id="mp-display-name">' + (p.display_name || '이름 없음') + '</div>' +
-							'<div class="mp-bio" id="mp-bio">' + (p.bio || '<span style="color:var(--color-text-dim)">자기소개가 없습니다</span>') + '</div>' +
+							'<div class="mp-display-name" id="mp-display-name">' + fmt.esc(p.display_name || '이름 없음') + '</div>' +
+							'<div class="mp-bio" id="mp-bio">' + (p.bio ? fmt.esc(p.bio) : '<span style="color:var(--color-text-dim)">자기소개가 없습니다</span>') + '</div>' +
 							'<div class="mp-meta">' +
-								'<span>' + p.email + '</span>' +
+								'<span>' + fmt.esc(p.email) + '</span>' +
 								'<span class="mp-meta-sep">·</span>' +
 								'<span>성별 ' + genderLabel + '</span>' +
 								'<span class="mp-meta-sep">·</span>' +
@@ -166,7 +150,7 @@ MyPageView = class MyPageView extends AView
 						'<div class="mp-edit-row">' +
 							'<div class="ac-input-group" style="flex:2">' +
 								'<label class="ac-label">닉네임</label>' +
-								'<input class="ac-input" type="text" id="edit-displayname" value="' + (p.display_name || '') + '">' +
+								'<input class="ac-input" type="text" id="edit-displayname" value="' + fmt.esc(p.display_name || '') + '">' +
 							'</div>' +
 							'<div class="ac-input-group" style="flex:1">' +
 								'<label class="ac-label">성별</label>' +
@@ -184,7 +168,7 @@ MyPageView = class MyPageView extends AView
 						'</div>' +
 						'<div class="ac-input-group">' +
 							'<label class="ac-label">자기소개</label>' +
-							'<textarea class="ac-input mp-bio-textarea" id="edit-bio" placeholder="나를 소개해보세요 (최대 200자)" maxlength="200">' + (p.bio || '') + '</textarea>' +
+							'<textarea class="ac-input mp-bio-textarea" id="edit-bio" placeholder="나를 소개해보세요 (최대 200자)" maxlength="200">' + fmt.esc(p.bio || '') + '</textarea>' +
 							'<div class="mp-char-count" id="bio-count">' + (p.bio ? p.bio.length : 0) + ' / 200</div>' +
 						'</div>' +
 						// 알림 설정 섹션
@@ -389,7 +373,7 @@ MyPageView = class MyPageView extends AView
 			if (nameEl) nameEl.textContent = displayName
 
 			var bioEl = el.querySelector('#mp-bio')
-			if (bioEl) bioEl.innerHTML = bio || '<span style="color:var(--color-text-dim)">자기소개가 없습니다</span>'
+			if (bioEl) bioEl.innerHTML = bio ? fmt.esc(bio) : '<span style="color:var(--color-text-dim)">자기소개가 없습니다</span>'
 
 			this._toggleEditForm(false)
 			ToastManager.success('프로필이 업데이트되었습니다')
@@ -464,15 +448,15 @@ MyPageView = class MyPageView extends AView
 			var badge   = '<span class="status-badge ' + st.cls + '">' + st.label + '</span>'
 
 			var reason  = (p.status === 'rejected' && p.rejection_reason)
-				? '<div class="my-prompt-reason">💬 반려 사유: ' + p.rejection_reason + '</div>'
+				? '<div class="my-prompt-reason">💬 반려 사유: ' + fmt.esc(p.rejection_reason) + '</div>'
 				: ''
 
 			html +=
 				'<div class="mp-list-card" data-id="' + p.id + '">' +
 					'<div class="mp-list-icon">' + icon + '</div>' +
 					'<div class="mp-list-info">' +
-						'<div class="mp-list-title">' + p.title + '</div>' +
-						'<div class="mp-list-desc">' + (p.description || '') + '</div>' +
+						'<div class="mp-list-title">' + fmt.esc(p.title) + '</div>' +
+						'<div class="mp-list-desc">' + fmt.esc(p.description || '') + '</div>' +
 						reason +
 					'</div>' +
 					'<div class="mp-list-meta">' +
@@ -570,7 +554,7 @@ MyPageView = class MyPageView extends AView
 		rows.forEach(function(r)
 		{
 			var prompt  = r.orders && r.orders.prompts ? r.orders.prompts : null
-			var title   = prompt ? prompt.title : '알 수 없음'
+			var title   = fmt.esc(prompt ? prompt.title : '알 수 없음')
 			var paidAt  = r.orders && r.orders.paid_at ? fmt.date(r.orders.paid_at) : fmt.date(r.created_at)
 			var gross   = Number(r.gross_amount).toLocaleString() + '원'
 			var net     = Number(r.net_amount).toLocaleString() + '원'
@@ -619,8 +603,8 @@ MyPageView = class MyPageView extends AView
 				'<div class="mp-list-card" data-id="' + p.id + '">' +
 					'<div class="mp-list-icon">' + icon + '</div>' +
 					'<div class="mp-list-info">'
-					+ '<div class="mp-list-title">' + p.title + '</div>'
-					+ '<div class="mp-list-desc">' + (p.description || '') + '</div>'
+					+ '<div class="mp-list-title">' + fmt.esc(p.title) + '</div>'
+					+ '<div class="mp-list-desc">' + fmt.esc(p.description || '') + '</div>'
 				+ '</div>'
 				+ price
 			+ '</div>'
