@@ -16553,12 +16553,12 @@ PromptService = class PromptService
 	// 관리자: 프롬프트 목록
 	// -----------------------------------------
 
-	async adminList(status, page, pageSize)
+	async adminList(status, page, pageSize, keyword)
 	{
 		var from = page * pageSize
 		var to   = from + pageSize - 1
 
-		return this.sb.getClient()
+		var query = this.sb.getClient()
 			.from('prompts')
 			.select(
 				'id, title, description, price, prompt_type, status, ' +
@@ -16567,6 +16567,10 @@ PromptService = class PromptService
 				{ count: 'exact' }
 			)
 			.eq('status', status)
+
+		if (keyword) query = query.ilike('title', '%' + keyword + '%')
+
+		return query
 			.order('created_at', { ascending: false })
 			.range(from, to)
 	}
@@ -16702,52 +16706,6 @@ PromptService = class PromptService
 			.select('role, display_name, avatar_url')
 			.eq('id', userId)
 			.single()
-	}
-
-	// -----------------------------------------
-	// 관리자 목록
-	// -----------------------------------------
-
-	async getAdmins()
-	{
-		return this.sb.getClient()
-			.from('users')
-			.select('id, display_name, email, role, created_at')
-			.in('role', ['main_admin', 'sub_admin'])
-			.order('role')
-	}
-
-	// -----------------------------------------
-	// 이메일로 유저 검색
-	// -----------------------------------------
-
-	async findByEmail(email)
-	{
-		return this.sb.getClient()
-			.from('users')
-			.select('id, display_name, email, role')
-			.eq('email', email)
-			.single()
-	}
-
-	// -----------------------------------------
-	// 서브 관리자 지정 / 해제
-	// -----------------------------------------
-
-	async addSubAdmin(userId)
-	{
-		return this.sb.getClient()
-			.from('users')
-			.update({ role: 'sub_admin' })
-			.eq('id', userId)
-	}
-
-	async removeSubAdmin(userId)
-	{
-		return this.sb.getClient()
-			.from('users')
-			.update({ role: 'user' })
-			.eq('id', userId)
 	}
 
 	// -----------------------------------------

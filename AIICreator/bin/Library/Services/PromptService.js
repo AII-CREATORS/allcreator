@@ -148,12 +148,12 @@ PromptService = class PromptService
 	// 관리자: 프롬프트 목록
 	// -----------------------------------------
 
-	async adminList(status, page, pageSize)
+	async adminList(status, page, pageSize, keyword)
 	{
 		var from = page * pageSize
 		var to   = from + pageSize - 1
 
-		return this.sb.getClient()
+		var query = this.sb.getClient()
 			.from('prompts')
 			.select(
 				'id, title, description, price, prompt_type, status, ' +
@@ -162,6 +162,10 @@ PromptService = class PromptService
 				{ count: 'exact' }
 			)
 			.eq('status', status)
+
+		if (keyword) query = query.ilike('title', '%' + keyword + '%')
+
+		return query
 			.order('created_at', { ascending: false })
 			.range(from, to)
 	}
