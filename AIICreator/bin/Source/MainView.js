@@ -86,9 +86,9 @@ MainView = class MainView extends AView
 		var kw = this.navBar.getKeyword()
 
 		var result = await this.ps.list({
-			toolId:  fs.toolId,
-			price:   fs.price,
-			type:    fs.type,
+			toolIds: fs.toolIds,
+			prices:  fs.prices,
+			types:   fs.types,
 			sort:    fs.sort,
 			keyword: kw
 		})

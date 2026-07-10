@@ -9,10 +9,12 @@ AdminView = class AdminView extends AView
 		this.us          = null
 		this.currentUser = null
 		this.profile     = null
-		this.prompts     = []
-		this.page        = 0
-		this.pageSize    = 20
-		this.tab         = 'pending'
+		this.prompts       = []
+		this.page          = 0
+		this.pageSize      = 20
+		this.tab           = 'pending'
+		this.searchKeyword = ''
+		this.searchTimer   = null
 	}
 
 	onInitDone()
@@ -84,6 +86,9 @@ AdminView = class AdminView extends AView
 					'<button class="adm-tab adm-tab-active" data-tab="pending">대기 중</button>' +
 					'<button class="adm-tab" data-tab="published">승인됨</button>' +
 					'<button class="adm-tab" data-tab="rejected">반려됨</button>' +
+					'<div class="adm-tabs-search">' +
+						'<input class="ac-input adm-search-input" type="text" id="adm-search" placeholder="제목 검색...">' +
+					'</div>' +
 				'</nav>' +
 
 				'<div class="adm-content" id="adm-content">' +
@@ -99,17 +104,6 @@ AdminView = class AdminView extends AView
 		var badge = this.getElement().querySelector('#adm-role-badge')
 		var role  = this.profile && this.profile.role
 		if (badge) badge.textContent = role === 'main_admin' ? '주 관리자' : '서브 관리자'
-
-		var tabs = this.getElement().querySelector('#adm-tabs')
-		if (tabs && role === 'main_admin' && !tabs.querySelector('[data-tab="manage"]'))
-		{
-			var manageBtn = document.createElement('button')
-			manageBtn.className   = 'adm-tab adm-tab-manage'
-			manageBtn.dataset.tab = 'manage'
-			manageBtn.textContent = '관리자 설정'
-			tabs.appendChild(manageBtn)
-			manageBtn.addEventListener('click', function() { this._switchTab('manage') }.bind(this))
-		}
 	}
 
 	_bindShellEvents()
@@ -124,6 +118,22 @@ AdminView = class AdminView extends AView
 				self._switchTab(this.dataset.tab)
 			})
 		})
+
+		var searchInput = el.querySelector('#adm-search')
+		if (searchInput)
+		{
+			searchInput.addEventListener('input', function()
+			{
+				var keyword = this.value.trim()
+				clearTimeout(self.searchTimer)
+				self.searchTimer = setTimeout(function()
+				{
+					self.searchKeyword = keyword
+					self.page = 0
+					self._loadPrompts()
+				}, 300)
+			})
+		}
 	}
 
 	async _switchTab(tab)
@@ -136,10 +146,7 @@ AdminView = class AdminView extends AView
 			btn.classList.toggle('adm-tab-active', btn.dataset.tab === tab)
 		})
 
-		if (tab === 'manage')
-			this._renderManagePanel()
-		else
-			await this._loadPrompts()
+		await this._loadPrompts()
 	}
 
 	// ─────────────────────────────────────────
@@ -151,7 +158,7 @@ AdminView = class AdminView extends AView
 		var content = this.getElement().querySelector('#adm-content')
 		content.innerHTML = '<div class="adm-loading">불러오는 중...</div>'
 
-		var result = await this.ps.adminList(this.tab, this.page, this.pageSize)
+		var result = await this.ps.adminList(this.tab, this.page, this.pageSize, this.searchKeyword)
 
 		if (result.error)
 		{
@@ -361,113 +368,5 @@ AdminView = class AdminView extends AView
 
 		ToastManager.success('프롬프트가 반려 처리되었습니다')
 		await this._loadPrompts()
-	}
-
-	// ─────────────────────────────────────────
-	// 관리자 설정 패널 (main_admin 전용)
-	// ─────────────────────────────────────────
-
-	async _renderManagePanel()
-	{
-		var content = this.getElement().querySelector('#adm-content')
-		content.innerHTML = '<div class="adm-loading">불러오는 중...</div>'
-
-		var { data: admins } = await this.us.getAdmins()
-
-		var self = this
-		var html =
-			'<div class="adm-manage">' +
-				'<h2 class="adm-manage-title">관리자 목록</h2>' +
-				'<div class="adm-manage-list" id="adm-manage-list">'
-
-		;(admins || []).forEach(function(u)
-		{
-			var isSelf    = u.id === self.currentUser.id
-			var roleLabel = u.role === 'main_admin' ? '주 관리자' : '서브 관리자'
-			var canRemove = !isSelf && u.role !== 'main_admin'
-
-			html +=
-				'<div class="adm-manage-row">' +
-					'<div class="adm-manage-info">' +
-						'<span class="adm-manage-name">' + fmt.esc(u.display_name || u.email) + '</span>' +
-						'<span class="adm-manage-email">' + fmt.esc(u.email) + '</span>' +
-					'</div>' +
-					'<span class="adm-role-tag adm-role-' + u.role + '">' + roleLabel + '</span>' +
-					(canRemove
-						? '<button class="adm-btn-remove-admin" data-id="' + u.id + '">해제</button>'
-						: '<span class="adm-manage-self">' + (isSelf ? '(나)' : '') + '</span>') +
-				'</div>'
-		})
-
-		html +=
-				'</div>' +
-				'<div class="adm-manage-add">' +
-					'<h3 class="adm-manage-subtitle">서브 관리자 지정</h3>' +
-					'<p class="adm-manage-desc">이메일로 회원을 검색하여 서브 관리자로 지정합니다</p>' +
-					'<div class="adm-manage-search-wrap">' +
-						'<input class="ac-input adm-manage-email-input" type="email" id="adm-sub-email" placeholder="이메일 주소 입력">' +
-						'<button class="ac-btn ac-btn-secondary ac-btn-sm" id="adm-btn-add-sub">서브 관리자 지정</button>' +
-					'</div>' +
-					'<div id="adm-search-result"></div>' +
-				'</div>' +
-			'</div>'
-
-		content.innerHTML = html
-
-		content.querySelectorAll('.adm-btn-remove-admin').forEach(function(btn)
-		{
-			btn.addEventListener('click', function() { self._removeSubAdmin(this.dataset.id) })
-		})
-
-		document.getElementById('adm-btn-add-sub').addEventListener('click', function()
-		{
-			self._addSubAdmin()
-		})
-	}
-
-	async _addSubAdmin()
-	{
-		var email     = document.getElementById('adm-sub-email').value.trim()
-		var resultEl  = document.getElementById('adm-search-result')
-		if (!email) { ToastManager.error('이메일을 입력해주세요'); return }
-
-		var { data: user } = await this.us.findByEmail(email)
-
-		if (!user)
-		{
-			resultEl.innerHTML = '<div class="adm-search-none">해당 이메일의 회원을 찾을 수 없습니다</div>'
-			return
-		}
-
-		if (user.role === 'main_admin' || user.role === 'sub_admin')
-		{
-			resultEl.innerHTML = '<div class="adm-search-none">이미 관리자 권한을 가진 계정입니다</div>'
-			return
-		}
-
-		var { error } = await this.us.addSubAdmin(user.id)
-		if (error)
-		{
-			ToastManager.error('지정 실패: ' + error.message)
-			return
-		}
-
-		ToastManager.success((user.display_name || user.email) + ' 님을 서브 관리자로 지정했습니다')
-		document.getElementById('adm-sub-email').value = ''
-		resultEl.innerHTML = ''
-		this._renderManagePanel()
-	}
-
-	async _removeSubAdmin(userId)
-	{
-		var { error } = await this.us.removeSubAdmin(userId)
-		if (error)
-		{
-			ToastManager.error('해제 실패: ' + error.message)
-			return
-		}
-
-		ToastManager.success('서브 관리자 권한이 해제되었습니다')
-		this._renderManagePanel()
 	}
 }

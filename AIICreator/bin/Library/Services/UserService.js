@@ -44,52 +44,6 @@ UserService = class UserService
 	}
 
 	// -----------------------------------------
-	// 관리자 목록
-	// -----------------------------------------
-
-	async getAdmins()
-	{
-		return this.sb.getClient()
-			.from('users')
-			.select('id, display_name, email, role, created_at')
-			.in('role', ['main_admin', 'sub_admin'])
-			.order('role')
-	}
-
-	// -----------------------------------------
-	// 이메일로 유저 검색
-	// -----------------------------------------
-
-	async findByEmail(email)
-	{
-		return this.sb.getClient()
-			.from('users')
-			.select('id, display_name, email, role')
-			.eq('email', email)
-			.single()
-	}
-
-	// -----------------------------------------
-	// 서브 관리자 지정 / 해제
-	// -----------------------------------------
-
-	async addSubAdmin(userId)
-	{
-		return this.sb.getClient()
-			.from('users')
-			.update({ role: 'sub_admin' })
-			.eq('id', userId)
-	}
-
-	async removeSubAdmin(userId)
-	{
-		return this.sb.getClient()
-			.from('users')
-			.update({ role: 'user' })
-			.eq('id', userId)
-	}
-
-	// -----------------------------------------
 	// 내 프롬프트 (마이페이지)
 	// -----------------------------------------
 

@@ -12,17 +12,24 @@ PromptService = class PromptService
 
 	async list(filters)
 	{
-		var { toolId, price, type, sort, keyword, limit } = filters || {}
+		var { toolIds, prices, types, sort, keyword, limit } = filters || {}
 
 		var query = this.sb.getClient()
 			.from('prompts')
 			.select('id, title, description, price, prompt_type, like_count, view_count, result_image, users!user_id(display_name), ai_tools(name)')
 			.eq('status', 'published')
 
-		if (toolId)           query = query.eq('ai_tool_id', toolId)
-		if (price === 'free') query = query.eq('price', '0')
-		else if (price === 'paid') query = query.neq('price', '0')
-		if (type && type !== 'all') query = query.eq('prompt_type', type)
+		if (toolIds && toolIds.length) query = query.in('ai_tool_id', toolIds)
+
+		// prices: 'free'/'paid' 조합. 하나만 선택된 경우에만 필터링 (0개 또는 2개 모두 = 전체)
+		if (prices && prices.length === 1)
+		{
+			if (prices[0] === 'free') query = query.eq('price', '0')
+			else                      query = query.neq('price', '0')
+		}
+
+		if (types && types.length) query = query.in('prompt_type', types)
+
 		if (keyword) query = query.or('title.ilike.%' + keyword + '%,description.ilike.%' + keyword + '%')
 
 		if (sort === 'popular')         query = query.order('like_count',  { ascending: false })
@@ -148,12 +155,12 @@ PromptService = class PromptService
 	// 관리자: 프롬프트 목록
 	// -----------------------------------------
 
-	async adminList(status, page, pageSize)
+	async adminList(status, page, pageSize, keyword)
 	{
 		var from = page * pageSize
 		var to   = from + pageSize - 1
 
-		return this.sb.getClient()
+		var query = this.sb.getClient()
 			.from('prompts')
 			.select(
 				'id, title, description, price, prompt_type, status, ' +
@@ -162,6 +169,10 @@ PromptService = class PromptService
 				{ count: 'exact' }
 			)
 			.eq('status', status)
+
+		if (keyword) query = query.ilike('title', '%' + keyword + '%')
+
+		return query
 			.order('created_at', { ascending: false })
 			.range(from, to)
 	}
