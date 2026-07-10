@@ -721,7 +721,7 @@ a:hover {
 .detail-result-image{width:100%;border-radius:16px;overflow:hidden;margin-bottom:20px;background:var(--color-surface-2);}
 .detail-result-image img{max-width:100%;height:auto;display:block;margin:0 auto;}
 .detail-purchase-box{display:flex;align-items:center;justify-content:space-between;background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-lg);padding:20px 24px;margin-bottom:12px;}
-.detail-action-row{display:flex;align-items:center;gap:10px;margin-bottom:24px;}
+.detail-action-row{display:flex;align-items:center;justify-content:flex-end;gap:10px;margin-bottom:24px;}
 .detail-price{font-family:var(--font-title);font-size:1.75rem;font-weight:700;color:var(--color-accent);}
 .detail-price.free{color:var(--color-success);}
 .detail-purchased-badge{font-size:0.9375rem;font-weight:700;color:var(--color-success);}

@@ -15695,10 +15695,10 @@ FilterBar = class FilterBar
 		this.callbacks = callbacks || {}
 		this.aiTools  = []
 		this.state    = {
-			toolId: null,
-			sort:   'latest',
-			price:  'all',
-			type:   'all'
+			toolIds: [],   // 빈 배열 = 전체
+			sort:    'latest',
+			prices:  [],   // 'free' | 'paid' 조합, 빈 배열 = 전체
+			types:   []    // 'text' | 'image' 조합, 빈 배열 = 전체
 		}
 	}
 
@@ -15718,7 +15718,7 @@ FilterBar = class FilterBar
 		var tabsHTML = '<button class="fb-tool-tab active" data-tool="">전체</button>'
 		this.aiTools.forEach(function(t)
 		{
-			tabsHTML += '<button class="fb-tool-tab" data-tool="' + t.id + '">' + t.name + '</button>'
+			tabsHTML += '<button class="fb-tool-tab" data-tool="' + t.id + '">' + fmt.esc(t.name) + '</button>'
 		})
 
 		return '<div class="fb-tool-bar">' +
@@ -15764,43 +15764,58 @@ FilterBar = class FilterBar
 		var self = this
 		var el   = this.el
 
-		// AI 도구 탭
+		// AI 도구 탭 (다중 선택)
 		el.querySelector('#fb-tool-tabs').addEventListener('click', function(e)
 		{
 			var tab = e.target.closest('.fb-tool-tab')
 			if (!tab) return
-			el.querySelectorAll('.fb-tool-tab').forEach(function(t) { t.classList.remove('active') })
-			tab.classList.add('active')
-			self.state.toolId = tab.getAttribute('data-tool') || null
+
+			var toolId = tab.getAttribute('data-tool')
+			if (!toolId)
+				self.state.toolIds = []
+			else
+				self.state.toolIds = self._toggle(self.state.toolIds, toolId)
+
+			self._syncToolTabsUI()
 			self._onChange()
 		})
 
-		// 정렬
+		// 정렬 (단일 선택 유지)
 		el.querySelector('#fb-sort').addEventListener('change', function()
 		{
 			self.state.sort = this.value
 			self._onChange()
 		})
 
-		// 가격 칩
+		// 가격 칩 (다중 선택)
 		el.querySelector('#fb-price-chips').addEventListener('click', function(e)
 		{
 			var chip = e.target.closest('.fb-chip')
 			if (!chip) return
-			el.querySelectorAll('#fb-price-chips .fb-chip').forEach(function(c) { c.classList.remove('active') })
-			chip.classList.add('active')
-			self.state.price = chip.getAttribute('data-price')
+
+			var price = chip.getAttribute('data-price')
+			if (price === 'all')
+				self.state.prices = []
+			else
+				self.state.prices = self._toggle(self.state.prices, price)
+
+			self._syncPriceChipsUI()
 			self._onChange()
 		})
 
-		// 타입 칩
+		// 타입 칩 (다중 선택)
 		el.querySelector('#fb-type-chips').addEventListener('click', function(e)
 		{
 			var chip = e.target.closest('.fb-chip')
 			if (!chip) return
-			el.querySelectorAll('#fb-type-chips .fb-chip').forEach(function(c) { c.classList.remove('active') })
-			chip.classList.add('active')
-			self.state.type = chip.getAttribute('data-type')
+
+			var type = chip.getAttribute('data-type')
+			if (type === 'all')
+				self.state.types = []
+			else
+				self.state.types = self._toggle(self.state.types, type)
+
+			self._syncTypeChipsUI()
 			self._onChange()
 		})
 
@@ -15811,64 +15826,102 @@ FilterBar = class FilterBar
 		})
 	}
 
+	// 배열에 값이 있으면 제거, 없으면 추가한 새 배열을 반환
+	_toggle(arr, value)
+	{
+		var idx = arr.indexOf(value)
+		if (idx === -1) return arr.concat([value])
+		var next = arr.slice()
+		next.splice(idx, 1)
+		return next
+	}
+
 	_onChange()
 	{
 		if (this.callbacks.onChange) this.callbacks.onChange()
 	}
 
 	// ─────────────────────────────────────────
+	// UI 동기화 — state.toolIds/prices/types 기준으로 active 클래스 반영
+	// '전체'는 선택된 항목이 없을 때만 active
+	// ─────────────────────────────────────────
+
+	_syncToolTabsUI()
+	{
+		var el      = this.el
+		var toolIds = this.state.toolIds
+		el.querySelectorAll('.fb-tool-tab').forEach(function(t)
+		{
+			var id = t.getAttribute('data-tool')
+			var isActive = id ? toolIds.indexOf(id) !== -1 : toolIds.length === 0
+			t.classList.toggle('active', isActive)
+		})
+	}
+
+	_syncPriceChipsUI()
+	{
+		var el     = this.el
+		var prices = this.state.prices
+		el.querySelectorAll('#fb-price-chips .fb-chip').forEach(function(c)
+		{
+			var val = c.getAttribute('data-price')
+			var isActive = (val === 'all') ? prices.length === 0 : prices.indexOf(val) !== -1
+			c.classList.toggle('active', isActive)
+		})
+	}
+
+	_syncTypeChipsUI()
+	{
+		var el    = this.el
+		var types = this.state.types
+		el.querySelectorAll('#fb-type-chips .fb-chip').forEach(function(c)
+		{
+			var val = c.getAttribute('data-type')
+			var isActive = (val === 'all') ? types.length === 0 : types.indexOf(val) !== -1
+			c.classList.toggle('active', isActive)
+		})
+	}
+
+	// ─────────────────────────────────────────
 	// 상태
 	// ─────────────────────────────────────────
 
-	getState() { return { toolId: this.state.toolId, sort: this.state.sort, price: this.state.price, type: this.state.type } }
+	getState()
+	{
+		return {
+			toolIds: this.state.toolIds.slice(),
+			sort:    this.state.sort,
+			prices:  this.state.prices.slice(),
+			types:   this.state.types.slice()
+		}
+	}
 
 	// render() 후 이전 상태를 DOM에 반영 — onChange는 발생시키지 않음
 	restoreState(saved)
 	{
 		if (!saved) return
 
-		var el = this.el
-		this.state = { toolId: saved.toolId || null, sort: saved.sort || 'latest', price: saved.price || 'all', type: saved.type || 'all' }
+		this.state = {
+			toolIds: saved.toolIds || [],
+			sort:    saved.sort    || 'latest',
+			prices:  saved.prices  || [],
+			types:   saved.types   || []
+		}
 
-		// 도구 탭
-		el.querySelectorAll('.fb-tool-tab').forEach(function(t) { t.classList.remove('active') })
-		var toolSel = saved.toolId
-			? el.querySelector('.fb-tool-tab[data-tool="' + saved.toolId + '"]')
-			: el.querySelector('.fb-tool-tab[data-tool=""]')
-		if (toolSel) toolSel.classList.add('active')
-
-		// 정렬
-		el.querySelector('#fb-sort').value = saved.sort || 'latest'
-
-		// 가격 칩
-		el.querySelectorAll('#fb-price-chips .fb-chip').forEach(function(c) { c.classList.remove('active') })
-		var priceChip = el.querySelector('[data-price="' + (saved.price || 'all') + '"]')
-		if (priceChip) priceChip.classList.add('active')
-
-		// 타입 칩
-		el.querySelectorAll('#fb-type-chips .fb-chip').forEach(function(c) { c.classList.remove('active') })
-		var typeChip = el.querySelector('[data-type="' + (saved.type || 'all') + '"]')
-		if (typeChip) typeChip.classList.add('active')
+		this._syncToolTabsUI()
+		this._syncPriceChipsUI()
+		this._syncTypeChipsUI()
+		this.el.querySelector('#fb-sort').value = this.state.sort
 	}
 
 	reset()
 	{
-		var el = this.el
-		this.state = { toolId: null, sort: 'latest', price: 'all', type: 'all' }
+		this.state = { toolIds: [], sort: 'latest', prices: [], types: [] }
 
-		el.querySelectorAll('.fb-tool-tab').forEach(function(t) { t.classList.remove('active') })
-		var allTab = el.querySelector('.fb-tool-tab[data-tool=""]')
-		if (allTab) allTab.classList.add('active')
-
-		el.querySelectorAll('#fb-price-chips .fb-chip').forEach(function(c) { c.classList.remove('active') })
-		var priceAll = el.querySelector('[data-price="all"]')
-		if (priceAll) priceAll.classList.add('active')
-
-		el.querySelectorAll('#fb-type-chips .fb-chip').forEach(function(c) { c.classList.remove('active') })
-		var typeAll = el.querySelector('[data-type="all"]')
-		if (typeAll) typeAll.classList.add('active')
-
-		el.querySelector('#fb-sort').value = 'latest'
+		this._syncToolTabsUI()
+		this._syncPriceChipsUI()
+		this._syncTypeChipsUI()
+		this.el.querySelector('#fb-sort').value = 'latest'
 
 		this._onChange()
 	}
@@ -16417,17 +16470,24 @@ PromptService = class PromptService
 
 	async list(filters)
 	{
-		var { toolId, price, type, sort, keyword, limit } = filters || {}
+		var { toolIds, prices, types, sort, keyword, limit } = filters || {}
 
 		var query = this.sb.getClient()
 			.from('prompts')
 			.select('id, title, description, price, prompt_type, like_count, view_count, result_image, users!user_id(display_name), ai_tools(name)')
 			.eq('status', 'published')
 
-		if (toolId)           query = query.eq('ai_tool_id', toolId)
-		if (price === 'free') query = query.eq('price', '0')
-		else if (price === 'paid') query = query.neq('price', '0')
-		if (type && type !== 'all') query = query.eq('prompt_type', type)
+		if (toolIds && toolIds.length) query = query.in('ai_tool_id', toolIds)
+
+		// prices: 'free'/'paid' 조합. 하나만 선택된 경우에만 필터링 (0개 또는 2개 모두 = 전체)
+		if (prices && prices.length === 1)
+		{
+			if (prices[0] === 'free') query = query.eq('price', '0')
+			else                      query = query.neq('price', '0')
+		}
+
+		if (types && types.length) query = query.in('prompt_type', types)
+
 		if (keyword) query = query.or('title.ilike.%' + keyword + '%,description.ilike.%' + keyword + '%')
 
 		if (sort === 'popular')         query = query.order('like_count',  { ascending: false })
