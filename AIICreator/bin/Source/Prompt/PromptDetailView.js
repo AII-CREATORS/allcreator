@@ -8,6 +8,7 @@ PromptDetailView = class PromptDetailView extends AView
 		this.ps          = null
 		this.pm          = null
 		this.us          = null
+		this.cs          = null
 		this.promptId    = null
 		this.prompt      = null
 		this.isLiked     = false
@@ -15,6 +16,10 @@ PromptDetailView = class PromptDetailView extends AView
 		this.isPurchased = false
 		this.currentUser = null
 		this.isAdmin     = false
+		this.isSeller    = false
+		this.reviews     = []
+		this.questions   = []
+		this.commentSort = 'oldest'
 	}
 
 	onInitDone()
@@ -24,6 +29,7 @@ PromptDetailView = class PromptDetailView extends AView
 		this.ps       = new PromptService(this.sb)
 		this.pm       = PaymentManager.getInstance()
 		this.us       = new UserService(this.sb)
+		this.cs       = new CommentService(this.sb)
 		this.promptId = theApp.getDetailId() || null
 
 		// 외부 구조: navbar 슬롯 + body 슬롯 (navbar는 교체되지 않음)
@@ -72,6 +78,7 @@ PromptDetailView = class PromptDetailView extends AView
 			await this._loadUserStatus()
 			this._renderDetail()
 			this._bindEvents()
+			this._loadComments()
 
 			// 조회수 증가 (비동기, 결과 무시)
 			this.ps.incrementView(this.promptId)
@@ -136,8 +143,8 @@ PromptDetailView = class PromptDetailView extends AView
 		var actionBtn = this._renderActionBtn(isFree)
 
 		// 관리자 또는 판매자 본인은 구매 여부와 무관하게 전체 내용 노출
-		var isSeller = !!(this.currentUser && p.users && this.currentUser.id === p.users.id)
-		var canView  = this.isAdmin || isSeller || this.isPurchased
+		this.isSeller = !!(this.currentUser && p.users && this.currentUser.id === p.users.id)
+		var canView  = this.isAdmin || this.isSeller || this.isPurchased
 		var contentHTML = canView
 			? '<div class="prompt-content-box">' +
 				'<div class="prompt-content-label">프롬프트 내용</div>' +
@@ -219,6 +226,48 @@ PromptDetailView = class PromptDetailView extends AView
 					// 프롬프트 내용
 					contentHTML +
 
+					// 댓글
+					this._commentsShellHTML() +
+
+				'</div>' +
+			'</div>'
+	}
+
+	_commentsShellHTML()
+	{
+		var canPostPublic = this.isSeller || this.isAdmin || this.isPurchased
+		var writeHTML
+
+		if (!this.currentUser)
+		{
+			writeHTML = '<div class="comment-login-hint">로그인 후 댓글을 작성할 수 있습니다</div>'
+		}
+		else
+		{
+			writeHTML =
+				'<div class="comment-write-box">' +
+					'<textarea class="ac-input comment-write-textarea" id="comment-input" placeholder="댓글을 입력하세요" maxlength="500"></textarea>' +
+					'<button class="ac-btn ac-btn-primary ac-btn-sm comment-write-btn" id="btn-comment-submit">등록</button>' +
+				'</div>' +
+				(canPostPublic
+					? ''
+					: '<div class="comment-write-hint">구매하지 않은 프롬프트에 남긴 댓글은 판매자에게만 비공개로 전달됩니다</div>')
+		}
+
+		return '<div class="comments-section">' +
+				'<div class="comments-header">' +
+					'<h2 class="comments-title">후기 <span id="comment-count"></span></h2>' +
+					'<select class="ac-input comment-sort-select" id="comment-sort">' +
+						'<option value="oldest">기본순</option>' +
+						'<option value="popular">인기순</option>' +
+						'<option value="latest">최신순</option>' +
+					'</select>' +
+				'</div>' +
+				writeHTML +
+				'<div class="comment-list" id="comment-reviews-list"><div class="mp-loading"><div class="ac-spinner"></div></div></div>' +
+				'<div class="comment-questions-section" id="comment-questions-section" style="display:none">' +
+					'<h3 class="comments-subtitle">구매 전 문의 <span class="comment-private-tag">🔒 비공개</span></h3>' +
+					'<div class="comment-list" id="comment-questions-list"></div>' +
 				'</div>' +
 			'</div>'
 	}
@@ -283,6 +332,20 @@ PromptDetailView = class PromptDetailView extends AView
 				theApp.mainContainer.open('Source/Prompt/PromptRegisterView.lay')
 			})
 		}
+
+		var commentSortSel = el.querySelector('#comment-sort')
+		if (commentSortSel)
+		{
+			commentSortSel.value = this.commentSort
+			commentSortSel.addEventListener('change', function()
+			{
+				self.commentSort = this.value
+				self._loadComments()
+			})
+		}
+
+		var btnCommentSubmit = el.querySelector('#btn-comment-submit')
+		if (btnCommentSubmit) btnCommentSubmit.addEventListener('click', function() { self._submitComment() })
 	}
 
 	// -----------------------------------------
@@ -356,8 +419,14 @@ PromptDetailView = class PromptDetailView extends AView
 
 			this.isPurchased = true
 			ToastManager.success('이용 목록에 추가되었습니다')
+
+			// prompt_content는 구매 여부에 따라 서버(get_prompt_detail RPC)가 내려주는 값이
+			// 달라지므로, 메모리에 있던 기존 this.prompt(구매 전 상태)로 다시 렌더링하면
+			// 내용이 비어 보임 — 구매 반영 후 최신 상태로 다시 조회해야 함
+			await this._loadPrompt()
 			this._renderDetail()
 			this._bindEvents()
+			this._loadComments()
 			return
 		}
 
@@ -389,6 +458,342 @@ PromptDetailView = class PromptDetailView extends AView
 		}).catch(function()
 		{
 			ToastManager.error('복사에 실패했습니다')
+		})
+	}
+
+	// -----------------------------------------
+	// 댓글
+	// -----------------------------------------
+
+	async _loadComments()
+	{
+		var result = await this.cs.list(this.promptId, this.commentSort)
+
+		if (result.error)
+		{
+			var listEl = this.getElement().querySelector('#comment-reviews-list')
+			if (listEl) listEl.innerHTML = '<div class="comment-empty">댓글을 불러오지 못했습니다</div>'
+			return
+		}
+
+		this.reviews   = result.data.reviews   || []
+		this.questions = result.data.questions || []
+		this._renderReviews()
+		this._renderQuestions()
+		this._bindCommentItemEvents()
+	}
+
+	_findComment(commentId)
+	{
+		var all = this.reviews.concat(this.questions)
+		for (var i = 0; i < all.length; i++)
+		{
+			if (all[i].id === commentId) return all[i]
+			var reply = (all[i].replies || []).filter(function(r) { return r.id === commentId })[0]
+			if (reply) return reply
+		}
+		return null
+	}
+
+	_renderReviews()
+	{
+		var el      = this.getElement()
+		var listEl  = el.querySelector('#comment-reviews-list')
+		var countEl = el.querySelector('#comment-count')
+		if (countEl) countEl.textContent = this.reviews.length > 0 ? this.reviews.length : ''
+
+		if (!listEl) return
+
+		if (this.reviews.length === 0)
+		{
+			listEl.innerHTML = '<div class="comment-empty">아직 후기가 없습니다. 첫 후기를 남겨보세요!</div>'
+			return
+		}
+
+		var self       = this
+		var pinnedMax  = this.reviews.length > 3 ? 3 : 0
+		var html = ''
+		this.reviews.forEach(function(c, idx)
+		{
+			html += self._commentItemHTML(c, { pinned: idx < pinnedMax })
+		})
+		listEl.innerHTML = html
+	}
+
+	_renderQuestions()
+	{
+		var el      = this.getElement()
+		var section = el.querySelector('#comment-questions-section')
+		var listEl  = el.querySelector('#comment-questions-list')
+		if (!section || !listEl) return
+
+		if (this.questions.length === 0)
+		{
+			section.style.display = 'none'
+			return
+		}
+
+		section.style.display = ''
+
+		var self = this
+		var html = ''
+		this.questions.forEach(function(c) { html += self._commentItemHTML(c, { isPrivate: true }) })
+		listEl.innerHTML = html
+	}
+
+	_commentItemHTML(c, opts)
+	{
+		opts = opts || {}
+
+		var authorRaw = c.display_name || '알 수 없음'
+		var avatarUrl = c.avatar_url
+		var initial   = fmt.esc((authorRaw[0] || 'U').toUpperCase())
+		var avatarHTML = avatarUrl
+			? '<img class="ac-avatar comment-avatar" src="' + fmt.esc(avatarUrl) + '" alt="avatar">'
+			: '<div class="ac-avatar comment-avatar">' + initial + '</div>'
+
+		var isOwn     = !!(this.currentUser && c.user_id === this.currentUser.id)
+		var canManage = isOwn || this.isAdmin || this.isSeller
+		var isLiked   = !!c.liked_by_me
+		var tags      = ''
+		if (opts.pinned)    tags += '<span class="comment-pinned-tag">🔥 인기</span>'
+		if (opts.isPrivate) tags += '<span class="comment-private-item-tag">🔒 비공개</span>'
+		if (c.is_edited)    tags += '<span class="comment-edited-tag">(수정됨)</span>'
+
+		var manageBtns = ''
+		if (canManage)
+		{
+			manageBtns =
+				(isOwn ? '<button class="comment-edit-btn" data-id="' + c.id + '">수정</button>' : '') +
+				'<button class="comment-delete-btn" data-id="' + c.id + '">삭제</button>'
+		}
+
+		var replyBtn = (!opts.isReply && this.currentUser)
+			? '<button class="comment-reply-btn" data-id="' + c.id + '">답글</button>'
+			: ''
+
+		var replyFormHTML = !opts.isReply
+			? '<div class="comment-reply-form" id="comment-reply-form-' + c.id + '" style="display:none"></div>'
+			: ''
+
+		var childrenHTML = ''
+		if (!opts.isReply && c.replies && c.replies.length)
+		{
+			var self = this
+			childrenHTML = '<div class="comment-replies">' +
+				c.replies.map(function(r) { return self._commentItemHTML(r, { isReply: true }) }).join('') +
+			'</div>'
+		}
+
+		return '<div class="comment-item' + (opts.isReply ? ' comment-reply-item' : '') + '" data-id="' + c.id + '">' +
+			avatarHTML +
+			'<div class="comment-body">' +
+				'<div class="comment-meta">' +
+					'<span class="comment-author">' + fmt.esc(authorRaw) + '</span>' +
+					'<span class="comment-time">' + fmt.timeAgo(c.created_at) + '</span>' +
+					tags +
+				'</div>' +
+				'<div class="comment-text" id="comment-text-' + c.id + '">' + fmt.esc(c.content) + '</div>' +
+				'<div class="comment-actions">' +
+					'<button class="comment-like-btn' + (isLiked ? ' active' : '') + '" data-id="' + c.id + '">' +
+						(isLiked ? '❤️' : '🤍') + ' ' + (c.like_count || 0) +
+					'</button>' +
+					manageBtns +
+					replyBtn +
+				'</div>' +
+				replyFormHTML +
+				childrenHTML +
+			'</div>' +
+		'</div>'
+	}
+
+	_bindCommentItemEvents()
+	{
+		var self = this
+		var el   = this.getElement()
+
+		el.querySelectorAll('.comment-like-btn').forEach(function(btn)
+		{
+			btn.addEventListener('click', function() { self._toggleCommentLike(btn.getAttribute('data-id')) })
+		})
+
+		el.querySelectorAll('.comment-edit-btn').forEach(function(btn)
+		{
+			btn.addEventListener('click', function() { self._startEditComment(btn.getAttribute('data-id')) })
+		})
+
+		el.querySelectorAll('.comment-delete-btn').forEach(function(btn)
+		{
+			btn.addEventListener('click', function() { self._confirmDeleteComment(btn.getAttribute('data-id')) })
+		})
+
+		el.querySelectorAll('.comment-reply-btn').forEach(function(btn)
+		{
+			btn.addEventListener('click', function() { self._startReply(btn.getAttribute('data-id')) })
+		})
+	}
+
+	_startReply(commentId)
+	{
+		if (!this.currentUser) { ToastManager.error('로그인이 필요합니다'); return }
+
+		var formEl = this.getElement().querySelector('#comment-reply-form-' + commentId)
+		if (!formEl) return
+
+		// 이미 열려있으면 토글로 닫기
+		if (formEl.style.display !== 'none')
+		{
+			formEl.style.display = 'none'
+			formEl.innerHTML = ''
+			return
+		}
+
+		var self = this
+		formEl.style.display = ''
+		formEl.innerHTML =
+			'<textarea class="ac-input comment-write-textarea" id="reply-input-' + commentId + '" placeholder="답글을 입력하세요" maxlength="500"></textarea>' +
+			'<div class="comment-edit-actions">' +
+				'<button class="ac-btn ac-btn-primary ac-btn-sm" id="reply-submit-' + commentId + '">등록</button>' +
+				'<button class="ac-btn ac-btn-outline ac-btn-sm" id="reply-cancel-' + commentId + '">취소</button>' +
+			'</div>'
+
+		formEl.querySelector('#reply-submit-' + commentId).addEventListener('click', function()
+		{
+			self._submitReply(commentId)
+		})
+		formEl.querySelector('#reply-cancel-' + commentId).addEventListener('click', function()
+		{
+			formEl.style.display = 'none'
+			formEl.innerHTML = ''
+		})
+	}
+
+	async _submitReply(parentCommentId)
+	{
+		var input   = this.getElement().querySelector('#reply-input-' + parentCommentId)
+		var content = input.value.trim()
+		if (!content) { ToastManager.error('답글 내용을 입력해주세요'); return }
+
+		var result = await this.cs.create(this.promptId, this.currentUser.id, content, parentCommentId)
+
+		if (result.error)
+		{
+			ToastManager.error('답글 등록 실패: ' + result.error.message)
+			return
+		}
+
+		window.location.reload()
+	}
+
+	async _submitComment()
+	{
+		if (!this.currentUser) { ToastManager.error('로그인이 필요합니다'); return }
+
+		var input   = this.getElement().querySelector('#comment-input')
+		var content = input.value.trim()
+		if (!content) { ToastManager.error('댓글 내용을 입력해주세요'); return }
+
+		var btn = this.getElement().querySelector('#btn-comment-submit')
+		btn.disabled = true
+
+		var result = await this.cs.create(this.promptId, this.currentUser.id, content)
+
+		btn.disabled = false
+
+		if (result.error)
+		{
+			ToastManager.error('댓글 등록 실패: ' + result.error.message)
+			return
+		}
+
+		// 새로고침해도 같은 프롬프트 상세 화면으로 복귀하도록 라우팅이 처리되어 있어
+		// 댓글 등록 후에는 페이지를 새로고침해서 최신 상태를 확실히 반영
+		window.location.reload()
+	}
+
+	async _toggleCommentLike(commentId)
+	{
+		if (!this.currentUser) { ToastManager.error('로그인이 필요합니다'); return }
+
+		var result = await this.cs.toggleLike(commentId)
+		if (result.error) { ToastManager.error('오류가 발생했습니다'); return }
+
+		await this._loadComments()
+	}
+
+	_startEditComment(commentId)
+	{
+		var comment = this._findComment(commentId)
+		if (!comment) return
+
+		var textEl = this.getElement().querySelector('#comment-text-' + commentId)
+		if (!textEl) return
+
+		var self = this
+		textEl.innerHTML =
+			'<textarea class="ac-input comment-edit-textarea" maxlength="500">' + fmt.esc(comment.content) + '</textarea>' +
+			'<div class="comment-edit-actions">' +
+				'<button class="ac-btn ac-btn-primary ac-btn-sm" id="comment-edit-save-' + commentId + '">저장</button>' +
+				'<button class="ac-btn ac-btn-outline ac-btn-sm" id="comment-edit-cancel-' + commentId + '">취소</button>' +
+			'</div>'
+
+		textEl.querySelector('#comment-edit-save-' + commentId).addEventListener('click', function()
+		{
+			self._saveEditComment(commentId, textEl)
+		})
+		textEl.querySelector('#comment-edit-cancel-' + commentId).addEventListener('click', function()
+		{
+			textEl.textContent = comment.content
+		})
+	}
+
+	async _saveEditComment(commentId, textEl)
+	{
+		var textarea = textEl.querySelector('textarea')
+		var content  = textarea.value.trim()
+		if (!content) { ToastManager.error('댓글 내용을 입력해주세요'); return }
+
+		var result = await this.cs.update(commentId, content)
+		if (result.error) { ToastManager.error('수정 실패: ' + result.error.message); return }
+
+		ToastManager.success('댓글이 수정되었습니다')
+		await this._loadComments()
+	}
+
+	_confirmDeleteComment(commentId)
+	{
+		var self = this
+
+		var existing = document.getElementById('comment-delete-modal')
+		if (existing) existing.remove()
+
+		var modal = document.createElement('div')
+		modal.id        = 'comment-delete-modal'
+		modal.className = 'adm-modal-overlay'
+		modal.innerHTML =
+			'<div class="adm-modal">' +
+				'<h3 class="adm-modal-title">댓글 삭제</h3>' +
+				'<p class="adm-modal-desc">댓글을 삭제하시겠습니까? 삭제 후 되돌릴 수 없습니다.</p>' +
+				'<div class="adm-modal-actions">' +
+					'<button class="ac-btn ac-btn-outline ac-btn-sm" id="comment-delete-cancel">취소</button>' +
+					'<button class="ac-btn ac-btn-secondary ac-btn-sm" id="comment-delete-confirm">삭제</button>' +
+				'</div>' +
+			'</div>'
+
+		document.body.appendChild(modal)
+
+		document.getElementById('comment-delete-cancel').addEventListener('click', function() { modal.remove() })
+		modal.addEventListener('click', function(e) { if (e.target === modal) modal.remove() })
+
+		document.getElementById('comment-delete-confirm').addEventListener('click', async function()
+		{
+			modal.remove()
+
+			var result = await self.cs.remove(commentId)
+			if (result.error) { ToastManager.error('삭제 실패: ' + result.error.message); return }
+
+			ToastManager.success('댓글이 삭제되었습니다')
+			await self._loadComments()
 		})
 	}
 
