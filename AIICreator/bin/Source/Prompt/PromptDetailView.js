@@ -419,6 +419,11 @@ PromptDetailView = class PromptDetailView extends AView
 
 			this.isPurchased = true
 			ToastManager.success('이용 목록에 추가되었습니다')
+
+			// prompt_content는 구매 여부에 따라 서버(get_prompt_detail RPC)가 내려주는 값이
+			// 달라지므로, 메모리에 있던 기존 this.prompt(구매 전 상태)로 다시 렌더링하면
+			// 내용이 비어 보임 — 구매 반영 후 최신 상태로 다시 조회해야 함
+			await this._loadPrompt()
 			this._renderDetail()
 			this._bindEvents()
 			this._loadComments()
@@ -480,8 +485,14 @@ PromptDetailView = class PromptDetailView extends AView
 
 	_findComment(commentId)
 	{
-		return this.reviews.filter(function(c) { return c.id === commentId })[0]
-			|| this.questions.filter(function(c) { return c.id === commentId })[0]
+		var all = this.reviews.concat(this.questions)
+		for (var i = 0; i < all.length; i++)
+		{
+			if (all[i].id === commentId) return all[i]
+			var reply = (all[i].replies || []).filter(function(r) { return r.id === commentId })[0]
+			if (reply) return reply
+		}
+		return null
 	}
 
 	_renderReviews()
@@ -557,7 +568,24 @@ PromptDetailView = class PromptDetailView extends AView
 				'<button class="comment-delete-btn" data-id="' + c.id + '">삭제</button>'
 		}
 
-		return '<div class="comment-item" data-id="' + c.id + '">' +
+		var replyBtn = (!opts.isReply && this.currentUser)
+			? '<button class="comment-reply-btn" data-id="' + c.id + '">답글</button>'
+			: ''
+
+		var replyFormHTML = !opts.isReply
+			? '<div class="comment-reply-form" id="comment-reply-form-' + c.id + '" style="display:none"></div>'
+			: ''
+
+		var childrenHTML = ''
+		if (!opts.isReply && c.replies && c.replies.length)
+		{
+			var self = this
+			childrenHTML = '<div class="comment-replies">' +
+				c.replies.map(function(r) { return self._commentItemHTML(r, { isReply: true }) }).join('') +
+			'</div>'
+		}
+
+		return '<div class="comment-item' + (opts.isReply ? ' comment-reply-item' : '') + '" data-id="' + c.id + '">' +
 			avatarHTML +
 			'<div class="comment-body">' +
 				'<div class="comment-meta">' +
@@ -571,7 +599,10 @@ PromptDetailView = class PromptDetailView extends AView
 						(isLiked ? '❤️' : '🤍') + ' ' + (c.like_count || 0) +
 					'</button>' +
 					manageBtns +
+					replyBtn +
 				'</div>' +
+				replyFormHTML +
+				childrenHTML +
 			'</div>' +
 		'</div>'
 	}
@@ -595,6 +626,63 @@ PromptDetailView = class PromptDetailView extends AView
 		{
 			btn.addEventListener('click', function() { self._confirmDeleteComment(btn.getAttribute('data-id')) })
 		})
+
+		el.querySelectorAll('.comment-reply-btn').forEach(function(btn)
+		{
+			btn.addEventListener('click', function() { self._startReply(btn.getAttribute('data-id')) })
+		})
+	}
+
+	_startReply(commentId)
+	{
+		if (!this.currentUser) { ToastManager.error('로그인이 필요합니다'); return }
+
+		var formEl = this.getElement().querySelector('#comment-reply-form-' + commentId)
+		if (!formEl) return
+
+		// 이미 열려있으면 토글로 닫기
+		if (formEl.style.display !== 'none')
+		{
+			formEl.style.display = 'none'
+			formEl.innerHTML = ''
+			return
+		}
+
+		var self = this
+		formEl.style.display = ''
+		formEl.innerHTML =
+			'<textarea class="ac-input comment-write-textarea" id="reply-input-' + commentId + '" placeholder="답글을 입력하세요" maxlength="500"></textarea>' +
+			'<div class="comment-edit-actions">' +
+				'<button class="ac-btn ac-btn-primary ac-btn-sm" id="reply-submit-' + commentId + '">등록</button>' +
+				'<button class="ac-btn ac-btn-outline ac-btn-sm" id="reply-cancel-' + commentId + '">취소</button>' +
+			'</div>'
+
+		formEl.querySelector('#reply-submit-' + commentId).addEventListener('click', function()
+		{
+			self._submitReply(commentId)
+		})
+		formEl.querySelector('#reply-cancel-' + commentId).addEventListener('click', function()
+		{
+			formEl.style.display = 'none'
+			formEl.innerHTML = ''
+		})
+	}
+
+	async _submitReply(parentCommentId)
+	{
+		var input   = this.getElement().querySelector('#reply-input-' + parentCommentId)
+		var content = input.value.trim()
+		if (!content) { ToastManager.error('답글 내용을 입력해주세요'); return }
+
+		var result = await this.cs.create(this.promptId, this.currentUser.id, content, parentCommentId)
+
+		if (result.error)
+		{
+			ToastManager.error('답글 등록 실패: ' + result.error.message)
+			return
+		}
+
+		window.location.reload()
 	}
 
 	async _submitComment()
@@ -618,9 +706,9 @@ PromptDetailView = class PromptDetailView extends AView
 			return
 		}
 
-		input.value = ''
-		ToastManager.success('댓글이 등록되었습니다')
-		await this._loadComments()
+		// 새로고침해도 같은 프롬프트 상세 화면으로 복귀하도록 라우팅이 처리되어 있어
+		// 댓글 등록 후에는 페이지를 새로고침해서 최신 상태를 확실히 반영
+		window.location.reload()
 	}
 
 	async _toggleCommentLike(commentId)

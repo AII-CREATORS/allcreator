@@ -410,6 +410,8 @@ NotificationPanel = class NotificationPanel
 			prompt_rejected:    '❌',
 			prompt_liked:       '❤️',
 			comment_liked:      '💬',
+			prompt_commented:   '💬',
+			comment_replied:    '↩️',
 			purchase_completed: '💰',
 			system:             '📢'
 		}
@@ -423,6 +425,8 @@ NotificationPanel = class NotificationPanel
 			prompt_rejected:    'rgba(255,101,132,0.2)',
 			prompt_liked:       'rgba(255,100,100,0.2)',
 			comment_liked:      'rgba(255,101,132,0.2)',
+			prompt_commented:   'rgba(100,180,255,0.2)',
+			comment_replied:    'rgba(100,180,255,0.2)',
 			purchase_completed: 'rgba(255,200,50,0.2)',
 			system:             'rgba(100,180,255,0.2)'
 		}

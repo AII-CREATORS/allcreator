@@ -26,11 +26,14 @@ CommentService = class CommentService
 	// 등록 / 수정 / 삭제
 	// -----------------------------------------
 
-	async create(promptId, userId, content)
+	async create(promptId, userId, content, parentCommentId)
 	{
+		var row = { prompt_id: promptId, user_id: userId, content: content }
+		if (parentCommentId) row.parent_comment_id = parentCommentId
+
 		return this.sb.getClient()
 			.from('comments')
-			.insert({ prompt_id: promptId, user_id: userId, content: content })
+			.insert(row)
 			.select('id')
 			.single()
 	}

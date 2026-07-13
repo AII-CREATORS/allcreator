@@ -116,7 +116,7 @@ MyPageView = class MyPageView extends AView
 		var genderLabel = p.gender ? (genderMap[p.gender] || p.gender) : '—'
 		var birthLabel  = p.birth_date || '—'
 		var joinDate    = fmt.date(p.created_at)
-		var ns          = p.notification_settings || { like: true, purchase: true, comment_like: true }
+		var ns          = p.notification_settings || { like: true, purchase: true, comment_like: true, comment_posted: true, comment_replied: true }
 
 		var body = this.getElement().querySelector('#mp-body-wrap') || this.getElement()
 		body.innerHTML =
@@ -200,6 +200,26 @@ MyPageView = class MyPageView extends AView
 							'</div>' +
 							'<label class="noti-toggle">' +
 								'<input type="checkbox" id="noti-comment-like"' + (ns.comment_like !== false ? ' checked' : '') + '>' +
+								'<span class="noti-toggle-slider"></span>' +
+							'</label>' +
+						'</div>' +
+						'<div class="noti-row">' +
+							'<div class="noti-row-info">' +
+								'<div class="noti-row-label">댓글 알림</div>' +
+								'<div class="noti-row-sub">내 프롬프트에 댓글이 달렸을 때 알림을 받습니다</div>' +
+							'</div>' +
+							'<label class="noti-toggle">' +
+								'<input type="checkbox" id="noti-comment-posted"' + (ns.comment_posted !== false ? ' checked' : '') + '>' +
+								'<span class="noti-toggle-slider"></span>' +
+							'</label>' +
+						'</div>' +
+						'<div class="noti-row">' +
+							'<div class="noti-row-info">' +
+								'<div class="noti-row-label">답글 알림</div>' +
+								'<div class="noti-row-sub">내가 작성한 댓글에 답글이 달렸을 때 알림을 받습니다</div>' +
+							'</div>' +
+							'<label class="noti-toggle">' +
+								'<input type="checkbox" id="noti-comment-replied"' + (ns.comment_replied !== false ? ' checked' : '') + '>' +
 								'<span class="noti-toggle-slider"></span>' +
 							'</label>' +
 						'</div>' +
@@ -370,15 +390,19 @@ MyPageView = class MyPageView extends AView
 			this.profile.birth_date   = birthDate
 
 			// 알림 설정 함께 저장
-			var notiLikeEl        = el.querySelector('#noti-like')
-			var notiPurchaseEl    = el.querySelector('#noti-purchase')
-			var notiCommentLikeEl = el.querySelector('#noti-comment-like')
-			if (notiLikeEl && notiPurchaseEl && notiCommentLikeEl)
+			var notiLikeEl          = el.querySelector('#noti-like')
+			var notiPurchaseEl      = el.querySelector('#noti-purchase')
+			var notiCommentLikeEl   = el.querySelector('#noti-comment-like')
+			var notiCommentPostedEl = el.querySelector('#noti-comment-posted')
+			var notiCommentReplyEl  = el.querySelector('#noti-comment-replied')
+			if (notiLikeEl && notiPurchaseEl && notiCommentLikeEl && notiCommentPostedEl && notiCommentReplyEl)
 			{
 				var newSettings = {
-					like:         notiLikeEl.checked,
-					purchase:     notiPurchaseEl.checked,
-					comment_like: notiCommentLikeEl.checked
+					like:            notiLikeEl.checked,
+					purchase:        notiPurchaseEl.checked,
+					comment_like:    notiCommentLikeEl.checked,
+					comment_posted:  notiCommentPostedEl.checked,
+					comment_replied: notiCommentReplyEl.checked
 				}
 				var notiResult  = await this.us.updateNotificationSettings(this.currentUser.id, newSettings)
 				if (!notiResult.error) this.profile.notification_settings = newSettings
