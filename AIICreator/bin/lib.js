@@ -16437,6 +16437,7 @@ PromptGrid = class PromptGrid
 			prompt_approved:    '✅',
 			prompt_rejected:    '❌',
 			prompt_liked:       '❤️',
+			comment_liked:      '💬',
 			purchase_completed: '💰',
 			system:             '📢'
 		}
@@ -16449,6 +16450,7 @@ PromptGrid = class PromptGrid
 			prompt_approved:    'rgba(108,99,255,0.2)',
 			prompt_rejected:    'rgba(255,101,132,0.2)',
 			prompt_liked:       'rgba(255,100,100,0.2)',
+			comment_liked:      'rgba(255,101,132,0.2)',
 			purchase_completed: 'rgba(255,200,50,0.2)',
 			system:             'rgba(100,180,255,0.2)'
 		}
@@ -16835,6 +16837,69 @@ PromptService = class PromptService
 	}
 }
 
+;CommentService = class CommentService
+{
+	constructor(sb)
+	{
+		this.sb = sb
+	}
+
+	// -----------------------------------------
+	// 댓글 목록
+	// 공개(후기)/비공개(구매 전 문의) 분류와 인기 후기 상위 3개 고정 정렬을
+	// get_prompt_comments RPC가 서버에서 한 번에 처리해 { reviews, questions }로 반환
+	// -----------------------------------------
+
+	async list(promptId, sort)
+	{
+		var result = await this.sb.getClient().rpc('get_prompt_comments', {
+			p_prompt_id: promptId,
+			p_sort:      sort || 'oldest'
+		})
+
+		if (result.error) return result
+		return { data: result.data || { reviews: [], questions: [] }, error: null }
+	}
+
+	// -----------------------------------------
+	// 등록 / 수정 / 삭제
+	// -----------------------------------------
+
+	async create(promptId, userId, content)
+	{
+		return this.sb.getClient()
+			.from('comments')
+			.insert({ prompt_id: promptId, user_id: userId, content: content })
+			.select('id')
+			.single()
+	}
+
+	async update(commentId, content)
+	{
+		return this.sb.getClient()
+			.from('comments')
+			.update({ content: content, is_edited: true })
+			.eq('id', commentId)
+	}
+
+	async remove(commentId)
+	{
+		return this.sb.getClient()
+			.from('comments')
+			.delete()
+			.eq('id', commentId)
+	}
+
+	// -----------------------------------------
+	// 좋아요 토글
+	// -----------------------------------------
+
+	async toggleLike(commentId)
+	{
+		return this.sb.getClient().rpc('toggle_comment_like', { p_comment_id: commentId })
+	}
+}
+
 ;
 PaymentManager = class PaymentManager
 {
@@ -16989,4 +17054,5 @@ afc.scriptMap["Library/Main/PromptGrid.js"] = true;
 afc.scriptMap["Library/Main/NotificationPanel.js"] = true;
 afc.scriptMap["Library/Services/PromptService.js"] = true;
 afc.scriptMap["Library/Services/UserService.js"] = true;
+afc.scriptMap["Library/Services/CommentService.js"] = true;
 afc.scriptMap["Library/PaymentManager.js"] = true;

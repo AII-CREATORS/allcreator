@@ -22,6 +22,8 @@ class AIICreatorApp extends AApplication
 	{
 		super.onReady()
 
+		var self = this
+
 		var noPersist    = localStorage.getItem('ac_no_persist') === '1'
 		var sessionAlive = sessionStorage.getItem('ac_session_alive') === '1'
 		if (noPersist && !sessionAlive)
@@ -47,29 +49,56 @@ class AIICreatorApp extends AApplication
 
 		var origOpen = this.mainContainer.open.bind(this.mainContainer)
 
-		var LAY_TO_HASH = {
-			'Source/MainView.lay':                  '#/',
-			'Source/Auth/AuthView.lay':             '#/auth',
-			'Source/Prompt/PromptRegisterView.lay': '#/register',
-			'Source/MyPage/MyPageView.lay':         '#/mypage',
-			'Source/Prompt/PromptDetailView.lay':   '#/detail',
-			'Source/Admin/AdminView.lay':           '#/admin',
+		// base: 쿼리스트링 없는 순수 경로. detail/register는 id를 #/detail/<id> 형태로 추가 인코딩해서
+		// 새로고침 시에도 어떤 프롬프트를 보고 있었는지 복원할 수 있게 함
+		var ROUTES = [
+			{ lay: 'Source/MainView.lay',                  base: '#/'         },
+			{ lay: 'Source/Auth/AuthView.lay',              base: '#/auth'     },
+			{ lay: 'Source/Prompt/PromptRegisterView.lay',  base: '#/register' },
+			{ lay: 'Source/MyPage/MyPageView.lay',          base: '#/mypage'   },
+			{ lay: 'Source/Prompt/PromptDetailView.lay',    base: '#/detail'   },
+			{ lay: 'Source/Admin/AdminView.lay',            base: '#/admin'    },
+		]
+
+		function hashFor(lay)
+		{
+			if (lay === 'Source/Prompt/PromptDetailView.lay' && self._promptId)
+				return '#/detail/' + self._promptId
+			if (lay === 'Source/Prompt/PromptRegisterView.lay' && self.editPromptId)
+				return '#/register/' + self.editPromptId
+			var route = ROUTES.filter(function(r) { return r.lay === lay })[0]
+			return route ? route.base : '#/'
 		}
-		var HASH_TO_LAY = {}
-		Object.keys(LAY_TO_HASH).forEach(function(k) { HASH_TO_LAY[LAY_TO_HASH[k]] = k })
+
+		function parseRoute(hash)
+		{
+			var parts = (hash || '#/').split('/')
+			var base  = '#/' + (parts[1] || '')
+			var id    = parts[2] || null
+			var route = ROUTES.filter(function(r) { return r.base === base })[0]
+			return { lay: route ? route.lay : null, id: id }
+		}
+
+		function openRoute(lay, id)
+		{
+			if (lay === 'Source/Prompt/PromptDetailView.lay' && id)   self._promptId    = id
+			if (lay === 'Source/Prompt/PromptRegisterView.lay' && id) self.editPromptId = id
+			origOpen(lay)
+		}
 
 		window.addEventListener('popstate', function(e)
 		{
-			var lay = (e.state && e.state.lay)
-				|| HASH_TO_LAY[window.location.hash]
-				|| 'Source/MainView.lay'
-			origOpen(lay)
+			var route = (e.state && e.state.lay)
+				? { lay: e.state.lay, id: e.state.id }
+				: parseRoute(window.location.hash)
+			openRoute(route.lay || 'Source/MainView.lay', route.id)
 		})
 
 		this.mainContainer.open = function(lay)
 		{
-			var hash = LAY_TO_HASH[lay] || '#/'
-			try { history.pushState({ lay: lay }, '', hash) }
+			var hash = hashFor(lay)
+			var id   = hash.split('/')[2] || null
+			try { history.pushState({ lay: lay, id: id }, '', hash) }
 			catch(e) {}
 			origOpen(lay)
 		}
@@ -87,13 +116,19 @@ class AIICreatorApp extends AApplication
 			try { history.replaceState({ lay: 'Source/Auth/AuthView.lay' }, '', '#/auth') }
 			catch(e) {}
 			origOpen('Source/Auth/AuthView.lay')
+			return
 		}
-		else
-		{
-			try { history.replaceState({ lay: 'Source/MainView.lay' }, '', '#/') }
-			catch(e) {}
-			origOpen('Source/MainView.lay')
-		}
+
+		// 새로고침(F5) 시 이전에 보고 있던 화면으로 복귀 (URL 해시 기준)
+		var initial = parseRoute(window.location.hash)
+		var lay     = initial.lay || 'Source/MainView.lay'
+
+		if (lay === 'Source/Prompt/PromptDetailView.lay' && initial.id)   this._promptId    = initial.id
+		if (lay === 'Source/Prompt/PromptRegisterView.lay' && initial.id) this.editPromptId = initial.id
+
+		try { history.replaceState({ lay: lay, id: initial.id }, '', hashFor(lay)) }
+		catch(e) {}
+		origOpen(lay)
 	}
 
 	async _handlePaymentReturn(result)
