@@ -128,7 +128,7 @@ PromptDetailView = class PromptDetailView extends AView
 		var p          = this.prompt
 		var isFree     = Number(p.price) === 0
 		var toolName   = p.ai_tools   ? p.ai_tools.name   : ''
-		var catName    = p.categories ? p.categories.name : ''
+		var catNames   = (p.categories || []).map(function(c) { return c.name })
 		var authorRaw  = p.users ? (p.users.display_name || '알 수 없음') : '알 수 없음'
 		var initial    = fmt.esc(authorRaw[0].toUpperCase())
 		var author     = fmt.esc(authorRaw)
@@ -164,7 +164,7 @@ PromptDetailView = class PromptDetailView extends AView
 					// 배지
 					'<div class="detail-badges">' +
 						(toolName ? '<span class="ac-badge ac-badge-accent">' + fmt.esc(toolName) + '</span>' : '') +
-						(catName  ? '<span class="ac-badge ac-badge-dim">'   + fmt.esc(catName)  + '</span>' : '') +
+						catNames.map(function(n) { return '<span class="ac-badge ac-badge-dim">' + fmt.esc(n) + '</span>' }).join('') +
 						(difficulty ? '<span class="ac-badge ac-badge-dim">' + fmt.esc(difficulty) + '</span>' : '') +
 						'<span class="ac-badge ' + (p.prompt_type === 'image' ? 'ac-badge-point' : 'ac-badge-dim') + '">' +
 							(p.prompt_type === 'image' ? '🎨 이미지' : '✍️ 텍스트') +

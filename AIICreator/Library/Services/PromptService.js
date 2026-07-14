@@ -32,11 +32,12 @@ PromptService = class PromptService
 
 		if (keyword) query = query.or('title.ilike.%' + keyword + '%,description.ilike.%' + keyword + '%')
 
-		if (sort === 'popular')         query = query.order('like_count',  { ascending: false })
-		else if (sort === 'views')      query = query.order('view_count',  { ascending: false })
-		else if (sort === 'price_asc')  query = query.order('price',      { ascending: true  })
-		else if (sort === 'price_desc') query = query.order('price',      { ascending: false })
-		else                            query = query.order('created_at', { ascending: false })
+		// price는 text 컬럼이라 그대로 정렬하면 사전순이 되어버려 price_numeric(생성 컬럼)으로 정렬
+		if (sort === 'popular')         query = query.order('like_count',    { ascending: false })
+		else if (sort === 'views')      query = query.order('view_count',    { ascending: false })
+		else if (sort === 'price_asc')  query = query.order('price_numeric', { ascending: true  })
+		else if (sort === 'price_desc') query = query.order('price_numeric', { ascending: false })
+		else                            query = query.order('created_at',   { ascending: false })
 
 		return query.limit(limit || 30)
 	}
@@ -262,5 +263,19 @@ PromptService = class PromptService
 	async getCategories()
 	{
 		return this.sb.getClient().from('categories').select('id, name').order('name')
+	}
+
+	// 프롬프트의 카테고리 태그를 통째로 교체 (다중 선택)
+	async setCategories(promptId, categoryIds)
+	{
+		var sb = this.sb.getClient()
+
+		var del = await sb.from('prompt_categories').delete().eq('prompt_id', promptId)
+		if (del.error) return del
+
+		if (!categoryIds || !categoryIds.length) return { error: null }
+
+		var rows = categoryIds.map(function(id) { return { prompt_id: promptId, category_id: id } })
+		return sb.from('prompt_categories').insert(rows)
 	}
 }

@@ -13,6 +13,8 @@ PromptRegisterView = class PromptRegisterView extends AView
 		this.editPrompt    = null   // 수정 대상 데이터
 		this._pendingImageFile   = null   // 업로드 대기 중인 이미지 파일
 		this._pendingImageRemove = false  // 수정 모드에서 이미지 제거 요청 여부
+		this.selectedCategoryIds = []     // 카테고리 다중 선택 상태
+		this.selectedToolId      = ''     // AI 도구 단일 선택 상태
 	}
 
 	onInitDone()
@@ -112,21 +114,26 @@ PromptRegisterView = class PromptRegisterView extends AView
 		var isRejected  = isEdit && p.status === 'rejected'
 		var submitLabel = isRejected ? '재심사요청' : (isEdit ? '수정 완료' : '등록하기')
 
-		// AI 도구 옵션 (수정 모드면 기존 값 selected)
-		var editToolId = isEdit && p.ai_tools ? (this._findToolId(p.ai_tools.name)) : ''
-		var toolOptions = '<option value="">AI 도구 선택 *</option>'
-		this.aiTools.forEach(function(t)
-		{
-			toolOptions += '<option value="' + t.id + '"' + (t.id === editToolId ? ' selected' : '') + '>' + t.name + '</option>'
-		})
+		// AI 도구 태그 (단일 선택, 수정 모드면 기존 값 선택 상태로)
+		if (isEdit && p.ai_tools)
+			this.selectedToolId = this._findToolId(p.ai_tools.name)
 
-		// 카테고리 옵션
-		var editCatId = isEdit && p.categories ? (this._findCatId(p.categories.name)) : ''
-		var catOptions = '<option value="">카테고리 선택</option>'
-		this.categories.forEach(function(c)
+		var self = this
+		var toolChipsHTML = this.aiTools.map(function(t)
 		{
-			catOptions += '<option value="' + c.id + '"' + (c.id === editCatId ? ' selected' : '') + '>' + c.name + '</option>'
-		})
+			var isSelected = self.selectedToolId === t.id
+			return '<button type="button" class="reg-chip' + (isSelected ? ' active' : '') + '" data-id="' + t.id + '">' + fmt.esc(t.name) + '</button>'
+		}).join('')
+
+		// 카테고리 태그 (다중 선택)
+		if (isEdit && p.categories)
+			this.selectedCategoryIds = p.categories.map(function(c) { return c.id })
+
+		var catChipsHTML = this.categories.map(function(c)
+		{
+			var isSelected = self.selectedCategoryIds.indexOf(c.id) !== -1
+			return '<button type="button" class="reg-chip' + (isSelected ? ' active' : '') + '" data-id="' + c.id + '">' + fmt.esc(c.name) + '</button>'
+		}).join('')
 
 		var body = this.getElement().querySelector('#reg-body-wrap') || this.getElement()
 		body.innerHTML =
@@ -152,11 +159,11 @@ PromptRegisterView = class PromptRegisterView extends AView
 						'<div class="reg-row">' +
 							'<div class="ac-input-group" style="flex:1">' +
 								'<label class="ac-label">AI 도구 <span class="reg-required">*</span></label>' +
-								'<select class="ac-input" id="reg-tool">' + toolOptions + '</select>' +
+								'<div class="reg-chips" id="reg-tool-chips">' + toolChipsHTML + '</div>' +
 							'</div>' +
 							'<div class="ac-input-group" style="flex:1">' +
-								'<label class="ac-label">카테고리</label>' +
-								'<select class="ac-input" id="reg-category">' + catOptions + '</select>' +
+								'<label class="ac-label">카테고리<span class="reg-label-sub">— 여러 개 선택 가능</span></label>' +
+								'<div class="reg-chips" id="reg-category-chips">' + catChipsHTML + '</div>' +
 							'</div>' +
 						'</div>' +
 
@@ -237,13 +244,6 @@ PromptRegisterView = class PromptRegisterView extends AView
 		return found ? found.id : ''
 	}
 
-	// 카테고리 이름으로 id 찾기
-	_findCatId(name)
-	{
-		var found = this.categories.filter(function(c) { return c.name === name })[0]
-		return found ? found.id : ''
-	}
-
 	// ─────────────────────────────────────────
 	// 이벤트 바인딩
 	// ─────────────────────────────────────────
@@ -282,6 +282,29 @@ PromptRegisterView = class PromptRegisterView extends AView
 				hint.textContent = val.toLocaleString() + '원'
 				hint.className   = 'reg-price-hint paid'
 			}
+		})
+
+		el.querySelector('#reg-tool-chips').addEventListener('click', function(e)
+		{
+			var chip = e.target.closest('.reg-chip')
+			if (!chip) return
+
+			self.selectedToolId = chip.getAttribute('data-id')
+			el.querySelectorAll('#reg-tool-chips .reg-chip').forEach(function(c) { c.classList.remove('active') })
+			chip.classList.add('active')
+		})
+
+		el.querySelector('#reg-category-chips').addEventListener('click', function(e)
+		{
+			var chip = e.target.closest('.reg-chip')
+			if (!chip) return
+
+			var id  = chip.getAttribute('data-id')
+			var idx = self.selectedCategoryIds.indexOf(id)
+			if (idx === -1) self.selectedCategoryIds.push(id)
+			else             self.selectedCategoryIds.splice(idx, 1)
+
+			chip.classList.toggle('active')
 		})
 
 		this._bindImageEvents(el)
@@ -411,8 +434,7 @@ PromptRegisterView = class PromptRegisterView extends AView
 		var title      = el.querySelector('#reg-title').value.trim()
 		var desc       = el.querySelector('#reg-desc').value.trim()
 		var content    = el.querySelector('#reg-content').value.trim()
-		var toolId     = el.querySelector('#reg-tool').value
-		var categoryId = el.querySelector('#reg-category').value
+		var toolId     = this.selectedToolId
 		var type       = el.querySelector('#reg-type').value
 		var difficulty = el.querySelector('#reg-difficulty').value
 		var price      = parseInt(el.querySelector('#reg-price').value, 10) || 0
@@ -437,8 +459,7 @@ PromptRegisterView = class PromptRegisterView extends AView
 				ai_tool_id:     toolId,
 				prompt_type:    type,
 				difficulty:     difficulty,
-				price:          String(price),
-				category_id:    categoryId || null
+				price:          String(price)
 			}
 
 			var result
@@ -461,6 +482,10 @@ PromptRegisterView = class PromptRegisterView extends AView
 				if (result.error) throw new Error(result.error.message)
 				savedPromptId = result.data.id
 			}
+
+			// 카테고리 태그 저장 (다중 선택)
+			var catResult = await this.ps.setCategories(savedPromptId, this.selectedCategoryIds)
+			if (catResult.error) throw new Error(catResult.error.message)
 
 			// 이미지 업로드 (파일이 선택된 경우)
 			if (this._pendingImageFile && savedPromptId)
