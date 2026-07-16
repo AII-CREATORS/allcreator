@@ -25,10 +25,11 @@ NavBar = class NavBar
 			this._notifPanel = null
 		}
 
-		var sb      = SupabaseManager.getInstance()
-		var user    = await sb.getUser()
-		var profile = null
-		var unread  = 0
+		var sb           = SupabaseManager.getInstance()
+		var user         = await sb.getUser()
+		var profile      = null
+		var unread       = 0
+		var pendingCount = 0
 
 		if (user)
 		{
@@ -38,15 +39,23 @@ NavBar = class NavBar
 
 			this._notifPanel = new NotificationPanel(sb)
 			unread = await this._notifPanel.getUnreadCount()
+
+			var role    = profile && profile.role
+			var isAdmin = role === 'main_admin' || role === 'sub_admin'
+			if (isAdmin)
+			{
+				var ps = new PromptService(sb)
+				pendingCount = await ps.countPending()
+			}
 		}
 
-		this.el.innerHTML = this._html(user, profile, unread)
+		this.el.innerHTML = this._html(user, profile, unread, pendingCount)
 		this._bindEvents(user, profile)
 	}
 
-	_html(user, profile, unread)
+	_html(user, profile, unread, pendingCount)
 	{
-		var userArea = user ? this._userHTML(user, profile, unread) : this._guestHTML()
+		var userArea = user ? this._userHTML(user, profile, unread, pendingCount) : this._guestHTML()
 
 		return '<div class="nb-inner">'
 			+ '<div class="nb-logo">'
@@ -65,7 +74,7 @@ NavBar = class NavBar
 		return '<button class="ac-btn ac-btn-outline ac-btn-sm" id="nb-btn-login">로그인</button>'
 	}
 
-	_userHTML(user, profile, unread)
+	_userHTML(user, profile, unread, pendingCount)
 	{
 		var initial   = fmt.esc((user.email || 'U')[0].toUpperCase())
 		var avatarUrl = profile && profile.avatar_url
@@ -75,8 +84,18 @@ NavBar = class NavBar
 		var role    = profile && profile.role
 		var isAdmin = role === 'main_admin' || role === 'sub_admin'
 
+		var adminBadgeHTML = (pendingCount > 0)
+			? '<span class="nb-notif-badge" style="position:absolute;top:-6px;right:-6px;min-width:16px;height:16px;' +
+				'border-radius:8px;background:#FF6584;color:#fff;font-size:0.625rem;font-weight:700;' +
+				'display:flex;align-items:center;justify-content:center;padding:0 3px;pointer-events:none;">' +
+				(pendingCount > 99 ? '99+' : String(pendingCount)) +
+			  '</span>'
+			: ''
+
 		var adminBtn = isAdmin
-			? '<button class="ac-btn ac-btn-outline ac-btn-sm nb-btn-admin" id="nb-btn-admin"> 관리자</button>'
+			? '<button class="ac-btn ac-btn-outline ac-btn-sm nb-btn-admin" id="nb-btn-admin" style="position:relative;"> 관리자' +
+				adminBadgeHTML +
+			  '</button>'
 			: ''
 
 		var badgeHTML = unread > 0

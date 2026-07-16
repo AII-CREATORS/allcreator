@@ -197,11 +197,16 @@ AdminView = class AdminView extends AView
 			var dateText  = fmt.date(p.created_at)
 
 			var actionBtns = ''
+			var pendingBadge = ''
 			if (tab === 'pending')
 			{
 				actionBtns =
 					'<button class="adm-btn-approve" data-id="' + p.id + '">✓ 승인</button>' +
 					'<button class="adm-btn-reject"  data-id="' + p.id + '">✗ 반려</button>'
+
+				pendingBadge = p.reviewed_at
+					? '<span class="adm-badge adm-badge-edit">수정요청</span>'
+					: '<span class="adm-badge adm-badge-new">신규 등록</span>'
 			}
 			else if (tab === 'published')
 			{
@@ -219,6 +224,7 @@ AdminView = class AdminView extends AView
 					'<div class="adm-card-meta">' +
 						'<span class="adm-card-type">' + (p.prompt_type === 'image' ? '🎨' : '✍️') + '</span>' +
 						'<span class="adm-card-seller">판매자: ' + seller + '</span>' +
+						pendingBadge +
 						'<span class="adm-card-date">' + dateText + '</span>' +
 						'<span class="adm-card-price">' + priceText + '</span>' +
 					'</div>' +
