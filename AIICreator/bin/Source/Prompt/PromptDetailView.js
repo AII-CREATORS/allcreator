@@ -147,9 +147,13 @@ PromptDetailView = class PromptDetailView extends AView
 		var canView  = this.isAdmin || this.isSeller || this.isPurchased
 		var contentHTML = canView
 			? '<div class="prompt-content-box">' +
-				'<div class="prompt-content-label">프롬프트 내용</div>' +
+				'<div class="prompt-content-header">' +
+					'<div class="prompt-content-label">프롬프트 내용</div>' +
+					'<button class="prompt-content-copy" id="btn-copy" title="복사">' +
+						'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>' +
+					'</button>' +
+				'</div>' +
 				'<pre class="prompt-content-text">' + fmt.esc(p.prompt_content || '') + '</pre>' +
-				'<button class="prompt-content-copy" id="btn-copy">📋 복사</button>' +
 			  '</div>'
 			: '<div class="prompt-locked">' +
 				'<div class="prompt-locked-icon">🔒</div>' +
@@ -205,7 +209,10 @@ PromptDetailView = class PromptDetailView extends AView
 					'<hr class="ac-divider">' +
 
 					// 설명
-					'<p class="detail-description">' + fmt.esc(p.description || '') + '</p>' +
+					'<div class="detail-description-box">' +
+						'<div class="detail-description-label">설명</div>' +
+						'<p class="detail-description">' + fmt.esc(p.description || '') + '</p>' +
+					'</div>' +
 
 					// 가격 + 구매 버튼
 					'<div class="detail-purchase-box">' +
