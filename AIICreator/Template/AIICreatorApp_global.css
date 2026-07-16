@@ -631,6 +631,9 @@ a:hover {
 .adm-card-seller{color:var(--color-text);}
 .adm-card-date{margin-left:auto;}
 .adm-card-price{font-weight:600;color:var(--color-accent);}
+.adm-badge{padding:2px 8px;border-radius:var(--radius-full);font-size:0.75rem;font-weight:600;}
+.adm-badge-edit{background:#3a2a00;color:#f0a500;}
+.adm-badge-new{background:#0f2e1f;color:#3ecf8e;}
 .adm-card-title{font-size:1rem;font-weight:700;color:var(--color-text);margin-bottom:6px;}
 .adm-card-desc{font-size:0.875rem;color:var(--color-text-muted);margin-bottom:14px;line-height:1.5;}
 .adm-card-actions{display:flex;align-items:center;gap:10px;}
@@ -671,7 +674,8 @@ a:hover {
 .mp-meta{font-size:0.8125rem;color:var(--color-text-dim);display:flex;flex-wrap:wrap;gap:4px;}
 .mp-meta-sep{color:var(--color-border);}
 .mp-profile-skeleton{height:120px;background:var(--color-surface-2);border-radius:var(--radius-lg);animation:skeleton-pulse 1.5s ease infinite;}
-.mp-edit-form{background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-lg);padding:20px;display:flex;flex-direction:column;gap:16px;}
+.mp-edit-form{background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-lg);padding:20px;margin-top:12px;display:flex;flex-direction:column;gap:16px;}
+.mp-edit-section-label{font-size:0.8125rem;font-weight:700;color:var(--color-text-muted);letter-spacing:0.04em;text-transform:uppercase;}
 .mp-edit-row{display:flex;gap:12px;}
 .mp-edit-actions{display:flex;gap:8px;justify-content:flex-end;}
 .mp-bio-textarea{resize:vertical;min-height:72px;line-height:1.6;}

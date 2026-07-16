@@ -153,6 +153,20 @@ PromptService = class PromptService
 	}
 
 	// -----------------------------------------
+	// 관리자: 검수 대기 건수 (신규 등록 + 수정요청 재제출 합계)
+	// -----------------------------------------
+
+	async countPending()
+	{
+		var result = await this.sb.getClient()
+			.from('prompts')
+			.select('id', { count: 'exact', head: true })
+			.eq('status', 'pending')
+
+		return result.count || 0
+	}
+
+	// -----------------------------------------
 	// 관리자: 프롬프트 목록
 	// -----------------------------------------
 
@@ -165,7 +179,7 @@ PromptService = class PromptService
 			.from('prompts')
 			.select(
 				'id, title, description, price, prompt_type, status, ' +
-				'rejection_reason, created_at, result_image, ' +
+				'rejection_reason, created_at, reviewed_at, result_image, ' +
 				'users!user_id(id, display_name, email), ai_tools(name)',
 				{ count: 'exact' }
 			)
