@@ -215,7 +215,7 @@ class PromptRegisterView extends AView
 									'<img src="' + fmt.esc(p.result_image) + '" style="max-width:100%;height:auto;border-radius:8px;display:block;margin:0 auto;">' +
 									'<div style="display:flex;gap:8px;justify-content:center;margin-top:10px;">' +
 										'<button type="button" class="ac-btn ac-btn-outline ac-btn-sm" id="reg-img-change">변경</button>' +
-										'<button type="button" class="ac-btn ac-btn-sm" id="reg-img-remove" style="color:#FF6584;border-color:#FF6584;">제거</button>' +
+										'<button type="button" class="ac-btn ac-btn-sm" id="reg-img-remove" style="color:var(--color-error);border-color:var(--color-error);">제거</button>' +
 									'</div>' +
 								'</div>'
 								: '<div class="reg-img-zone" id="reg-img-zone" style="cursor:pointer;">' +
@@ -328,8 +328,8 @@ class PromptRegisterView extends AView
 		zone.addEventListener('dragover', function(e)
 		{
 			e.preventDefault()
-			zone.style.borderColor = '#6C63FF'
-			zone.style.background  = 'rgba(108,99,255,0.1)'
+			zone.style.borderColor = '#60E5F2'
+			zone.style.background  = 'rgba(96,229,242,0.1)'
 		})
 		zone.addEventListener('dragleave', function()
 		{
@@ -393,7 +393,7 @@ class PromptRegisterView extends AView
 				'<img src="' + e.target.result + '" style="max-width:100%;height:auto;border-radius:8px;display:block;margin:0 auto;">' +
 				'<div style="display:flex;gap:8px;justify-content:center;margin-top:10px;">' +
 					'<button type="button" class="ac-btn ac-btn-outline ac-btn-sm" id="reg-img-change">변경</button>' +
-					'<button type="button" class="ac-btn ac-btn-sm" id="reg-img-remove" style="color:#FF6584;border-color:#FF6584;">제거</button>' +
+					'<button type="button" class="ac-btn ac-btn-sm" id="reg-img-remove" style="color:var(--color-error);border-color:var(--color-error);">제거</button>' +
 				'</div>'
 			zone.style.cursor = 'default'
 

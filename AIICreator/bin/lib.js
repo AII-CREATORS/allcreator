@@ -15349,7 +15349,7 @@ ErrorHandler = class ErrorHandler
 		banner.id  = 'ac-network-banner'
 		banner.style.cssText =
 			'position:fixed;top:0;left:0;right:0;z-index:9999;' +
-			'background:#FF6584;color:#fff;text-align:center;' +
+			'background:var(--color-error, #E5484D);color:#fff;text-align:center;' +
 			'padding:8px 16px;font-size:0.875rem;font-family:var(--font-body, sans-serif);' +
 			'font-weight:600;letter-spacing:0.02em;'
 		banner.textContent = '⚠️ 오프라인 상태입니다 — 인터넷 연결을 확인해주세요'
@@ -15450,8 +15450,6 @@ ErrorHandler._authSubscription  = null
 	{
 		this.el               = container
 		this.callbacks        = callbacks || {}
-		this.searchTimer      = null
-		this.keyword          = ''
 		this._docClickHandler = null
 		this._notifPanel      = null
 	}
@@ -15505,11 +15503,9 @@ ErrorHandler._authSubscription  = null
 
 		return '<div class="nb-inner">'
 			+ '<div class="nb-logo">'
+				+ '<img class="nb-logo-img" src="Template/Logo/ACLogo.png" alt="">'
 				+ '<span class="nb-logo-text">ALL</span>'
 				+ '<span class="nb-logo-accent">Creator</span>'
-			+ '</div>'
-			+ '<div class="nb-search">'
-				+ '<input class="ac-input nb-search-input" id="nb-search" type="text" placeholder="  프롬프트 검색...">'
 			+ '</div>'
 			+ '<div class="nb-actions" id="nb-user-area">' + userArea + '</div>'
 		+ '</div>'
@@ -15532,7 +15528,7 @@ ErrorHandler._authSubscription  = null
 
 		var adminBadgeHTML = (pendingCount > 0)
 			? '<span class="nb-notif-badge" style="position:absolute;top:-6px;right:-6px;min-width:16px;height:16px;' +
-				'border-radius:8px;background:#FF6584;color:#fff;font-size:0.625rem;font-weight:700;' +
+				'border-radius:8px;background:var(--color-accent);color:var(--color-text);font-size:0.625rem;font-weight:700;' +
 				'display:flex;align-items:center;justify-content:center;padding:0 3px;pointer-events:none;">' +
 				(pendingCount > 99 ? '99+' : String(pendingCount)) +
 			  '</span>'
@@ -15546,15 +15542,15 @@ ErrorHandler._authSubscription  = null
 
 		var badgeHTML = unread > 0
 			? '<span class="nb-notif-badge" style="position:absolute;top:-4px;right:-4px;min-width:16px;height:16px;' +
-				'border-radius:8px;background:#FF6584;color:#fff;font-size:0.625rem;font-weight:700;' +
+				'border-radius:8px;background:var(--color-accent);color:var(--color-text);font-size:0.625rem;font-weight:700;' +
 				'display:flex;align-items:center;justify-content:center;padding:0 3px;pointer-events:none;">' +
 				(unread > 99 ? '99+' : String(unread)) +
 			  '</span>'
 			: ''
 
 		return adminBtn
-			+ '<button class="ac-btn ac-btn-secondary ac-btn-sm" id="nb-btn-register">+ 프롬프트 등록</button>'
-			+ '<button id="nb-btn-notif" style="position:relative;background:rgba(255,255,255,0.06);border:1px solid #2E2E48;' +
+			+ '<button class="ac-btn ac-btn-secondary ac-btn-sm nb-btn-register" id="nb-btn-register">+ 프롬프트 등록</button>'
+			+ '<button id="nb-btn-notif" style="position:relative;background:var(--color-surface-2);border:1px solid var(--color-border);' +
 				'border-radius:50%;width:36px;height:36px;cursor:pointer;font-size:1.1rem;' +
 				'display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:background 150ms ease;">' +
 				'🔔' +
@@ -15580,21 +15576,7 @@ ErrorHandler._authSubscription  = null
 			logo.style.cursor = 'pointer'
 			logo.addEventListener('click', function()
 			{
-				if (self.callbacks.onSearch) self.callbacks.onSearch('')
-			})
-		}
-
-		var searchInput = el.querySelector('#nb-search')
-		if (searchInput)
-		{
-			searchInput.addEventListener('input', function()
-			{
-				self.keyword = this.value.trim()
-				clearTimeout(self.searchTimer)
-				self.searchTimer = setTimeout(function()
-				{
-					if (self.callbacks.onSearch) self.callbacks.onSearch(self.keyword)
-				}, 300)
+				if (self.callbacks.onSearch) self.callbacks.onSearch()
 			})
 		}
 
@@ -15624,11 +15606,11 @@ ErrorHandler._authSubscription  = null
 			})
 			btnNotif.addEventListener('mouseenter', function()
 			{
-				btnNotif.style.background = 'rgba(108,99,255,0.2)'
+				btnNotif.style.background = 'rgba(96,229,242,0.25)'
 			})
 			btnNotif.addEventListener('mouseleave', function()
 			{
-				btnNotif.style.background = 'rgba(255,255,255,0.06)'
+				btnNotif.style.background = 'var(--color-surface-2)'
 			})
 		}
 
@@ -15673,8 +15655,6 @@ ErrorHandler._authSubscription  = null
 			if (self.callbacks.onLogout) await self.callbacks.onLogout()
 		})
 	}
-
-	getKeyword() { return this.keyword }
 
 	// ─────────────────────────────────────────
 	// 서브 화면(Admin/MyPage/Detail/Register) 공용 NavBar 초기화
@@ -16073,25 +16053,25 @@ PromptGrid = class PromptGrid
 		panel.id  = 'notif-panel'
 		panel.style.cssText =
 			'position:fixed;top:0;right:0;width:400px;max-width:100vw;height:100vh;' +
-			'background:#1A1A2E;border-left:1px solid #2E2E48;z-index:8000;' +
+			'background:var(--color-surface);border-left:1px solid var(--color-border);z-index:8000;' +
 			'display:flex;flex-direction:column;' +
-			'box-shadow:-8px 0 32px rgba(0,0,0,0.5);' +
+			'box-shadow:-8px 0 32px rgba(20,20,30,0.14);' +
 			'animation:notifSlideIn 200ms ease;'
 
 		panel.innerHTML =
 			'<div style="display:flex;align-items:center;justify-content:space-between;' +
-				'padding:20px 20px 16px;border-bottom:1px solid #2E2E48;flex-shrink:0;">' +
-				'<h2 style="font-size:1rem;font-weight:700;color:#F0F0FF;margin:0;">알림</h2>' +
+				'padding:20px 20px 16px;border-bottom:1px solid var(--color-border);flex-shrink:0;">' +
+				'<h2 style="font-size:1rem;font-weight:700;color:var(--color-text);margin:0;">알림</h2>' +
 				'<div style="display:flex;align-items:center;gap:8px;">' +
-					'<button id="notif-clear-all" style="background:none;border:1px solid #3E3E58;' +
-						'border-radius:6px;padding:4px 10px;cursor:pointer;color:#8080A0;font-size:0.75rem;' +
+					'<button id="notif-clear-all" style="background:none;border:1px solid var(--color-border);' +
+						'border-radius:6px;padding:4px 10px;cursor:pointer;color:var(--color-text-muted);font-size:0.75rem;' +
 						'transition:all 150ms ease;">모두 지우기</button>' +
-					'<button id="notif-close" style="background:rgba(255,255,255,0.08);border:none;' +
-						'border-radius:50%;width:30px;height:30px;cursor:pointer;color:#A0A0C0;font-size:0.9rem;">✕</button>' +
+					'<button id="notif-close" style="background:var(--color-surface-2);border:none;' +
+						'border-radius:50%;width:30px;height:30px;cursor:pointer;color:var(--color-text-muted);font-size:0.9rem;">✕</button>' +
 				'</div>' +
 			'</div>' +
 			'<div id="notif-list" style="flex:1;overflow-y:auto;padding:12px 0;">' +
-				'<div style="text-align:center;padding:40px 20px;color:#6B6B8A;font-size:0.875rem;">불러오는 중...</div>' +
+				'<div style="text-align:center;padding:40px 20px;color:var(--color-text-dim);font-size:0.875rem;">불러오는 중...</div>' +
 			'</div>'
 
 		document.body.appendChild(panel)
@@ -16170,7 +16150,7 @@ PromptGrid = class PromptGrid
 
 		if (!user)
 		{
-			listEl.innerHTML = '<div style="text-align:center;padding:40px 20px;color:#6B6B8A;font-size:0.875rem;">로그인이 필요합니다</div>'
+			listEl.innerHTML = '<div style="text-align:center;padding:40px 20px;color:var(--color-text-dim);font-size:0.875rem;">로그인이 필요합니다</div>'
 			return
 		}
 
@@ -16183,7 +16163,7 @@ PromptGrid = class PromptGrid
 
 		if (result.error)
 		{
-			listEl.innerHTML = '<div style="text-align:center;padding:40px 20px;color:#FF6584;font-size:0.875rem;">로드 실패</div>'
+			listEl.innerHTML = '<div style="text-align:center;padding:40px 20px;color:var(--color-error);font-size:0.875rem;">로드 실패</div>'
 			return
 		}
 
@@ -16191,7 +16171,7 @@ PromptGrid = class PromptGrid
 
 		if (items.length === 0)
 		{
-			listEl.innerHTML = '<div style="text-align:center;padding:40px 20px;color:#6B6B8A;font-size:0.875rem;">알림이 없습니다</div>'
+			listEl.innerHTML = '<div style="text-align:center;padding:40px 20px;color:var(--color-text-dim);font-size:0.875rem;">알림이 없습니다</div>'
 			return
 		}
 
@@ -16212,25 +16192,25 @@ PromptGrid = class PromptGrid
 					' data-prompt="' + (n.prompt_id || '') + '"' +
 					' data-body="' + encodeURIComponent(n.body || '') + '"' +
 					' data-read="' + (n.is_read ? '1' : '0') + '"' +
-					' style="position:relative;padding:14px 20px;cursor:pointer;border-bottom:1px solid #1E1E32;transition:background 150ms ease;' +
-					(isUnread ? 'background:rgba(108,99,255,0.06);' : '') + '">' +
+					' style="position:relative;padding:14px 20px;cursor:pointer;border-bottom:1px solid var(--color-border);transition:background 150ms ease;' +
+					(isUnread ? 'background:rgba(96,229,242,0.08);' : '') + '">' +
 					'<div style="display:flex;gap:12px;align-items:flex-start;">' +
 						'<div style="width:36px;height:36px;border-radius:50%;background:' + self._typeColor(n.type) + ';' +
 							'display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">' +
 							icon +
 						'</div>' +
 						'<div style="flex:1;min-width:0;padding-right:20px;">' +
-							'<div class="notif-title-text" style="font-size:0.875rem;font-weight:' + (isUnread ? '600' : '400') + ';color:' + (isUnread ? '#F0F0FF' : '#B0B0D0') + ';line-height:1.4;margin-bottom:4px;">' +
+							'<div class="notif-title-text" style="font-size:0.875rem;font-weight:' + (isUnread ? '600' : '400') + ';color:' + (isUnread ? 'var(--color-text)' : 'var(--color-text-muted)') + ';line-height:1.4;margin-bottom:4px;">' +
 								fmt.esc(n.title) +
 							'</div>' +
-							(n.body ? '<div style="font-size:0.775rem;color:#6B6B8A;line-height:1.5;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;">' + fmt.esc(n.body) + '</div>' : '') +
-							'<div style="font-size:0.725rem;color:#4A4A6A;margin-top:6px;">' + timeText + '</div>' +
+							(n.body ? '<div style="font-size:0.775rem;color:var(--color-text-dim);line-height:1.5;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;">' + fmt.esc(n.body) + '</div>' : '') +
+							'<div style="font-size:0.725rem;color:var(--color-text-dim);margin-top:6px;">' + timeText + '</div>' +
 						'</div>' +
-						'<div class="notif-dot" style="' + (isUnread ? '' : 'display:none;') + 'width:7px;height:7px;border-radius:50%;background:#6C63FF;flex-shrink:0;margin-top:5px;"></div>' +
+						'<div class="notif-dot" style="' + (isUnread ? '' : 'display:none;') + 'width:7px;height:7px;border-radius:50%;background:var(--color-accent);flex-shrink:0;margin-top:5px;"></div>' +
 					'</div>' +
 					'<button class="notif-item-del" data-del-id="' + n.id + '"' +
 						' style="position:absolute;top:8px;right:8px;background:none;border:none;' +
-						'color:#4A4A6A;font-size:0.75rem;cursor:pointer;padding:2px 5px;border-radius:4px;' +
+						'color:var(--color-text-dim);font-size:0.75rem;cursor:pointer;padding:2px 5px;border-radius:4px;' +
 						'line-height:1;transition:color 150ms ease;">✕</button>' +
 				'</div>'
 		})
@@ -16242,17 +16222,17 @@ PromptGrid = class PromptGrid
 			item.addEventListener('click', function() { self._onItemClick(item) })
 			item.addEventListener('mouseenter', function()
 			{
-				item.style.background = 'rgba(108,99,255,0.1)'
+				item.style.background = 'rgba(96,229,242,0.14)'
 				var delBtn = item.querySelector('.notif-item-del')
-				if (delBtn) delBtn.style.color = '#8080A0'
+				if (delBtn) delBtn.style.color = 'var(--color-text-muted)'
 			})
 			item.addEventListener('mouseleave', function()
 			{
 				item.style.background = item.getAttribute('data-read') === '0'
-					? 'rgba(108,99,255,0.06)'
+					? 'rgba(96,229,242,0.08)'
 					: ''
 				var delBtn = item.querySelector('.notif-item-del')
-				if (delBtn) delBtn.style.color = '#4A4A6A'
+				if (delBtn) delBtn.style.color = 'var(--color-text-dim)'
 			})
 		})
 
@@ -16297,7 +16277,7 @@ PromptGrid = class PromptGrid
 			var dot = item.querySelector('.notif-dot')
 			if (dot) dot.style.display = 'none'
 			var titleEl = item.querySelector('.notif-title-text')
-			if (titleEl) { titleEl.style.fontWeight = '400'; titleEl.style.color = '#B0B0D0' }
+			if (titleEl) { titleEl.style.fontWeight = '400'; titleEl.style.color = 'var(--color-text-muted)' }
 
 			this.unreadCount = Math.max(0, this.unreadCount - 1)
 			this._updateBadge(this.unreadCount)
@@ -16339,7 +16319,7 @@ PromptGrid = class PromptGrid
 			badge.className = 'nb-notif-badge'
 			badge.style.cssText =
 				'position:absolute;top:-4px;right:-4px;min-width:16px;height:16px;' +
-				'border-radius:8px;background:#FF6584;color:#fff;font-size:0.625rem;font-weight:700;' +
+				'border-radius:8px;background:var(--color-accent);color:var(--color-text);font-size:0.625rem;font-weight:700;' +
 				'display:flex;align-items:center;justify-content:center;padding:0 3px;pointer-events:none;'
 			btn.appendChild(badge)
 		}
@@ -16358,16 +16338,16 @@ PromptGrid = class PromptGrid
 			'display:flex;align-items:center;justify-content:center;padding:20px;'
 
 		overlay.innerHTML =
-			'<div style="background:#1E1E32;border:1px solid #2E2E48;border-radius:16px;' +
+			'<div style="background:var(--color-surface);border:1px solid var(--color-border);border-radius:16px;' +
 				'width:100%;max-width:480px;padding:28px;">' +
-				'<h3 style="font-size:1rem;font-weight:700;color:#FF6584;margin:0 0 16px;">반려 사유</h3>' +
-				'<div style="background:#2A1520;border:1px solid rgba(255,101,132,0.3);border-radius:10px;' +
-					'padding:16px;font-size:0.875rem;color:#F0C0C8;line-height:1.7;white-space:pre-wrap;">' +
+				'<h3 style="font-size:1rem;font-weight:700;color:var(--color-error);margin:0 0 16px;">반려 사유</h3>' +
+				'<div style="background:#FFF0F0;border:1px solid rgba(229,72,77,0.3);border-radius:10px;' +
+					'padding:16px;font-size:0.875rem;color:#8A2226;line-height:1.7;white-space:pre-wrap;">' +
 					(body ? fmt.esc(body) : '사유가 기록되지 않았습니다.') +
 				'</div>' +
 				'<div style="text-align:right;margin-top:20px;">' +
 					'<button id="rej-popup-close" style="padding:8px 24px;border:none;border-radius:8px;' +
-						'background:rgba(255,255,255,0.1);color:#E0E0FF;cursor:pointer;font-size:0.875rem;">닫기</button>' +
+						'background:var(--color-surface-2);color:var(--color-text);cursor:pointer;font-size:0.875rem;">닫기</button>' +
 				'</div>' +
 			'</div>'
 
@@ -16413,7 +16393,7 @@ PromptGrid = class PromptGrid
 
 		var listEl = document.getElementById('notif-list')
 		if (listEl)
-			listEl.innerHTML = '<div style="text-align:center;padding:40px 20px;color:#6B6B8A;font-size:0.875rem;">알림이 없습니다</div>'
+			listEl.innerHTML = '<div style="text-align:center;padding:40px 20px;color:var(--color-text-dim);font-size:0.875rem;">알림이 없습니다</div>'
 
 		this.unreadCount = 0
 		this._updateBadge(0)
@@ -16443,7 +16423,7 @@ PromptGrid = class PromptGrid
 		// 남은 아이템이 없으면 빈 상태 표시
 		var listEl = document.getElementById('notif-list')
 		if (listEl && listEl.querySelectorAll('.notif-item').length === 0)
-			listEl.innerHTML = '<div style="text-align:center;padding:40px 20px;color:#6B6B8A;font-size:0.875rem;">알림이 없습니다</div>'
+			listEl.innerHTML = '<div style="text-align:center;padding:40px 20px;color:var(--color-text-dim);font-size:0.875rem;">알림이 없습니다</div>'
 	}
 
 	_typeIcon(type)
@@ -16464,7 +16444,7 @@ PromptGrid = class PromptGrid
 	_typeColor(type)
 	{
 		var map = {
-			prompt_approved:    'rgba(108,99,255,0.2)',
+			prompt_approved:    'rgba(96,229,242,0.2)',
 			prompt_rejected:    'rgba(255,101,132,0.2)',
 			prompt_liked:       'rgba(255,100,100,0.2)',
 			comment_liked:      'rgba(255,101,132,0.2)',
@@ -16473,7 +16453,7 @@ PromptGrid = class PromptGrid
 			purchase_completed: 'rgba(255,200,50,0.2)',
 			system:             'rgba(100,180,255,0.2)'
 		}
-		return map[type] || 'rgba(108,99,255,0.15)'
+		return map[type] || 'rgba(96,229,242,0.15)'
 	}
 }
 

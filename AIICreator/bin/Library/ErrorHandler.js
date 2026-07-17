@@ -65,7 +65,7 @@ ErrorHandler = class ErrorHandler
 		banner.id  = 'ac-network-banner'
 		banner.style.cssText =
 			'position:fixed;top:0;left:0;right:0;z-index:9999;' +
-			'background:#FF6584;color:#fff;text-align:center;' +
+			'background:var(--color-error, #E5484D);color:#fff;text-align:center;' +
 			'padding:8px 16px;font-size:0.875rem;font-family:var(--font-body, sans-serif);' +
 			'font-weight:600;letter-spacing:0.02em;'
 		banner.textContent = '⚠️ 오프라인 상태입니다 — 인터넷 연결을 확인해주세요'
