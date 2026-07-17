@@ -8,10 +8,10 @@ FilterBar = class FilterBar
 		this.callbacks = callbacks || {}
 		this.aiTools  = []
 		this.state    = {
-			toolIds: [],   // 빈 배열 = 전체
+			toolIds: [],   // 빈 배열 = 전체 (다중 선택)
 			sort:    'latest',
-			prices:  [],   // 'free' | 'paid' 조합, 빈 배열 = 전체
-			types:   []    // 'text' | 'image' 조합, 빈 배열 = 전체
+			prices:  '',   // 'free' | 'paid', 빈 문자열 = 전체 (단일 선택 — 값이 2개뿐이라 다중 선택 의미 없음)
+			types:   ''    // 'text' | 'image', 빈 문자열 = 전체 (단일 선택)
 		}
 	}
 
@@ -100,33 +100,27 @@ FilterBar = class FilterBar
 			self._onChange()
 		})
 
-		// 가격 칩 (다중 선택)
+		// 가격 칩 (단일 선택 — 무료/유료 둘 중 하나, 값이 2개뿐이라 다중 선택은 '전체'와 동일해짐)
 		el.querySelector('#fb-price-chips').addEventListener('click', function(e)
 		{
 			var chip = e.target.closest('.fb-chip')
 			if (!chip) return
 
 			var price = chip.getAttribute('data-price')
-			if (price === 'all')
-				self.state.prices = []
-			else
-				self.state.prices = self._toggle(self.state.prices, price)
+			self.state.prices = (price === 'all') ? '' : price
 
 			self._syncPriceChipsUI()
 			self._onChange()
 		})
 
-		// 타입 칩 (다중 선택)
+		// 타입 칩 (단일 선택 — 텍스트/이미지 둘 중 하나)
 		el.querySelector('#fb-type-chips').addEventListener('click', function(e)
 		{
 			var chip = e.target.closest('.fb-chip')
 			if (!chip) return
 
 			var type = chip.getAttribute('data-type')
-			if (type === 'all')
-				self.state.types = []
-			else
-				self.state.types = self._toggle(self.state.types, type)
+			self.state.types = (type === 'all') ? '' : type
 
 			self._syncTypeChipsUI()
 			self._onChange()
@@ -178,7 +172,7 @@ FilterBar = class FilterBar
 		el.querySelectorAll('#fb-price-chips .fb-chip').forEach(function(c)
 		{
 			var val = c.getAttribute('data-price')
-			var isActive = (val === 'all') ? prices.length === 0 : prices.indexOf(val) !== -1
+			var isActive = (val === 'all') ? prices === '' : val === prices
 			c.classList.toggle('active', isActive)
 		})
 	}
@@ -190,7 +184,7 @@ FilterBar = class FilterBar
 		el.querySelectorAll('#fb-type-chips .fb-chip').forEach(function(c)
 		{
 			var val = c.getAttribute('data-type')
-			var isActive = (val === 'all') ? types.length === 0 : types.indexOf(val) !== -1
+			var isActive = (val === 'all') ? types === '' : val === types
 			c.classList.toggle('active', isActive)
 		})
 	}
@@ -199,13 +193,15 @@ FilterBar = class FilterBar
 	// 상태
 	// ─────────────────────────────────────────
 
+	// prices/types는 내부적으로 단일 선택(문자열)이지만, 외부(PromptService.list 등)와의
+	// 호환을 위해 배열 형태(0개 또는 1개)로 반환
 	getState()
 	{
 		return {
 			toolIds: this.state.toolIds.slice(),
 			sort:    this.state.sort,
-			prices:  this.state.prices.slice(),
-			types:   this.state.types.slice()
+			prices:  this.state.prices ? [this.state.prices] : [],
+			types:   this.state.types  ? [this.state.types]  : []
 		}
 	}
 
@@ -217,8 +213,8 @@ FilterBar = class FilterBar
 		this.state = {
 			toolIds: saved.toolIds || [],
 			sort:    saved.sort    || 'latest',
-			prices:  saved.prices  || [],
-			types:   saved.types   || []
+			prices:  (saved.prices && saved.prices[0]) || '',
+			types:   (saved.types  && saved.types[0])  || ''
 		}
 
 		this._syncToolTabsUI()
@@ -229,7 +225,7 @@ FilterBar = class FilterBar
 
 	reset()
 	{
-		this.state = { toolIds: [], sort: 'latest', prices: [], types: [] }
+		this.state = { toolIds: [], sort: 'latest', prices: '', types: '' }
 
 		this._syncToolTabsUI()
 		this._syncPriceChipsUI()
