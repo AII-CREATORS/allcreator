@@ -144,6 +144,54 @@
             "name": "AIICreatorApp_global.css",
             "relType": 1,
             "path": "Template\\"
+          },
+          {
+            "type": 1,
+            "name": "Logo",
+            "children": [
+              {
+                "type": 8,
+                "name": "ChatGPT.png",
+                "relType": 1,
+                "path": "Template\\Logo\\"
+              },
+              {
+                "type": 8,
+                "name": "Claude.png",
+                "relType": 1,
+                "path": "Template\\Logo\\"
+              },
+              {
+                "type": 8,
+                "name": "Gemini.png",
+                "relType": 1,
+                "path": "Template\\Logo\\"
+              },
+              {
+                "type": 8,
+                "name": "Midjourney.png",
+                "relType": 1,
+                "path": "Template\\Logo\\"
+              },
+              {
+                "type": 8,
+                "name": "Sora.png",
+                "relType": 1,
+                "path": "Template\\Logo\\"
+              },
+              {
+                "type": 8,
+                "name": "ACLogo.png",
+                "relType": 1,
+                "path": "Template\\Logo\\"
+              },
+              {
+                "type": 8,
+                "name": "hero-bg.gif",
+                "relType": 1,
+                "path": "Template\\Logo\\"
+              }
+            ]
           }
         ]
       },
@@ -310,7 +358,7 @@
       }
     ]
   },
-  "version": "5.1.1",
+  "version": "5.1.2",
   "flavor": {
     "common": "common"
   },

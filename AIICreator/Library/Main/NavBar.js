@@ -4,8 +4,6 @@ NavBar = class NavBar
 	{
 		this.el               = container
 		this.callbacks        = callbacks || {}
-		this.searchTimer      = null
-		this.keyword          = ''
 		this._docClickHandler = null
 		this._notifPanel      = null
 	}
@@ -59,11 +57,9 @@ NavBar = class NavBar
 
 		return '<div class="nb-inner">'
 			+ '<div class="nb-logo">'
+				+ '<img class="nb-logo-img" src="Template/Logo/ACLogo.png" alt="">'
 				+ '<span class="nb-logo-text">ALL</span>'
 				+ '<span class="nb-logo-accent">Creator</span>'
-			+ '</div>'
-			+ '<div class="nb-search">'
-				+ '<input class="ac-input nb-search-input" id="nb-search" type="text" placeholder="  프롬프트 검색...">'
 			+ '</div>'
 			+ '<div class="nb-actions" id="nb-user-area">' + userArea + '</div>'
 		+ '</div>'
@@ -86,7 +82,7 @@ NavBar = class NavBar
 
 		var adminBadgeHTML = (pendingCount > 0)
 			? '<span class="nb-notif-badge" style="position:absolute;top:-6px;right:-6px;min-width:16px;height:16px;' +
-				'border-radius:8px;background:#FF6584;color:#fff;font-size:0.625rem;font-weight:700;' +
+				'border-radius:8px;background:var(--color-accent);color:var(--color-text);font-size:0.625rem;font-weight:700;' +
 				'display:flex;align-items:center;justify-content:center;padding:0 3px;pointer-events:none;">' +
 				(pendingCount > 99 ? '99+' : String(pendingCount)) +
 			  '</span>'
@@ -100,15 +96,15 @@ NavBar = class NavBar
 
 		var badgeHTML = unread > 0
 			? '<span class="nb-notif-badge" style="position:absolute;top:-4px;right:-4px;min-width:16px;height:16px;' +
-				'border-radius:8px;background:#FF6584;color:#fff;font-size:0.625rem;font-weight:700;' +
+				'border-radius:8px;background:var(--color-accent);color:var(--color-text);font-size:0.625rem;font-weight:700;' +
 				'display:flex;align-items:center;justify-content:center;padding:0 3px;pointer-events:none;">' +
 				(unread > 99 ? '99+' : String(unread)) +
 			  '</span>'
 			: ''
 
 		return adminBtn
-			+ '<button class="ac-btn ac-btn-secondary ac-btn-sm" id="nb-btn-register">+ 프롬프트 등록</button>'
-			+ '<button id="nb-btn-notif" style="position:relative;background:rgba(255,255,255,0.06);border:1px solid #2E2E48;' +
+			+ '<button class="ac-btn ac-btn-secondary ac-btn-sm nb-btn-register" id="nb-btn-register">+ 프롬프트 등록</button>'
+			+ '<button id="nb-btn-notif" style="position:relative;background:var(--color-surface-2);border:1px solid var(--color-border);' +
 				'border-radius:50%;width:36px;height:36px;cursor:pointer;font-size:1.1rem;' +
 				'display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:background 150ms ease;">' +
 				'🔔' +
@@ -134,21 +130,7 @@ NavBar = class NavBar
 			logo.style.cursor = 'pointer'
 			logo.addEventListener('click', function()
 			{
-				if (self.callbacks.onSearch) self.callbacks.onSearch('')
-			})
-		}
-
-		var searchInput = el.querySelector('#nb-search')
-		if (searchInput)
-		{
-			searchInput.addEventListener('input', function()
-			{
-				self.keyword = this.value.trim()
-				clearTimeout(self.searchTimer)
-				self.searchTimer = setTimeout(function()
-				{
-					if (self.callbacks.onSearch) self.callbacks.onSearch(self.keyword)
-				}, 300)
+				if (self.callbacks.onSearch) self.callbacks.onSearch()
 			})
 		}
 
@@ -178,11 +160,11 @@ NavBar = class NavBar
 			})
 			btnNotif.addEventListener('mouseenter', function()
 			{
-				btnNotif.style.background = 'rgba(108,99,255,0.2)'
+				btnNotif.style.background = 'rgba(96,229,242,0.25)'
 			})
 			btnNotif.addEventListener('mouseleave', function()
 			{
-				btnNotif.style.background = 'rgba(255,255,255,0.06)'
+				btnNotif.style.background = 'var(--color-surface-2)'
 			})
 		}
 
@@ -227,8 +209,6 @@ NavBar = class NavBar
 			if (self.callbacks.onLogout) await self.callbacks.onLogout()
 		})
 	}
-
-	getKeyword() { return this.keyword }
 
 	// ─────────────────────────────────────────
 	// 서브 화면(Admin/MyPage/Detail/Register) 공용 NavBar 초기화
