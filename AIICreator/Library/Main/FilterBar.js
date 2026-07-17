@@ -28,15 +28,38 @@ FilterBar = class FilterBar
 
 	_html()
 	{
-		var tabsHTML = '<button class="fb-tool-tab active" data-tool="">전체</button>'
+		var tabsHTML = '<button class="fb-tool-tab active" data-tool="" title="전체">전체</button>'
 		this.aiTools.forEach(function(t)
 		{
-			tabsHTML += '<button class="fb-tool-tab" data-tool="' + t.id + '">' + fmt.esc(t.name) + '</button>'
+			tabsHTML += '<button class="fb-tool-tab fb-tool-tab-icon" data-tool="' + t.id + '" title="' + fmt.esc(t.name) + '">' +
+				'<img src="Template/Logo/' + encodeURIComponent(t.name) + '.png" alt="' + fmt.esc(t.name) + '">' +
+			'</button>'
 		})
 
 		return '<div class="fb-tool-bar">' +
 				'<div class="fb-tool-tabs" id="fb-tool-tabs">' + tabsHTML + '</div>' +
-				'<div class="fb-sort">' +
+			'</div>' +
+			'<div class="fb-chip-bar">' +
+				'<div class="fb-chip-spacer"></div>' +
+				'<div class="fb-chip-center">' +
+					'<div class="fb-chip-group">' +
+						'<span class="fb-chip-label">가격</span>' +
+						'<div class="fb-chips" id="fb-price-chips">' +
+							'<button class="fb-chip active" data-price="all">전체</button>' +
+							'<button class="fb-chip" data-price="free">무료</button>' +
+							'<button class="fb-chip" data-price="paid">유료</button>' +
+						'</div>' +
+					'</div>' +
+					'<div class="fb-chip-group">' +
+						'<span class="fb-chip-label">타입</span>' +
+						'<div class="fb-chips" id="fb-type-chips">' +
+							'<button class="fb-chip active" data-type="all">전체</button>' +
+							'<button class="fb-chip" data-type="text">텍스트</button>' +
+							'<button class="fb-chip" data-type="image">이미지</button>' +
+						'</div>' +
+					'</div>' +
+				'</div>' +
+				'<div class="fb-chip-right">' +
 					'<select class="fb-sort-select" id="fb-sort">' +
 						'<option value="latest">최신순</option>' +
 						'<option value="popular">인기순</option>' +
@@ -44,26 +67,8 @@ FilterBar = class FilterBar
 						'<option value="price_asc">낮은 가격순</option>' +
 						'<option value="price_desc">높은 가격순</option>' +
 					'</select>' +
+					'<button class="fb-reset" id="fb-reset">필터 초기화</button>' +
 				'</div>' +
-			'</div>' +
-			'<div class="fb-chip-bar">' +
-				'<div class="fb-chip-group">' +
-					'<span class="fb-chip-label">가격</span>' +
-					'<div class="fb-chips" id="fb-price-chips">' +
-						'<button class="fb-chip active" data-price="all">전체</button>' +
-						'<button class="fb-chip" data-price="free">무료</button>' +
-						'<button class="fb-chip" data-price="paid">유료</button>' +
-					'</div>' +
-				'</div>' +
-				'<div class="fb-chip-group">' +
-					'<span class="fb-chip-label">타입</span>' +
-					'<div class="fb-chips" id="fb-type-chips">' +
-						'<button class="fb-chip active" data-type="all">전체</button>' +
-						'<button class="fb-chip" data-type="text">텍스트</button>' +
-						'<button class="fb-chip" data-type="image">이미지</button>' +
-					'</div>' +
-				'</div>' +
-				'<button class="fb-reset" id="fb-reset">필터 초기화</button>' +
 			'</div>'
 	}
 

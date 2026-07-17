@@ -39,7 +39,7 @@ MainView = class MainView extends AView
 			'<div style="padding:20px 24px 0;box-sizing:border-box;">' +
 				'<section class="hero" id="main-hero">' +
 					'<div class="hero-bg"></div>' +
-					'<img class="hero-video" src="Template/Logo/hero-bg.gif" alt="">' +
+					'<video class="hero-video" src="Template/Logo/hero-bg.mp4" autoplay muted loop playsinline></video>' +
 					'<div class="hero-scrim"></div>' +
 					'<div class="hero-content">' +
 						'<div class="hero-eyebrow">AI Prompt Marketplace</div>' +
