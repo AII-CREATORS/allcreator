@@ -280,21 +280,25 @@ a:hover {
     font-family: var(--font-title);
     font-size: 0.9375rem;
     font-weight: 700;
+    line-height: 1.3;
     color: var(--color-text);
     margin-bottom: 6px;
     display: -webkit-box;
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
+    min-height: 2.6em;
 }
 .ac-prompt-card-desc {
     font-size: 0.8125rem;
+    line-height: 1.4;
     color: var(--color-text-muted);
     margin-bottom: 10px;
     display: -webkit-box;
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
+    min-height: 2.8em;
 }
 .ac-prompt-card-footer {
     display: flex;
