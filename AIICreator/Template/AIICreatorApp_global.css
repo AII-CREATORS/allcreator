@@ -841,7 +841,7 @@ a:hover {
 .nb-logo{display:inline-flex;align-items:center;gap:7px;font-family:var(--font-title);font-size:1.375rem;font-weight:700;white-space:nowrap;flex-shrink:0;}
 .nb-logo-img{width:28px;height:28px;object-fit:contain;flex-shrink:0;}
 .nb-logo-text{color:var(--color-text);}
-.nb-logo-accent{color: var(--color-text);margin-left:3px;}
+.nb-logo-accent{color: var(--color-text);margin-left:-7px;}
 .nb-actions{display:flex;align-items:center;gap:10px;margin-left:auto;position:relative;}
 .nb-avatar{cursor:pointer;width:34px;height:34px;font-size:0.8125rem;}
 .nb-btn-admin{border-color:var(--color-point)!important;color: var(--color-brand-text)!important;}
