@@ -883,6 +883,7 @@ a:hover {
 .pg-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;align-items:start;}
 .pg-thumb-text{width:100%;aspect-ratio:1/1;display:flex;align-items:center;justify-content:center;font-size:2rem;background:linear-gradient(155deg,#0C4A52,var(--color-accent) 140%);}
 .pg-thumb-image{width:100%;aspect-ratio:1/1;display:flex;align-items:center;justify-content:center;font-size:2rem;background:linear-gradient(155deg,#123B4A,var(--color-accent-hover) 140%);}
+.pg-thumb-fallback{width:100%;font-size:1.0625rem;font-weight:700;line-height:1.4;color:#fff;text-align:center;padding:20px;box-sizing:border-box;display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden;word-break:break-word;}
 .pg-loading{display:flex;justify-content:center;padding:60px;}
 .pg-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:80px 20px;color:var(--color-text-muted);gap:12px;}
 .pg-empty-icon{font-size:3rem;}
