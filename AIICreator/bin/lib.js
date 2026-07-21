@@ -16004,7 +16004,7 @@ PromptGrid = class PromptGrid
 				'<img src="' + p.result_image + '" style="width:100%;height:100%;object-fit:cover;" alt="result" loading="lazy">' +
 			  '</div>'
 			: '<div class="' + (isImage ? 'pg-thumb-image' : 'pg-thumb-text') + '">' +
-				(isImage ? '🎨' : '✍️') +
+				'<span class="pg-thumb-fallback">' + fmt.esc(p.title) + '</span>' +
 			  '</div>'
 
 		return '<div class="ac-prompt-card" data-id="' + p.id + '">' +
