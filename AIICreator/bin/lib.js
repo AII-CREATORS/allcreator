@@ -15504,7 +15504,7 @@ ErrorHandler._authSubscription  = null
 		return '<div class="nb-inner">'
 			+ '<div class="nb-logo">'
 				+ '<img class="nb-logo-img" src="Template/Logo/ACLogo.png" alt="">'
-				+ '<span class="nb-logo-text">ALL</span>'
+				+ '<span class="nb-logo-text">All</span>'
 				+ '<span class="nb-logo-accent">Creator</span>'
 			+ '</div>'
 			+ '<div class="nb-actions" id="nb-user-area">' + userArea + '</div>'
