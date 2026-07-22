@@ -15,6 +15,9 @@ AdminView = class AdminView extends AView
 		this.tab           = 'pending'
 		this.searchKeyword = ''
 		this.searchTimer   = null
+
+		this.aiTools     = []   // 대량등록 시 AI 도구 이름 매칭용
+		this.bulkRows    = []   // 파싱된 대량등록 행 (검증 결과 포함)
 	}
 
 	onInitDone()
@@ -64,6 +67,9 @@ AdminView = class AdminView extends AView
 			return
 		}
 
+		var toolResult = await this.ps.getAITools()
+		this.aiTools   = toolResult.data || []
+
 		this._renderHeader()
 		await this._loadPrompts()
 	}
@@ -86,6 +92,7 @@ AdminView = class AdminView extends AView
 					'<button class="adm-tab adm-tab-active" data-tab="pending">대기 중</button>' +
 					'<button class="adm-tab" data-tab="published">승인됨</button>' +
 					'<button class="adm-tab" data-tab="rejected">반려됨</button>' +
+					'<button class="adm-tab" data-tab="bulk">대량등록</button>' +
 					'<div class="adm-tabs-search">' +
 						'<input class="ac-input adm-search-input" type="text" id="adm-search" placeholder="제목 검색...">' +
 					'</div>' +
@@ -146,7 +153,11 @@ AdminView = class AdminView extends AView
 			btn.classList.toggle('adm-tab-active', btn.dataset.tab === tab)
 		})
 
-		await this._loadPrompts()
+		var searchWrap = this.getElement().querySelector('.adm-tabs-search')
+		if (searchWrap) searchWrap.style.display = (tab === 'bulk') ? 'none' : ''
+
+		if (tab === 'bulk') this._renderBulkTab()
+		else                await this._loadPrompts()
 	}
 
 	// ─────────────────────────────────────────
@@ -374,5 +385,240 @@ AdminView = class AdminView extends AView
 
 		ToastManager.success('프롬프트가 반려 처리되었습니다')
 		await this._loadPrompts()
+	}
+
+	// ─────────────────────────────────────────
+	// 대량등록 (엑셀/CSV 업로드)
+	// ─────────────────────────────────────────
+
+	_renderBulkTab()
+	{
+		var content = this.getElement().querySelector('#adm-content')
+
+		content.innerHTML =
+			'<div class="adm-bulk">' +
+				'<div class="adm-bulk-guide">' +
+					'<h3>엑셀/CSV로 프롬프트 한 번에 등록</h3>' +
+					'<p>다음 열(컬럼)을 포함한 .xlsx 또는 .csv 파일을 업로드하세요. 첫 번째 행은 열 이름(헤더)이어야 합니다.</p>' +
+					'<table class="adm-bulk-guide-table">' +
+						'<tr><th>제목</th><th>설명</th><th>프롬프트내용</th><th>AI도구</th><th>타입</th><th>난이도</th><th>가격</th></tr>' +
+						'<tr><td>필수</td><td>필수</td><td>필수</td><td>필수 (ChatGPT/Claude/Gemini/Midjourney/Sora 등 등록된 이름과 일치)</td>' +
+							'<td>선택 (텍스트/이미지, 기본 텍스트)</td><td>선택 (입문/중급/고급, 기본 입문)</td><td>선택 (숫자, 기본 0)</td></tr>' +
+					'</table>' +
+					'<p class="adm-bulk-note">업로드한 프롬프트는 일반 등록과 동일하게 <b>검수 대기(pending)</b> 상태로 들어가며, 승인 후 게시됩니다. 결과 이미지는 대량등록으로 첨부할 수 없습니다.</p>' +
+				'</div>' +
+
+				'<div class="adm-bulk-upload">' +
+					'<input type="file" id="adm-bulk-file" accept=".xlsx,.xls,.csv" style="display:none">' +
+					'<div class="adm-bulk-dropzone" id="adm-bulk-dropzone">' +
+						'<div style="font-size:2rem;margin-bottom:8px;">📄</div>' +
+						'<div>클릭하거나 파일을 끌어다 놓으세요</div>' +
+						'<div class="adm-bulk-note">.xlsx, .xls, .csv</div>' +
+					'</div>' +
+				'</div>' +
+
+				'<div id="adm-bulk-preview"></div>' +
+			'</div>'
+
+		this.bulkRows = []
+		this._bindBulkEvents()
+	}
+
+	_bindBulkEvents()
+	{
+		var self      = this
+		var el        = this.getElement()
+		var zone      = el.querySelector('#adm-bulk-dropzone')
+		var fileInput = el.querySelector('#adm-bulk-file')
+
+		zone.addEventListener('click', function() { fileInput.click() })
+
+		zone.addEventListener('dragover', function(e)
+		{
+			e.preventDefault()
+			zone.classList.add('adm-bulk-dropzone-hover')
+		})
+		zone.addEventListener('dragleave', function() { zone.classList.remove('adm-bulk-dropzone-hover') })
+		zone.addEventListener('drop', function(e)
+		{
+			e.preventDefault()
+			zone.classList.remove('adm-bulk-dropzone-hover')
+			var file = e.dataTransfer.files[0]
+			if (file) self._handleBulkFile(file)
+		})
+
+		fileInput.addEventListener('change', function()
+		{
+			var file = fileInput.files[0]
+			if (file) self._handleBulkFile(file)
+			fileInput.value = ''
+		})
+	}
+
+	_handleBulkFile(file)
+	{
+		var self   = this
+		var reader = new FileReader()
+
+		reader.onload = function(e)
+		{
+			var wb    = XLSX.read(e.target.result, { type: 'array' })
+			var sheet = wb.Sheets[wb.SheetNames[0]]
+			var rows  = XLSX.utils.sheet_to_json(sheet, { defval: '' })
+
+			self.bulkRows = rows.map(function(r) { return self._validateBulkRow(r) })
+			self._renderBulkPreview()
+		}
+
+		reader.onerror = function()
+		{
+			ToastManager.error('파일을 읽을 수 없습니다')
+		}
+
+		reader.readAsArrayBuffer(file)
+	}
+
+	_validateBulkRow(r)
+	{
+		var title   = String(r['제목'] || '').trim()
+		var desc    = String(r['설명'] || '').trim()
+		var content = String(r['프롬프트내용'] || '').trim()
+		var toolRaw = String(r['AI도구'] || '').trim()
+
+		var errors = []
+		if (!title)   errors.push('제목 없음')
+		if (!desc)    errors.push('설명 없음')
+		if (!content) errors.push('프롬프트내용 없음')
+
+		var tool = this.aiTools.filter(function(t) { return t.name.toLowerCase() === toolRaw.toLowerCase() })[0]
+		if (!toolRaw)   errors.push('AI도구 없음')
+		else if (!tool) errors.push('AI도구 불일치: "' + toolRaw + '"')
+
+		var priceRaw = Number(r['가격'])
+		var price    = isNaN(priceRaw) || priceRaw < 0 ? 0 : Math.floor(priceRaw)
+
+		return {
+			title:       title,
+			description: desc,
+			content:     content,
+			toolId:      tool ? tool.id : '',
+			type:        this._mapPromptType(r['타입']),
+			difficulty:  this._mapDifficulty(r['난이도']),
+			price:       price,
+			errors:      errors
+		}
+	}
+
+	_mapPromptType(v)
+	{
+		v = String(v || '').trim()
+		if (v === '이미지' || v.toLowerCase() === 'image') return 'image'
+		return 'text'
+	}
+
+	_mapDifficulty(v)
+	{
+		v = String(v || '').trim()
+		if (v === '중급' || v.toLowerCase() === 'intermediate') return 'intermediate'
+		if (v === '고급' || v.toLowerCase() === 'advanced')     return 'advanced'
+		return 'beginner'
+	}
+
+	_renderBulkPreview()
+	{
+		var self    = this
+		var wrap    = this.getElement().querySelector('#adm-bulk-preview')
+		var rows    = this.bulkRows
+		var okCount = rows.filter(function(r) { return r.errors.length === 0 }).length
+
+		if (rows.length === 0)
+		{
+			wrap.innerHTML = '<div class="adm-empty">파일에서 읽은 행이 없습니다</div>'
+			return
+		}
+
+		var rowsHTML = rows.map(function(r, i)
+		{
+			var statusHTML = r.errors.length === 0
+				? '<span class="adm-bulk-status-ok">OK</span>'
+				: '<span class="adm-bulk-status-err">' + fmt.esc(r.errors.join(', ')) + '</span>'
+
+			return '<tr class="' + (r.errors.length ? 'adm-bulk-row-err' : '') + '">' +
+				'<td>' + (i + 1) + '</td>' +
+				'<td>' + fmt.esc(r.title || '(없음)') + '</td>' +
+				'<td>' + fmt.esc((r.description || '').slice(0, 40)) + '</td>' +
+				'<td>' + (r.type === 'image' ? '🎨 이미지' : '✍️ 텍스트') + '</td>' +
+				'<td>' + r.price.toLocaleString() + '원</td>' +
+				'<td>' + statusHTML + '</td>' +
+			'</tr>'
+		}).join('')
+
+		wrap.innerHTML =
+			'<div class="adm-bulk-summary">전체 ' + rows.length + '건 중 <b>' + okCount + '건</b> 등록 가능 (오류 ' + (rows.length - okCount) + '건)</div>' +
+			'<div class="adm-bulk-table-wrap">' +
+				'<table class="adm-bulk-table">' +
+					'<tr><th>#</th><th>제목</th><th>설명</th><th>타입</th><th>가격</th><th>상태</th></tr>' +
+					rowsHTML +
+				'</table>' +
+			'</div>' +
+			'<div class="adm-bulk-actions">' +
+				'<button class="ac-btn ac-btn-primary" id="adm-bulk-submit"' + (okCount === 0 ? ' disabled' : '') + '>' +
+					okCount + '건 일괄 등록' +
+				'</button>' +
+			'</div>' +
+			'<div id="adm-bulk-progress" class="adm-bulk-note"></div>'
+
+		var submitBtn = wrap.querySelector('#adm-bulk-submit')
+		if (submitBtn) submitBtn.addEventListener('click', function() { self._submitBulk() })
+	}
+
+	async _submitBulk()
+	{
+		var self      = this
+		var el        = this.getElement()
+		var submitBtn = el.querySelector('#adm-bulk-submit')
+		var progress  = el.querySelector('#adm-bulk-progress')
+
+		var validRows = this.bulkRows.filter(function(r) { return r.errors.length === 0 })
+
+		submitBtn.disabled = true
+
+		var successCount = 0
+		var failed        = []
+
+		for (var i = 0; i < validRows.length; i++)
+		{
+			var r = validRows[i]
+			progress.textContent = '등록 중... (' + (i + 1) + ' / ' + validRows.length + ')'
+
+			var row = {
+				title:          r.title,
+				description:    r.description,
+				prompt_content: r.content,
+				ai_tool_id:     r.toolId,
+				prompt_type:    r.type,
+				difficulty:     r.difficulty,
+				price:          String(r.price),
+				user_id:        this.currentUser.id,
+				status:         'pending'
+			}
+
+			var result = await this.ps.create(row)
+			if (result.error) failed.push(r.title + ' (' + result.error.message + ')')
+			else               successCount++
+		}
+
+		progress.textContent = ''
+
+		if (failed.length === 0)
+		{
+			ToastManager.success(successCount + '건 등록 완료. 검수 대기 목록에서 확인하세요.')
+		}
+		else
+		{
+			ToastManager.error(successCount + '건 성공, ' + failed.length + '건 실패: ' + failed.join(' / '))
+		}
+
+		this._switchTab('pending')
 	}
 }

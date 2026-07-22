@@ -679,6 +679,27 @@ a:hover {
 .adm-modal-textarea{width:100%;resize:vertical;line-height:1.6;margin-bottom:16px;}
 .adm-modal-actions{display:flex;justify-content:flex-end;gap:10px;}
 
+/* ── 관리자 대량등록 ─────────────────────────── */
+.adm-bulk{max-width:900px;margin:0 auto;display:flex;flex-direction:column;gap:20px;}
+.adm-bulk-guide{background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-md);padding:20px;}
+.adm-bulk-guide h3{font-size:1rem;font-weight:700;color:var(--color-text);margin-bottom:8px;}
+.adm-bulk-guide p{font-size:0.875rem;color:var(--color-text-muted);line-height:1.6;margin-bottom:12px;}
+.adm-bulk-guide-table{width:100%;border-collapse:collapse;font-size:0.8125rem;margin-bottom:12px;}
+.adm-bulk-guide-table th,.adm-bulk-guide-table td{border:1px solid var(--color-border);padding:8px 10px;text-align:left;color:var(--color-text-muted);}
+.adm-bulk-guide-table th{background:var(--color-primary-dark);color:var(--color-text);font-weight:700;}
+.adm-bulk-note{font-size:0.8125rem;color:var(--color-text-dim);line-height:1.6;}
+.adm-bulk-dropzone{border:2px dashed var(--color-border);border-radius:var(--radius-md);padding:40px 20px;text-align:center;cursor:pointer;color:var(--color-text-muted);transition:border-color var(--transition),background var(--transition);}
+.adm-bulk-dropzone-hover{border-color:var(--color-accent);background:rgba(96,229,242,0.08);}
+.adm-bulk-summary{font-size:0.9375rem;color:var(--color-text);margin-bottom:12px;}
+.adm-bulk-table-wrap{overflow-x:auto;border:1px solid var(--color-border);border-radius:var(--radius-md);}
+.adm-bulk-table{width:100%;border-collapse:collapse;font-size:0.8125rem;white-space:nowrap;}
+.adm-bulk-table th,.adm-bulk-table td{padding:8px 12px;border-bottom:1px solid var(--color-border);text-align:left;color:var(--color-text-muted);}
+.adm-bulk-table th{background:var(--color-primary-dark);color:var(--color-text);font-weight:700;position:sticky;top:0;}
+.adm-bulk-row-err td{color:var(--color-error);}
+.adm-bulk-status-ok{color:var(--color-success);font-weight:700;}
+.adm-bulk-status-err{color:var(--color-error);font-weight:600;white-space:normal;}
+.adm-bulk-actions{display:flex;justify-content:flex-end;margin-top:12px;}
+
 /* ── MyPageView ──────────────────────────────── */
 .mp-wrap{display:flex;flex-direction:column;height:100%;background:var(--color-primary);}
 .mp-nav{display:flex;align-items:center;gap:16px;padding:0 24px;height:56px;background:var(--color-primary-dark);border-bottom:1px solid var(--color-border);flex-shrink:0;}
