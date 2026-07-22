@@ -15507,6 +15507,9 @@ ErrorHandler._authSubscription  = null
 				+ '<span class="nb-logo-text">All</span>'
 				+ '<span class="nb-logo-accent">Creator</span>'
 			+ '</div>'
+			+ '<nav class="nb-links">'
+				+ '<button class="nb-link" id="nb-btn-about">회사소개</button>'
+			+ '</nav>'
 			+ '<div class="nb-actions" id="nb-user-area">' + userArea + '</div>'
 		+ '</div>'
 	}
@@ -15579,6 +15582,12 @@ ErrorHandler._authSubscription  = null
 				if (self.callbacks.onSearch) self.callbacks.onSearch()
 			})
 		}
+
+		var btnAbout = el.querySelector('#nb-btn-about')
+		if (btnAbout) btnAbout.addEventListener('click', function()
+		{
+			theApp.mainContainer.open('Source/About/AboutView.lay')
+		})
 
 		if (!user)
 		{
