@@ -63,6 +63,7 @@ NavBar = class NavBar
 			+ '</div>'
 			+ '<nav class="nb-links">'
 				+ '<button class="nb-link" id="nb-btn-about">회사소개</button>'
+				+ '<button class="nb-link" id="nb-btn-legal">약관·정책</button>'
 			+ '</nav>'
 			+ '<div class="nb-actions" id="nb-user-area">' + userArea + '</div>'
 		+ '</div>'
@@ -141,6 +142,12 @@ NavBar = class NavBar
 		if (btnAbout) btnAbout.addEventListener('click', function()
 		{
 			theApp.mainContainer.open('Source/About/AboutView.lay')
+		})
+
+		var btnLegal = el.querySelector('#nb-btn-legal')
+		if (btnLegal) btnLegal.addEventListener('click', function()
+		{
+			theApp.mainContainer.open('Source/Legal/LegalView.lay')
 		})
 
 		if (!user)

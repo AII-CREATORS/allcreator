@@ -347,6 +347,26 @@
             "type": 1,
             "name": "Common",
             "children": []
+          },
+          {
+            "type": 1,
+            "name": "Legal",
+            "children": [
+              {
+                "type": 5,
+                "name": "LegalView.js",
+                "action": 9,
+                "relType": 1,
+                "path": "Source\\Legal\\"
+              },
+              {
+                "type": 3,
+                "name": "LegalView.lay",
+                "action": 6,
+                "relType": 1,
+                "path": "Source\\Legal\\"
+              }
+            ]
           }
         ]
       },
