@@ -1,7 +1,9 @@
 {
-	"changed": [],
+	"changed": [
+		"C:\\Users\\dicki\\AII CREATOR\\allcreator\\AIICreator\\bin\\Template\\AIICreatorApp_global.css"
+	],
 	"version": "5.1.2",
-	"C:\\Users\\dicki\\AII CREATOR\\allcreator\\AIICreator\\Template\\AIICreatorApp_global.css": 1784709395066.967,
+	"C:\\Users\\dicki\\AII CREATOR\\allcreator\\AIICreator\\Template\\AIICreatorApp_global.css": 1784864464463.6892,
 	"C:\\Users\\dicki\\AII CREATOR\\allcreator\\AIICreator\\Framework\\afc\\library\\ARect.js": 1782693623482.5632,
 	"C:\\Users\\dicki\\AII CREATOR\\allcreator\\AIICreator\\Framework\\afc\\library\\AUtil.js": 1782693623483.5637,
 	"C:\\Users\\dicki\\AII CREATOR\\allcreator\\AIICreator\\Framework\\afc\\library\\afc.js": 1782693623490.5627,

@@ -983,3 +983,52 @@ a:hover {
     .mission-grid{grid-template-columns:1fr;}
     .about-title{font-size:1.5rem;}
 }
+
+/* ================================
+   반응형 — 태블릿 (≤768px)
+   ================================ */
+@media(max-width:768px){
+    .pg-grid{grid-template-columns:repeat(2,1fr);}
+    .nb-inner,.fb-tool-bar,.fb-chip-bar,.main-content,.adm-header,.adm-tabs{padding-left:16px;padding-right:16px;}
+    .hero{min-height:240px;}
+}
+
+/* ================================
+   반응형 — 모바일(스마트폰) (≤480px)
+   ================================ */
+@media(max-width:480px){
+    .pg-grid{grid-template-columns:1fr;gap:12px;}
+
+    /* NavBar */
+    .nb-inner{gap:8px;height:52px;}
+    .nb-logo{font-size:1.0625rem;gap:5px;}
+    .nb-logo-img{width:22px;height:22px;}
+    .nb-actions{gap:6px;}
+    .nb-actions .ac-btn{padding:6px 10px;font-size:0.75rem;}
+    .nb-btn-register{padding:6px 12px 6px 10px!important;}
+
+    /* Hero */
+    .hero{min-height:200px;padding:16px;}
+    .hero-eyebrow{font-size:0.625rem;margin-bottom:6px;}
+    .hero-title{font-size:1.0625rem;margin-bottom:14px;}
+    .hero-search-bar{padding:6px 6px 6px 14px;gap:6px;}
+    .hero-search-input{font-size:0.8125rem;}
+    .hero-search-go{padding:7px 14px;font-size:0.75rem;}
+
+    /* AI 도구 필터 */
+    .fb-tool-bar{height:auto;padding:10px 12px;}
+    .fb-tool-tabs{gap:10px;}
+    .fb-tool-tab-icon{width:32px;height:32px;}
+    .fb-tool-tab-icon img{width:18px;height:18px;}
+
+    /* 가격/타입 필터 — 3분할(spacer/center/right) 대신 세로로 쌓기 */
+    .fb-chip-bar{flex-direction:column;align-items:stretch;border-radius:var(--radius-lg);padding:14px 16px;gap:12px;}
+    .fb-chip-spacer{display:none;}
+    .fb-chip-center{flex-wrap:wrap;justify-content:center;gap:10px;}
+    .fb-chip-group{flex-wrap:wrap;justify-content:center;}
+    .fb-chip-right{flex:none;justify-content:center;}
+
+    /* 프롬프트 카드 하단 통계 텍스트 넘침 방지 */
+    .ac-prompt-card-footer{flex-wrap:wrap;gap:6px;}
+    .ac-prompt-card-footer .ac-caption{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%;}
+}
