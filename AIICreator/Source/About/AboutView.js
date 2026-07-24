@@ -90,9 +90,11 @@ class AboutView extends AView
 					'</div>' +
 				'</section>' +
 
-			'</div>'
+			'</div>' +
+			'<footer id="about-footer"></footer>'
 
 		NavBar.mountStandard(this.getElement().querySelector('#about-navbar'))
+		Footer.mountStandard(this.getElement().querySelector('#about-footer'))
 	}
 
 	_bindEvents()

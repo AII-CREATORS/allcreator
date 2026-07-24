@@ -94,7 +94,10 @@ class AdminView extends AView
 				'<div class="adm-content" id="adm-content">' +
 					'<div class="adm-loading">불러오는 중...</div>' +
 				'</div>' +
+				'<footer id="adm-footer"></footer>' +
 			'</div>'
+
+		Footer.mountStandard(this.getElement().querySelector('#adm-footer'))
 
 		this._bindShellEvents()
 	}

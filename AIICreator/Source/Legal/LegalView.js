@@ -120,9 +120,11 @@ class LegalView extends AView
 
 					'<p class="legal-note">공고일자: [공고일자]<br>시행일자: [시행일자]</p>' +
 				'</section>' +
-			'</div>'
+			'</div>' +
+			'<footer id="legal-footer"></footer>'
 
 		NavBar.mountStandard(this.getElement().querySelector('#legal-navbar'))
+		Footer.mountStandard(this.getElement().querySelector('#legal-footer'))
 	}
 
 	_bindEvents()

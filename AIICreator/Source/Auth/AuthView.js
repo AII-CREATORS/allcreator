@@ -348,7 +348,10 @@ class AuthView extends AView
 						'</button>' +
 					'</div>' +
 				'</div>' +
+				'<footer id="auth-footer" style="width:100%;"></footer>' +
 			'</div>'
+
+		Footer.mountStandard(this.getElement().querySelector('#auth-footer'))
 	}
 
 	// ─────────────────────────────────────────

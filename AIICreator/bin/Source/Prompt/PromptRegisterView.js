@@ -234,7 +234,11 @@ PromptRegisterView = class PromptRegisterView extends AView
 
 				'</div>' +
 
+				'<footer id="reg-footer"></footer>' +
+
 			'</div>'
+
+		Footer.mountStandard(this.getElement().querySelector('#reg-footer'))
 	}
 
 	// AI 도구 이름으로 id 찾기

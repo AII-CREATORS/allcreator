@@ -846,10 +846,19 @@ a:hover {
 .nb-logo-img{width:28px;height:28px;object-fit:contain;flex-shrink:0;}
 .nb-logo-text{color:var(--color-text);}
 .nb-logo-accent{color: var(--color-text);margin-left:-7px;}
-.nb-links{display:flex;align-items:center;gap:8px;}
-.nb-link{background:none;border:none;font-family:var(--font-body);font-size:0.8125rem;font-weight:600;color:var(--color-text-muted);cursor:pointer;padding:6px 4px;transition:color var(--transition);}
+.nb-links{display:flex;align-items:center;gap:8px;flex-shrink:0;}
+.nb-link{background:none;border:none;font-family:var(--font-body);font-size:0.8125rem;font-weight:600;color:var(--color-text-muted);cursor:pointer;padding:6px 4px;white-space:nowrap;transition:color var(--transition);}
 .nb-link:hover{color:var(--color-text);}
 .nb-actions{display:flex;align-items:center;gap:10px;margin-left:auto;position:relative;}
+
+/* ── Footer ──────────────────────────────── */
+.ft-inner{max-width:1200px;width:100%;margin:0 auto;padding:28px 24px;box-sizing:border-box;text-align:center;border-top:1px solid var(--color-border);}
+.ft-links{display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:12px;}
+.ft-link{background:none;border:none;font-family:var(--font-body);font-size:0.8125rem;font-weight:600;color:var(--color-text-muted);cursor:pointer;padding:2px;transition:color var(--transition);}
+.ft-link:hover{color:var(--color-text);}
+.ft-sep{color:var(--color-border);font-size:0.75rem;}
+.ft-info{font-size:0.75rem;color:var(--color-text-dim);line-height:1.7;margin-bottom:10px;}
+.ft-copyright{font-size:0.75rem;color:var(--color-text-dim);}
 .nb-avatar{cursor:pointer;width:34px;height:34px;font-size:0.8125rem;}
 .nb-btn-admin{border-color:var(--color-point)!important;color: var(--color-brand-text)!important;}
 .nb-btn-admin:hover{background:var(--color-point)!important;color:var(--color-text)!important;}
@@ -1003,6 +1012,7 @@ a:hover {
     .nb-inner{gap:8px;height:52px;}
     .nb-logo{font-size:1.0625rem;gap:5px;}
     .nb-logo-img{width:22px;height:22px;}
+    .nb-link{font-size:0.75rem;padding:6px 2px;}
     .nb-actions{gap:6px;}
     .nb-actions .ac-btn{padding:6px 10px;font-size:0.75rem;}
     .nb-btn-register{padding:6px 12px 6px 10px!important;}
@@ -1031,6 +1041,10 @@ a:hover {
     /* 프롬프트 카드 하단 통계 텍스트 넘침 방지 */
     .ac-prompt-card-footer{flex-wrap:wrap;gap:6px;}
     .ac-prompt-card-footer .ac-caption{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%;}
+
+    /* Footer */
+    .ft-inner{padding:20px 16px;}
+    .ft-info{font-size:0.6875rem;}
 }
 
 /* ── 이용약관 / 개인정보처리방침 ──────────────────────────────── */

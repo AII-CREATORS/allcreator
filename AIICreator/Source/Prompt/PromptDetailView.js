@@ -237,7 +237,10 @@ class PromptDetailView extends AView
 					this._commentsShellHTML() +
 
 				'</div>' +
+				'<footer id="detail-footer"></footer>' +
 			'</div>'
+
+		Footer.mountStandard(this.getElement().querySelector('#detail-footer'))
 	}
 
 	_commentsShellHTML()

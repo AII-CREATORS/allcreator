@@ -242,7 +242,10 @@ MyPageView = class MyPageView extends AView
 
 				'</div>' +  // mp-center
 			'</div>' +      // mp-body
+			'<footer id="mp-footer"></footer>' +
 		'</div>'            // mp-wrap
+
+		Footer.mountStandard(this.getElement().querySelector('#mp-footer'))
 	}
 
 	// ─────────────────────────────────────────

@@ -53,7 +53,10 @@ class MainView extends AView
 				'</section>' +
 			'</div>' +
 			'<div id="main-filterbar"></div>' +
-			'<main class="main-content" id="main-grid-wrap"></main>'
+			'<main class="main-content" id="main-grid-wrap"></main>' +
+			'<footer id="main-footer"></footer>'
+
+		Footer.mountStandard(this.getElement().querySelector('#main-footer'))
 	}
 
 	_initComponents()
