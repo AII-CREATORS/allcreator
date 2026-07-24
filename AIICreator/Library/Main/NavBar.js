@@ -57,7 +57,7 @@ NavBar = class NavBar
 
 		return '<div class="nb-inner">'
 			+ '<div class="nb-logo">'
-				+ '<img class="nb-logo-img" src="Template/Logo/ACLogo.png" alt="">'
+				+ '<img class="nb-logo-img" src="Template/Logo/올크로고.png" alt="">'
 				+ '<span class="nb-logo-text">All</span>'
 				+ '<span class="nb-logo-accent">Creator</span>'
 			+ '</div>'

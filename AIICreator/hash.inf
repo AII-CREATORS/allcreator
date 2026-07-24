@@ -1,9 +1,11 @@
 {
 	"changed": [
-		"C:\\Users\\dicki\\AII CREATOR\\allcreator\\AIICreator\\bin\\Template\\AIICreatorApp_global.css"
+		"C:\\Users\\dicki\\AII CREATOR\\allcreator\\AIICreator\\bin\\Template\\AIICreatorApp_global.css",
+		"C:\\Users\\dicki\\AII CREATOR\\allcreator\\AIICreator\\bin\\Template\\Logo\\올크로고.png",
+		"C:\\Users\\dicki\\AII CREATOR\\allcreator\\AIICreator\\bin\\Library\\Main\\NavBar.js"
 	],
 	"version": "5.1.2",
-	"C:\\Users\\dicki\\AII CREATOR\\allcreator\\AIICreator\\Template\\AIICreatorApp_global.css": 1784864464463.6892,
+	"C:\\Users\\dicki\\AII CREATOR\\allcreator\\AIICreator\\Template\\AIICreatorApp_global.css": 1784865491771.0208,
 	"C:\\Users\\dicki\\AII CREATOR\\allcreator\\AIICreator\\Framework\\afc\\library\\ARect.js": 1782693623482.5632,
 	"C:\\Users\\dicki\\AII CREATOR\\allcreator\\AIICreator\\Framework\\afc\\library\\AUtil.js": 1782693623483.5637,
 	"C:\\Users\\dicki\\AII CREATOR\\allcreator\\AIICreator\\Framework\\afc\\library\\afc.js": 1782693623490.5627,
@@ -170,7 +172,7 @@
 	"C:\\Users\\dicki\\AII CREATOR\\allcreator\\AIICreator\\Source\\Main\\NavBar.js": 1782778983568.0017,
 	"C:\\Users\\dicki\\AII CREATOR\\allcreator\\AIICreator\\Source\\Main\\FilterBar.js": 1782779012483.751,
 	"C:\\Users\\dicki\\AII CREATOR\\allcreator\\AIICreator\\Source\\Main\\PromptGrid.js": 1782779031803.1653,
-	"C:\\Users\\dicki\\AII CREATOR\\allcreator\\AIICreator\\Library\\Main\\NavBar.js": 1784709395033.8147,
+	"C:\\Users\\dicki\\AII CREATOR\\allcreator\\AIICreator\\Library\\Main\\NavBar.js": 1784867116326.5144,
 	"C:\\Users\\dicki\\AII CREATOR\\allcreator\\AIICreator\\Library\\Main\\FilterBar.js": 1784278326102.599,
 	"C:\\Users\\dicki\\AII CREATOR\\allcreator\\AIICreator\\Library\\Main\\PromptGrid.js": 1784677699043.369,
 	"C:\\Users\\dicki\\AII CREATOR\\allcreator\\AIICreator\\Library\\ErrorHandler.js": 1784275337529.803,
@@ -189,5 +191,6 @@
 	"C:\\Users\\dicki\\AII CREATOR\\allcreator\\AIICreator\\Template\\Logo\\Sora.png": 1784275337572.745,
 	"C:\\Users\\dicki\\AII CREATOR\\allcreator\\AIICreator\\Template\\Logo\\ACLogo.png": 1784275337548.7986,
 	"C:\\Users\\dicki\\AII CREATOR\\allcreator\\AIICreator\\Template\\Logo\\hero-bg.gif": 1784275337703.7727,
-	"C:\\Users\\dicki\\AII CREATOR\\allcreator\\AIICreator\\Template\\Logo\\hero-bg.mp4": 1784278326146.5999
+	"C:\\Users\\dicki\\AII CREATOR\\allcreator\\AIICreator\\Template\\Logo\\hero-bg.mp4": 1784278326146.5999,
+	"C:\\Users\\dicki\\AII CREATOR\\allcreator\\AIICreator\\Template\\Logo\\올크로고.png": 1784867004889.4468
 }

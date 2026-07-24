@@ -196,6 +196,12 @@
                 "name": "hero-bg.mp4",
                 "relType": 1,
                 "path": "Template\\Logo\\"
+              },
+              {
+                "type": 8,
+                "name": "올크로고.png",
+                "relType": 1,
+                "path": "Template\\Logo\\"
               }
             ]
           }
